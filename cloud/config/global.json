@@ -1,0 +1,14 @@
+{
+  "global": {
+    "parseVersion": "1.4.2"
+  },
+  "applications": {
+    "Smart Light": {
+      "applicationId": "LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP",
+      "masterKey": "8CeSzamKV9keCDuYs44R9UChLVfWdXjjwW7vf1Qh"
+    },
+    "_default": {
+      "link": "Smart Light"
+    }
+  }
+}
