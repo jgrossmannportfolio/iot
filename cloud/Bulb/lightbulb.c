@@ -227,8 +227,8 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	printf("%s\n", sunsetStr);
 
 	struct timeEmulate *sunrise, *sunset;
-	char *temp;
-	printf("hello1\n");
+	char temp[128];
+
 	strncpy(temp, sunriseStr, 2);
 	printf("temp: %s\n", temp);
 	printf("hello\n");
