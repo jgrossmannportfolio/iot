@@ -219,9 +219,12 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	read(newClient, buffer, 512);
 	int i = 0;
 	char *weather = strtok(buffer, "\n");
+	printf("%s\n", weather);
 	if(weather == NULL) return;
 	char *sunriseStr = strtok(NULL, "\n");
+	printf("%s\n", sunriseStr);
 	char *sunsetStr = strtok(NULL, "\n");
+	printf("%s\n", sunsetStr);
 
 	struct timeEmulate *sunrise, *sunset;
 	char *temp;
