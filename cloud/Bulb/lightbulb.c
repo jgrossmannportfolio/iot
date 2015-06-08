@@ -212,7 +212,11 @@ void clientSendSocket(int port, char *buffer)
 // Function to update the bulb Intensity based on time.
 void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock)
 {
- 
+ 	listen(servSock, 5);
+	int newClient = accept(servSock, (struct sockaddr*) NULL, NULL);
+	char buffer[512];
+	read(newClient, buffer, 512);
+	printf("%s\n", buffer);
 }
 
 int main() {
