@@ -27,6 +27,7 @@
 #define MAXPENDING 5    /* Maximum outstanding connection requests */
 #define PARSE_TIME_INTERVAL 5 /* Default time (s) for updating simulated time to Parse Cloud */
 
+
 static numClimates = 3;
 char *climateList[] = {"Clouds", "Clear", "Rain"};
 char *healthList[] = {"GOOD", "POOR", "DAMAGED"};
@@ -216,7 +217,15 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	int newClient = accept(servSock, (struct sockaddr*) NULL, NULL);
 	char buffer[512];
 	read(newClient, buffer, 512);
-	printf("%s\n", buffer);
+	int i = 0;
+	char *weather = strtok(buffer, "\n");
+	if(weather == NULL) return;
+	char *sunrise = strtok(NULL, "\n");
+	char *sunset = strtok(NULL, "\n");
+		
+	printf("%s\n", weather);
+	printf("%s\n", sunrise);
+	printf("%s\n", sunset);
 }
 
 int main() {
