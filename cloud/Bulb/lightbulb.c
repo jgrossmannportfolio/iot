@@ -69,7 +69,7 @@ void healthCallback(ParseClient client, int error, const char *buffer)
 void *threadPushNotifications()
 {
     pthread_detach(pthread_self());
-    ParseClient client = parseInitialize("kayWALfBm6h1SQdANXoZtTZqA0N9sZsB7cwUUVod", "7Nw0R9LTDXR7lRhmPsArePQMralFW8Yt7DL2zWTS");
+    ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
     char *installationId = parseGetInstallationId(client);
     
     /* We need to set the InstallationId forcefully. Setting installationId to dataUUID based on null string is incorrect
@@ -97,7 +97,9 @@ int getIntensity(struct lightBulb *bulb)
 // Function updates bulb intensity. Varies based on climate.
 void updateIntensity(int newIntensity, char *climate)
 {
- 
+	//make sure to update based on climate
+	bulb.intensity = newIntensity;
+	clientSendSocket(PORT_INTENSITY, bulb->intensity);
 }
 
 // Function to retrieve light bulb health status
@@ -235,13 +237,14 @@ int main() {
      */
     pthread_create(&threadPush, NULL, threadPushNotifications, NULL);
     pthread_create(&threadTime, NULL, updateBulbTime, (void *)(&bulbTime));
-    
+    int i = 0;
     while(1)
     {	
         char str[4];
         updateBasedOnTime(&bulbTime, level, servSockWeather);
         sprintf(str, "%d", getIntensity(&bulb));
         clientSendSocket(PORT_INTENSITY, str);
+		updateIntensity(i++, NULL);
         while (bulb.health == 2)
         {
             if (isHealth)
