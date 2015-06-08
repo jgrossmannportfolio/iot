@@ -220,12 +220,25 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	int i = 0;
 	char *weather = strtok(buffer, "\n");
 	if(weather == NULL) return;
-	char *sunrise = strtok(NULL, "\n");
-	char *sunset = strtok(NULL, "\n");
+	char *sunriseStr = strtok(NULL, "\n");
+	char *sunsetStr = strtok(NULL, "\n");
+
+	struct timeEmulate *sunrise, *sunset;
+	char *temp;
+	sunrise->hour = atoi(strncpy(temp, sunriseStr, 2));
+	sunrise->min = atoi(strncpy(temp, sunriseStr+3, 2));
+
+	printf("%d : %d\n", sunrise->hour, sunrise->min);
+
+	int time = bulbTime->hour * 60 + bulbTime->min;
+
+	
 		
 	printf("%s\n", weather);
 	printf("%s\n", sunrise);
 	printf("%s\n", sunset);
+
+	updateIntensity(0, weather);
 }
 
 int main() {
