@@ -99,7 +99,9 @@ void updateIntensity(int newIntensity, char *climate)
 {
 	//make sure to update based on climate
 	bulb.intensity = newIntensity;
-	clientSendSocket(PORT_INTENSITY, bulb->intensity);
+	char strIntensity[2];
+	sprintf(strIntensity, "%d", bulb.intensity);
+	clientSendSocket(PORT_INTENSITY, strIntensity);
 }
 
 // Function to retrieve light bulb health status
@@ -237,14 +239,13 @@ int main() {
      */
     pthread_create(&threadPush, NULL, threadPushNotifications, NULL);
     pthread_create(&threadTime, NULL, updateBulbTime, (void *)(&bulbTime));
-    int i = 0;
     while(1)
     {	
         char str[4];
         updateBasedOnTime(&bulbTime, level, servSockWeather);
         sprintf(str, "%d", getIntensity(&bulb));
         clientSendSocket(PORT_INTENSITY, str);
-		updateIntensity(i++, NULL);
+	updateIntensity(8, NULL);
         while (bulb.health == 2)
         {
             if (isHealth)
