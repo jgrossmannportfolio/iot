@@ -225,7 +225,9 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 
 	struct timeEmulate *sunrise, *sunset;
 	char *temp;
-	sunrise->hour = atoi(strncpy(temp, sunriseStr, 2));
+	strncpy(temp, sunriseStr, 2);
+	printf("temp: %s\n", temp);
+	sunrise->hour = atoi(temp);
 	sunrise->min = atoi(strncpy(temp, sunriseStr+3, 2));
 
 	printf("%d : %d\n", sunrise->hour, sunrise->min);
