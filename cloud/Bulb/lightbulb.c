@@ -215,13 +215,8 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 {
  	listen(servSock, 5);
 	int newClient = accept(servSock, (struct sockaddr*) NULL, NULL);
-	char *weather = extractClimate((File *) &newClient);
-	printf("%s\n", weather);
-	char *sunrise = extractHour(newClient);
-	char *sunset = extractHour(newClient);
 
-	printf("%s %s %s\n", weather, sunrise, sunset);
-	/*char buffer[512];
+	char buffer[512];
 	read(newClient, buffer, 512);
 	int i = 0;
 	char *weather = strtok(buffer, "\n");
@@ -237,22 +232,13 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 
 	strncpy(temp, sunriseStr, 2);
 	printf("temp: %s\n", temp);
-	printf("hello\n");
 	sunrise->hour = atoi(temp);
 	printf("int hour %d\n", sunrise->hour);
-	strncpy(temp, sunriseStr+3, 2);
-	sunrise->min = atoi(temp);
-	printf("int min %d\n", sunrise->min);
-
-	printf("%d : %d\n", sunrise->hour, sunrise->min);
+	strncpy(temp, sunsetStr, 2);
+	sunset->hour = atoi(temp);
+	printf("int hour sunset %d\n", sunset->hour);
 
 	int time = bulbTime->hour * 60 + bulbTime->min;
-
-	
-		
-	printf("%s\n", weather);
-	printf("%s\n", sunrise);
-	printf("%s\n", sunset);
 
 	//updateIntensity(0, weather);*/
 }
