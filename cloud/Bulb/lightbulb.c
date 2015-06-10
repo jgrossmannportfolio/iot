@@ -210,8 +210,35 @@ void clientSendSocket(int port, char *buffer)
     close(sockfd);
 }
 
-int nearSunriseIntensity(int timeDif) {
-	
+int nightIntensity(int time, int sunset, int sunrise) {
+	sunrise = sunrise + 24;
+	switch(time) {
+		case sunset :
+			return 6;
+		case sunset+1 :
+			return 8;
+		case sunrise-1:
+			return 8;
+		case sunrise:
+			return 6;
+		default:
+			return 9;
+	}
+}
+
+int dayIntensity(int time, int sunset, int sunrise) {
+	switch(time) {
+		case sunrise :
+			return 6;
+		case sunrise+1:
+			return 3;
+		case sunset-1 :
+			return 3;
+		case sunset:
+			return 6;
+		default:
+			return 0;
+	}
 }
 
 // Function to update the bulb Intensity based on time.
@@ -242,7 +269,7 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 		strncpy(temp, sunriseStr, 2);
 	}
 	printf("sunrise hour: %s\n", temp);
-	sunriseHour = atoi(temp);
+	sunriseHour = atoi(temp) - 4;
 	printf("int hour %d\n", sunriseHour);
 
 	if(sunsetStr[0] == '0') {
@@ -250,13 +277,19 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	}else {
 		strncpy(temp, sunsetStr, 2);
 	}
-	sunsetHour = atoi(temp);
+	sunsetHour = atoi(temp) - 4;
 	printf("int hour sunset %d\n", sunsetHour);
 
 	int time = bulbTime->hour;
+	int intensity = 0;
 
-	
-	//updateIntensity(timeIntensity, weather);
+	if((time >= sunsetHour) || (time < sunriseHour)) {
+		intensity = nightIntensity(time, sunsetHour, sunriseHour);
+	else {
+		intensity = dayIntensity(time, sunsetHour, sunriseHour);
+	}
+
+	updateIntensity(intensity, weather);
 }
 
 int main() {
@@ -289,7 +322,7 @@ int main() {
         updateBasedOnTime(&bulbTime, level, servSockWeather);
         sprintf(str, "%d", getIntensity(&bulb));
         clientSendSocket(PORT_INTENSITY, str);
-	updateIntensity(8, NULL);
+	//updateIntensity(8, NULL);
         while (bulb.health == 2)
         {
             if (isHealth)
