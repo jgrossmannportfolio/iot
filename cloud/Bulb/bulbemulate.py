@@ -116,14 +116,15 @@ def checkCondition():
 		weatherPanel.configure(text = city + country + briefWeather + weatherDesc + currentTime, fg="red", bg="yellow", font="Verdana 10 bold", width=640, height=200)
 		connection = httplib.HTTPSConnection(baseUrl, 443)
 		connection.connect()
-		connection.request('PUT', '/1/classes/Bulb/7SPLF6KHR6', json.dumps({
+		print(connection.request('PUT', '/1/classes/Bulb/7SPLF6KHR6', json.dumps({
        "City": city,
-       "Weather": briefWeather
+       "Weather": briefWeather,
+		"Intensity": intensity
      }), {
        "X-Parse-Application-Id": "LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP",
-       "X-Parse-REST-API-Key": "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN",
+       "X-Parse-REST-API-Key": "zbXsj30R5Tgn4SfSpWOsAyyQh477RbzvdNd89gVi",
        "Content-Type": "application/json"
-     })
+     }) )
 	bulbRoot.after(5000, checkCondition)
 
 
