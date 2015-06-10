@@ -210,6 +210,10 @@ void clientSendSocket(int port, char *buffer)
     close(sockfd);
 }
 
+int nearSunriseIntensity(int timeDif) {
+	
+}
+
 // Function to update the bulb Intensity based on time.
 void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock)
 {
@@ -246,9 +250,10 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	sunset->hour = atoi(temp);
 	printf("int hour sunset %d\n", sunset->hour);
 
-	int time = bulbTime->hour * 60 + bulbTime->min;
+	int time = bulbTime->hour;
 
-	//updateIntensity(0, weather);*/
+	
+	//updateIntensity(timeIntensity, weather);
 }
 
 int main() {
