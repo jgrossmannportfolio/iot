@@ -98,7 +98,16 @@ int getIntensity(struct lightBulb *bulb)
 // Function updates bulb intensity. Varies based on climate.
 void updateIntensity(int newIntensity, char *climate)
 {
-	//make sure to update based on climate
+	printf("climate: %s\n", climate);
+	if(climate == NULL) {
+		//do nothing
+	} else if(strcmp(climate, "Clouds") == 0) {
+		newIntensity += 2;
+	} else if(strcmp(climate, "Rain") == 0) {
+		newIntensity += 4;
+	}
+	newIntensity = ((newIntensity > 9) ? 9 : newIntensity);
+	
 	bulb.intensity = newIntensity;
 	char strIntensity[2];
 	sprintf(strIntensity, "%d", bulb.intensity);
@@ -211,7 +220,6 @@ void clientSendSocket(int port, char *buffer)
 }
 
 int nightIntensity(int time, int sunset, int sunrise) {
-	sunrise = sunrise + 24;
 	if(time == sunset) return 6;
 	else if(time == (sunset+1)) return 8;
 	else if(time == (sunrise-1)) return 8;
@@ -237,41 +245,39 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	read(newClient, buffer, 512);
 	int i = 0;
 	char *weather = strtok(buffer, "\n");
-	printf("%s\n", weather);
 	if(weather == NULL) return;
 	char *sunriseStr = strtok(NULL, "\n");
-	printf("%s\n", sunriseStr);
 	char *sunsetStr = strtok(NULL, "\n");
-	printf("%s\n", sunsetStr);
 
 	int sunriseHour = 0, sunsetHour = 0;
-	char temp[128];
+	char temp[3];
 
-	printf("parsing time data to ints\n");
 	if(sunriseStr[0] == '0') {
-		printf("sunrise has a 0\n");
 		strncpy(temp, sunriseStr+1, 1);
+		temp[1] = '\0';
 	}else {
 		strncpy(temp, sunriseStr, 2);
+		temp[2] = '\0';
 	}
-	printf("sunrise hour: %s\n", temp);
-	sunriseHour = atoi(temp) - 4;
-	printf("int hour %d\n", sunriseHour);
+	printf("sunrise: %s\n", temp);
+	sunriseHour = atoi(temp);
 
 	if(sunsetStr[0] == '0') {
 		strncpy(temp, sunsetStr+1, 1);
+		temp[1] = '\0';
 	}else {
 		strncpy(temp, sunsetStr, 2);
+		temp[2] = '\0';
 	}
-	sunsetHour = atoi(temp) - 4;
-	printf("int hour sunset %d\n", sunsetHour);
+	sunsetHour = atoi(temp);
 
 	int time = bulbTime->hour;
 	int intensity = 0;
 
+	printf("timeHour %d sunriseHour: %d sunsetHour: %d\n", time, sunriseHour, sunsetHour);
 	if((time >= sunsetHour) || (time < sunriseHour)) {
 		intensity = nightIntensity(time, sunsetHour, sunriseHour);
-	else {
+	} else {
 		intensity = dayIntensity(time, sunsetHour, sunriseHour);
 	}
 
