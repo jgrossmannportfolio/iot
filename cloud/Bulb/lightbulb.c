@@ -212,33 +212,19 @@ void clientSendSocket(int port, char *buffer)
 
 int nightIntensity(int time, int sunset, int sunrise) {
 	sunrise = sunrise + 24;
-	switch(time) {
-		case sunset :
-			return 6;
-		case sunset+1 :
-			return 8;
-		case sunrise-1:
-			return 8;
-		case sunrise:
-			return 6;
-		default:
-			return 9;
-	}
+	if(time == sunset) return 6;
+	else if(time == (sunset+1)) return 8;
+	else if(time == (sunrise-1)) return 8;
+	else if(time == (sunrise)) return 6;
+	else return 9;
 }
 
 int dayIntensity(int time, int sunset, int sunrise) {
-	switch(time) {
-		case sunrise :
-			return 6;
-		case sunrise+1:
-			return 3;
-		case sunset-1 :
-			return 3;
-		case sunset:
-			return 6;
-		default:
-			return 0;
-	}
+	if(time == sunrise) return 6;
+	else if(time == (sunrise+1)) return 3;
+	else if(time == (sunset-1)) return 3;
+	else if(time == (sunset)) return 6;
+	else return 0;
 }
 
 // Function to update the bulb Intensity based on time.
@@ -258,7 +244,7 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	char *sunsetStr = strtok(NULL, "\n");
 	printf("%s\n", sunsetStr);
 
-	int sunriseHour, sunsetHour;
+	int sunriseHour = 0, sunsetHour = 0;
 	char temp[128];
 
 	printf("parsing time data to ints\n");
