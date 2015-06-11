@@ -87,6 +87,8 @@ void *threadPushNotifications()
 // This function pushes changes to the cloud
 void updateOnParse(const char *column, int value)
 {
+	ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
+	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", "{column:value}", NULL);
 }
 
 // Function returns current intensity of light bulb
