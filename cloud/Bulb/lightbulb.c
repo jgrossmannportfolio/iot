@@ -91,10 +91,10 @@ void *threadPushNotifications()
 void updateOnParse(const char *column, int value)
 {
 	char body[128];
-	sprintf(body, "{%s:%d}", column, value);
+	//sprintf(body, "{%s:%d}", column, value);
 	//ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
-	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
-	printf("sending column: %s, value: %s\n", column, value);
+	//parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
+	//printf("sending column: %s, value: %s\n", column, value);
 }
 
 // Function returns current intensity of light bulb
