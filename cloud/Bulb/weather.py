@@ -24,7 +24,7 @@ baseUrl = "http://api.openweathermap.org/data/2.5/weather?q="
 # Exceptions need to be caught, else we will terminate abruptly and create havoc.
 def clientSendSocket(port, data):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.settimeout(2)
+	s.settimeout(2.5)
 	try:
 		s.connect((HOST, port))
 		s.send(data)

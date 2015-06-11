@@ -125,7 +125,7 @@ def checkCondition():
        "X-Parse-REST-API-Key": "zbXsj30R5Tgn4SfSpWOsAyyQh477RbzvdNd89gVi",
        "Content-Type": "application/json"
      }) 
-	print(json.loads(connection.getresponse().read()))
+	#print(json.loads(connection.getresponse().read()))
 	bulbRoot.after(5000, checkCondition)
 
 
