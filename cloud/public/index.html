@@ -18,7 +18,13 @@
     <link href='http://fonts.googleapis.com/css?family=Lobster|Open+Sans|Lobster+Two|Inconsolata' rel='stylesheet' type='text/css'>
     <script>
 // !! TECHNICAL GUIDE STEP : PARSE INITIALIZATION AND OBJECT CREATION !!
-Parse.initialize("kayWALfBm6h1SQdANXoZtTZqA0N9sZsB7cwUUVod", "1FtYiQ1p6n6QlUFXorwlM078O2BW2TJ7Vlv17jaW");
+Parse.initialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "q2aIYnqAQyP918HHfxlsARtle7uHxZz93IYt7lyC");
+
+	$(document).ready(function() {
+		getInfo();
+		console.log("page loaded");
+	});
+
 // !! TECHNICAL GUIDE STEP : UPDATE OBJECT (PUT)!!
 function updateIntensity(form) {
   var newIntensity = Number(form.inputbox.value);
@@ -37,18 +43,18 @@ function updateIntensity(form) {
 function getInfo() {
   var Bulb = Parse.Object.extend("Bulb");
   var query = new Parse.Query(Bulb);
-  var bulb = new Bulb();
-  query.get("muHzstKOYg", {
+  //var bulb = new Bulb();
+  query.get("7SPLF6KHR6", {
     success: function(bulb) {
       var intensity = bulb.get("Intensity");
       var health = bulb.get("Health");
       var hour = bulb.get("Hour");
-      var min = bulb.get("Minute");
+      var minute = bulb.get("Minute");
       var city = bulb.get("City");
       var weather = bulb.get("Weather");
       var time = "";
       // Update Bulb Intensity
-      document.getElementById("intensity").innerHTML = bulb.get("Intensity");
+     // document.getElementById("intensity").innerHTML = bulb.get("Intensity");
       // Update Bulb Health
       if (health == 0)
         document.getElementById("health").innerHTML = "GOOD";
@@ -65,17 +71,17 @@ function getInfo() {
       else
         time = time.concat(hour);
       time = time.concat(":");
-      if (min >=0 && min <= 9)
+      if (minute >=0 && minute <= 9)
       {
         time = time.concat("0");
-        time = time.concat(min);
+        time = time.concat(minute);
       }
       else
-        time = time.concat(min);
-      document.getElementById("time").innerHTML = time;
+        time = time.concat(minute);
+      //document.getElementById("time").innerHTML = time;
       // Update City and Weather
-      document.getElementById("weather").innerHTML = weather;
-      document.getElementById("city").innerHTML = city;
+      //document.getElementById("weather").innerHTML = weather;
+      //document.getElementById("city").innerHTML = city;
     },
     error: function(object, error) {
       // The object was not retrieved successfully.
@@ -171,6 +177,7 @@ function pushHealthNotification(form) {
       <div class="row" >
         <div class="text-center" id="heading">
           <h1>Columbia University Internet Of Things Project - Smart City Lights</h1>
+          
         </div>
       </div>
       <div class="row">
@@ -193,7 +200,8 @@ function pushHealthNotification(form) {
             <br><br>
             <div class ="col-md-12">
             <p>Advanced Project - Electrical Engineering<br><br>
-
+			<a onclick="getInfo()" href="#">Click Me</a>
+			<p id="health"> This is where the health goes</p>
 Our goal is to monitor and control a light bulb from the Internet. The light bulb can be treated as a street lamp / light that can be controlled by any third party through the cloud. Additionally, we also detect the number of people near the light bulb through Broadcom's WICED Sense sensor. The WICED Sense communicates through Bluetooth Low Energy and informs the cloud about details such as temperature, pressure, etc.
 
 Through these measurements, we can dynamically vary the intensity of the light bulb and read information from it into the cloud. The information is displayed to the end user through a web site. [<a href="http://smartcitylights.parseapp.com/">http://smartcitylights.parseapp.com/</a>]
