@@ -91,10 +91,13 @@ void *threadPushNotifications()
 void updateOnParse(const char *column, int value)
 {
 	char body[128];
-	//sprintf(body, "{%s:%d}", column, value);
+	if(column == NULL || value == NULL) {
+		return;
+	}
+	sprintf(body, "{\"%s\":%d}", column, value);
 	//ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
-	//parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
-	//printf("sending column: %s, value: %s\n", column, value);
+	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
+	
 }
 
 // Function returns current intensity of light bulb
@@ -106,7 +109,7 @@ int getIntensity(struct lightBulb *bulb)
 // Function updates bulb intensity. Varies based on climate.
 void updateIntensity(int newIntensity, char *climate)
 {
-	printf("climate: %s\n", climate);
+	//printf("climate: %s\n", climate);
 	if(climate == NULL) {
 		//do nothing
 	} else if(strcmp(climate, "Clouds") == 0) {
@@ -251,6 +254,7 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 
 	char buffer[512];
 	read(newClient, buffer, 512);
+	close(newClient);
 	int i = 0;
 	char *weather = strtok(buffer, "\n");
 	if(weather == NULL) return;
@@ -267,7 +271,7 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 		strncpy(temp, sunriseStr, 2);
 		temp[2] = '\0';
 	}
-	printf("sunrise: %s\n", temp);
+	//printf("sunrise: %s\n", temp);
 	sunriseHour = atoi(temp);
 
 	if(sunsetStr[0] == '0') {
@@ -282,7 +286,7 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	int time = bulbTime->hour;
 	int intensity = 0;
 
-	printf("timeHour %d sunriseHour: %d sunsetHour: %d\n", time, sunriseHour, sunsetHour);
+	//printf("timeHour %d sunriseHour: %d sunsetHour: %d\n", time, sunriseHour, sunsetHour);
 	if((time >= sunsetHour) || (time < sunriseHour)) {
 		intensity = nightIntensity(time, sunsetHour, sunriseHour);
 	} else {
