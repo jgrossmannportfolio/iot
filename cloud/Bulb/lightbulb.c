@@ -35,6 +35,8 @@ char *healthList[] = {"GOOD", "POOR", "DAMAGED"};
 // This is lock needed to ensure proper synchronization while updating some data of lightBulb struct
 pthread_mutex_t lock;
 char dataUUID[] = "bb946c14-758a-4448-8b78-69b04ba1bb8b"; /** Please update this value **/
+ParseClient client;
+
 struct lightBulb bulb;
 
 // Struct holding intensity / health values for light bulb
@@ -70,7 +72,8 @@ void healthCallback(ParseClient client, int error, const char *buffer)
 void *threadPushNotifications()
 {
     pthread_detach(pthread_self());
-    ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
+    //ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
+	client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
     char *installationId = parseGetInstallationId(client);
     
     /* We need to set the InstallationId forcefully. Setting installationId to dataUUID based on null string is incorrect
@@ -89,7 +92,7 @@ void updateOnParse(const char *column, int value)
 {
 	char body[128];
 	sprintf(body, "{%s:%d}", column, value);
-	ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
+	//ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
 	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
 	printf("sending column: %s, value: %s\n", column, value);
 }
