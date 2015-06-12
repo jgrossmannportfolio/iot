@@ -30,7 +30,7 @@ function updateIntensity(form) {
   var newIntensity = Number(form.inputbox.value);
   var Bulb = Parse.Object.extend("Bulb");
   var bulb = new Bulb()
-  bulb.set("objectId", "muHzstKOYg");
+  bulb.set("objectId", "7SPLF6KHR6");
   bulb.save(null, {
     success: function(bulb) {
       bulb.set("Intensity", newIntensity);
@@ -211,6 +211,13 @@ function pushHealthNotification(form) {
 			<p id="weather">N/A</p>
 			<h3>City</h3>
 			<p id="city">N/A</p>
+
+	<div class="col-md-6">
+		<form name="updateIntensityForm" action="" method="PUT">Change Bulb Intensity
+			<input type="text" name="inputbox" value="Enter Intensity" ="">
+			<input type="button" id-"own-button" class = "btn btn-primary btn-sm active" value="Update" onClick="updateIntensity(this.form)">
+		</form>
+	</div>
 			
 
 Our goal is to monitor and control a light bulb from the Internet. The light bulb can be treated as a street lamp / light that can be controlled by any third party through the cloud. Additionally, we also detect the number of people near the light bulb through Broadcom's WICED Sense sensor. The WICED Sense communicates through Bluetooth Low Energy and informs the cloud about details such as temperature, pressure, etc.

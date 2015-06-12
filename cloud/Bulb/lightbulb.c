@@ -65,7 +65,8 @@ void logThis()
  */
 void healthCallback(ParseClient client, int error, const char *buffer)
 {
- 
+ 	printf("callback: %s\n", buffer);
+	printf("error: %d\n", error);
 }
 
 // This function pushes data onto the Parse Application in cloud.
