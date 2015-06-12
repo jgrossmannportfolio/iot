@@ -68,6 +68,7 @@ void healthCallback(ParseClient clientCallback, int error, const char *buffer)
 	printf("inside health callback!!!!\n\n\n\n");
 	printf("error: %d\n", error);
  	printf("callback: %s\n", buffer);
+	exit(0);
 	
 }
 
@@ -99,7 +100,7 @@ void updateOnParse(const char *column, int value)
 	}
 	sprintf(body, "{\"%s\":%d}", column, value);
 	//ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
-	//parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
+	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
 	
 }
 
