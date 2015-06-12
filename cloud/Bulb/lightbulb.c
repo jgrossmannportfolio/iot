@@ -72,7 +72,7 @@ void healthCallback(ParseClient clientCallback, int error, const char *buffer)
 	char body[128];
 	
 	sprintf(body, "{\"%s\":%d}", "Health", 0);
-	parseSendRequest(clientCallback, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
+	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
 	
 }
 
