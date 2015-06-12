@@ -65,7 +65,7 @@ void logThis()
  */
 void healthCallback(ParseClient client, int error, const char *buffer)
 {
-	
+	printf("inside health callback!!!!\n");
 	printf("error: %d\n", error);
  	printf("callback: %s\n", buffer);
 	
