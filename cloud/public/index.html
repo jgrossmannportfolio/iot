@@ -218,6 +218,12 @@ function pushHealthNotification(form) {
 			<input type="button" id-"own-button" class = "btn btn-primary btn-sm active" value="Update" onClick="updateIntensity(this.form)">
 		</form>
 	</div>
+	<div class="col-md-6">
+		<form name="updateHealthForm" action="" method="GET">Change Bulb Health [GOOD, POOR, DAMAGED]
+			<input type="text" name="inputbox" value="Enter Health" ="">
+			<input type="button" id="own-button" name="button" class="btn btn-primary btn-sm active" value="Push" onClick="pushHealthNotification(this.form)">
+		</form>
+	</div>
 			
 
 Our goal is to monitor and control a light bulb from the Internet. The light bulb can be treated as a street lamp / light that can be controlled by any third party through the cloud. Additionally, we also detect the number of people near the light bulb through Broadcom's WICED Sense sensor. The WICED Sense communicates through Bluetooth Low Energy and informs the cloud about details such as temperature, pressure, etc.
