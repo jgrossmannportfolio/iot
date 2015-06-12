@@ -63,7 +63,7 @@ void logThis()
  *  from the cloud. Whenever an explicit change is made on the cloud by an end user from the web site, we will over ride any
  *  existing changes and update the bulb accordingly.
  */
-void healthCallback(ParseClient client, int error, const char *buffer)
+void healthCallback(ParseClient clientCallback, int error, const char *buffer)
 {
 	printf("inside health callback!!!!\n\n\n\n");
 	printf("error: %d\n", error);
@@ -99,7 +99,7 @@ void updateOnParse(const char *column, int value)
 	}
 	sprintf(body, "{\"%s\":%d}", column, value);
 	//ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
-	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
+	//parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
 	
 }
 
