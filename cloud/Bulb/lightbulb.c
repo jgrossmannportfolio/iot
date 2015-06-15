@@ -85,7 +85,7 @@ void healthCallback(ParseClient client, int error, const char *buffer)
 		bulb.health = 0;
 	}else if(strcasecmp(temp, "POOR") == 0) {
 		bulb.health = 1;
-	}else if(strcasecmp(temp, "DAMAGED") == 0) [
+	}else if(strcasecmp(temp, "DAMAGED") == 0) {
 		bulb.health = 2;
 	}
 
