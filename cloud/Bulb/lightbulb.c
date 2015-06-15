@@ -92,6 +92,7 @@ void *threadPushNotifications()
     printf("lightbulb::threadPushNotifications():Installation ID is : %s\n", installationId);
     parseSetPushCallback(client, healthCallback);
     parseStartPushService(client);
+	printf("starting push loop\n");
     parseRunPushLoop(client);
 	printf("Push loop started\n");
 }
