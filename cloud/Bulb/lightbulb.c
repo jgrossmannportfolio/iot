@@ -93,6 +93,7 @@ void *threadPushNotifications()
     parseSetPushCallback(client, healthCallback);
     parseStartPushService(client);
     parseRunPushLoop(client);
+	printf("Push loop started\n");
 }
 
 // This function pushes changes to the cloud
