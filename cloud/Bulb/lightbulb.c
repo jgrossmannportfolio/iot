@@ -65,28 +65,32 @@ void logThis()
  */
 void healthCallback(ParseClient client, int error, const char *buffer)
 {
-	printf("inside health callback!!!!\n\n\n\n");
-	printf("error: %d\n", error);
- 	printf("callback: %s\n", buffer);
+
+	if(error != 0 || buffer == NULL) {
+		printf("Error on callback\n");
+		return;
+	}
 
 	char *temp = strtok(buffer, "\"");
-	printf("first: %s\n", temp);
 	if(temp == NULL) {
 		printf("bad push value\n");
 		return;
 	}
 	int i = 0;
-	for(;i<4;i++) {
+	for(;i<5;i++) {
 		temp = strtok(NULL, "\"");
-		printf("%d, %s\n", i, temp);
 	}
 	
+	if(strcasecmp(temp, "GOOD") == 0) {
+		bulb.health = 0;
+	}else if(strcasecmp(temp, "POOR") == 0) {
+		bulb.health = 1;
+	}else if(strcasecmp(temp, "DAMAGED") == 0) [
+		bulb.health = 2;
+	}
 
-	char body[128];
-	
-	sprintf(body, "{\"%s\":%d}", "Health", 0);
-	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
-	
+	updateOnParse("Health", bulb.health);
+	printf("New Health: %d\n", bulb.health);
 }
 
 // This function pushes data onto the Parse Application in cloud.
