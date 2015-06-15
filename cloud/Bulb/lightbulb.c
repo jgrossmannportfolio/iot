@@ -70,7 +70,7 @@ void healthCallback(ParseClient client, int error, const char *buffer)
  	printf("callback: %s\n", buffer);
 
 	char *temp = strtok(buffer, "\"");
-	if(weather == NULL) {
+	if(temp == NULL) {
 		printf("bad push value\n");
 		return;
 	}
