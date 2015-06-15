@@ -77,7 +77,7 @@ void healthCallback(ParseClient client, int error, const char *buffer)
 	}
 	int i = 0;
 	for(;i<4;i++) {
-		*temp = strtok(NULL, "\"");
+		temp = strtok(NULL, "\"");
 		printf("%d, %s\n", i, temp);
 	}
 	
