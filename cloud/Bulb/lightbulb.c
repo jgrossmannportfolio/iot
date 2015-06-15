@@ -35,7 +35,7 @@ char *healthList[] = {"GOOD", "POOR", "DAMAGED"};
 // This is lock needed to ensure proper synchronization while updating some data of lightBulb struct
 pthread_mutex_t lock;
 char dataUUID[] = "bb946c14-758a-4448-8b78-69b04ba1bb8b"; /** Please update this value **/
-ParseClient client;
+
 
 struct lightBulb bulb;
 
@@ -63,7 +63,7 @@ void logThis()
  *  from the cloud. Whenever an explicit change is made on the cloud by an end user from the web site, we will over ride any
  *  existing changes and update the bulb accordingly.
  */
-void healthCallback(ParseClient clientCallback, int error, const char *buffer)
+void healthCallback(ParseClient client, int error, const char *buffer)
 {
 	printf("inside health callback!!!!\n\n\n\n");
 	printf("error: %d\n", error);
