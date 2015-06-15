@@ -69,6 +69,18 @@ void healthCallback(ParseClient client, int error, const char *buffer)
 	printf("error: %d\n", error);
  	printf("callback: %s\n", buffer);
 
+	char *temp = strtok(buffer, "\"");
+	if(weather == NULL) {
+		printf("bad push value\n");
+		return;
+	}
+	int i = 0;
+	for(;i<4;i++) {
+		*temp = strtok(NULL, "\"");
+		printf("%d, %s\n", i, temp);
+	}
+	
+
 	char body[128];
 	
 	sprintf(body, "{\"%s\":%d}", "Health", 0);
