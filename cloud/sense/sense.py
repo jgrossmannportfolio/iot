@@ -141,9 +141,9 @@ def main():
     #tag.notification_loop()
 
     # Print the data
-    print tag.accelerometer 
-    print tag.gyroscope
-    print tag.magnetometer
+    print "Accel: "+tag.accelerometer 
+    print "Gyro: "+tag.gyroscope
+    print "Magneto: "+tag.magnetometer
 
     # @avi: Add final REST API code to push data to Parse Cloud
 
