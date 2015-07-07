@@ -98,6 +98,7 @@ class wicedsense:
       try:
 	print "in notification loop"
 	if(len(self.frequency) >= 50):
+	   print (self.frequency[-1] - self.frequency[0])
 	   break
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
 	self.frequency.append(time.time())

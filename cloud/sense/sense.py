@@ -23,10 +23,21 @@ import pexpect
 import sys
 import time
 
+
+tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
+tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
+
 # Wiced sense class
-
-
 class wicedsense:
+
+  # Accelerometer conversion
+  def calcAccel(rawX, rawY, rawZ):
+    accel = lambda v: tosignedbyte(v) / 64.0  # Range -2G, +2G
+    xyz = [accel(rawX), accel(rawY), accel(rawZ)]
+    mag = (xyz[0]**2 + xyz[1]**2 + xyz[2]**2)**0.5
+    return (xyz, mag)
+
+
   # Init function to connect to wiced sense using mac address
   # Blue tooth address is obtained from blescan.py 
   def __init__( self, bluetooth_adr ):
