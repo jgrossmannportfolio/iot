@@ -1,0 +1,17 @@
+{
+  "global": {
+    "parseVersion": "1.4.2"
+  },
+  "applications": {
+    "Up And Down Golf": {
+      "applicationId": "iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb",
+      "masterKey": "8iflY00l5CVYXy7HaZwBEZ9WSQDIcaWfycwwl472"
+    },
+    "_default": {
+      "link": "Up And Down Golf"
+    },
+    "cloudCode": {
+      "link": "Up And Down Golf"
+    }
+  }
+}

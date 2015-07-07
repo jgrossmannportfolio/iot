@@ -1,0 +1,154 @@
+#people {
+width: 50%;
+background-color: whitesmoke;
+}
+
+#test {
+display:inline-block;
+width:100%
+}
+
+.center {
+margin-left: auto;
+margin-right: auto;
+text-align: center;
+}
+
+h1#title {
+text-align: center;
+}
+
+#navbar {
+background-color: #CCE1F3;
+font-size: 22;
+}
+
+.nav.nav-pills a {
+color: blue;
+}
+
+#hello {
+font-size: 36;
+font-weight: bold;
+text-align: center;
+}
+
+#header form {
+float: right; 
+}
+
+#Select-User {
+margin-top: 15px;
+margin-right: 40px;
+}
+
+#project-info {
+margin-left: 10px;
+margin-right: 10px;
+}
+
+.table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
+background-color: #6699FF;
+}
+
+.selected {
+background-color: blue;
+}
+
+#remove-user {
+margin-left: 15px;
+}
+
+.giftBold {
+font-weight: bold;
+color: blue;
+font-size: 16px;
+}
+
+b {
+font-weight: normal;
+}
+#description {
+font-size: 16px;
+}
+
+.scrollable-menu {
+height: auto;
+max-height: 400px;
+overflow-x: hidden;
+}
+
+#accordion .panel.panel-default {
+margin-top: 10px;
+margin-left: 4%;
+max-width: 90%;
+}
+
+#user {
+margin-left: 15px;
+}
+
+.navspacer {
+height: 4%;
+}
+
+#new-event {
+margin-left: 15px;
+margin-bottom: 20px;
+}
+
+#settings h4 {
+font-weight: bold;
+margin-left: 15px;
+}
+
+.tab {
+margin-left: 40px;
+}
+
+.tab2 {
+margin-left: 60px;
+}
+
+.item-remove {
+float:right;
+}
+
+.date-range {
+float: right;
+}
+
+#newevent .input-group {
+display: inline-block;
+margin-left:2%
+}
+
+#newevent button {
+margin-left:2%
+}
+
+#newevent {
+margin-bottom: 4%
+}
+
+#saletext {
+color: red
+}
+
+#newAddress.input-group {
+display:inline-block;
+margin-left: 3%;
+}
+
+button#newAddress {
+margin-left: 3%
+}
+
+#newPayment.input-group {
+display:inline-block;
+margin-left: 3%;
+}
+
+button#newPayment {
+margin-left: 3%
+}

@@ -1,0 +1,40 @@
+head
+    script(src='/javascripts/jquery-2.1.0.min.js')
+    link(href='/css/app.css', rel='stylesheet')
+    script(src='/javascripts/appclient.js')
+    script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js')
+    link(href='http://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css', rel='stylesheet')
+
+    title= title
+    
+            
+body
+#header
+    h2#hello Up And Down Golf
+
+div#navbar
+    ul(class='nav nav-pills')
+        li
+            a(href='/') Home
+        li
+            a(href='/') Tab1
+        li
+            a(href='/') Tab2
+        li(class='dropdown')
+            a(href='#', data-toggle='dropdown', class='dropdown-toggle') Settings
+                b(class='caret')
+            ul(class='dropdown-menu')
+                li
+                    a(href='/orderhistory') Order History    
+                li 
+                    a(href='/paymentmethods') Payment Information
+                li
+                    a(href='/shippingAddresses') Shipping Addresses
+                li
+                    a(href='/friends') Friends  
+                li(class='divider')
+                li
+                    a(href='/settings') Settings
+             
+        
+block content
