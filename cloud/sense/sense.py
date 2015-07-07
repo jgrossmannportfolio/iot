@@ -21,14 +21,17 @@
 
 import pexpect
 import sys
+import time
 
 # Wiced sense class
+
 
 class wicedsense:
   # Init function to connect to wiced sense using mac address
   # Blue tooth address is obtained from blescan.py 
   def __init__( self, bluetooth_adr ):
     self.con = pexpect.spawn('gatttool -b ' + bluetooth_adr + ' --interactive')
+    self.con.logfile = sys.stdout
     self.con.expect('\[LE\]>', timeout=600)
     print "Preparing to connect. You might need to press the side button..."
     self.con.sendline('connect')
@@ -39,6 +42,7 @@ class wicedsense:
     self.cb = {}
 
     # Data from sensors
+    self.frequency = []
     self.accelerometer = []
     self.gyroscope = []
     self.magnetometer=[]
@@ -50,7 +54,7 @@ class wicedsense:
   # Function to write a value to a particular handle  
   def char_write_cmd( self, handle, value ):
     cmd = 'char-write-req 0x%02x 0%x' % (handle, value)
-    print cmd
+    #print cmd
     self.con.sendline( cmd )
     return
 
@@ -60,7 +64,7 @@ class wicedsense:
     self.con.expect('descriptor: .*? \r')
     after = self.con.after
     rval = after.split()[1:]
-    print rval
+    #print rval
     # decode data obtained from the sensor tag
     self.processdata(rval)
 
@@ -70,14 +74,18 @@ class wicedsense:
     # please refer to the broadcom data packet format document to understand the structure of the packet
     data_decode = ''.join(data)
     mask = int(data_decode[0:2],16)
+    print "processing data"
     if(mask==0x0b):
-      self.accelerometer.append(int((data_decode[4:6] + data_decode[2:4]),16))
+      self.accelerometer = [int((data_decode[4:6] + data_decode[2:4]),16)]
+      #self.accelerometer.append(int((data_decode[4:6] + data_decode[2:4]),16))
       self.accelerometer.append(int((data_decode[8:10] + data_decode[6:8]),16))
       self.accelerometer.append(int((data_decode[12:14] + data_decode[10:12]),16))
-      self.gyroscope.append(int((data_decode[16:18] + data_decode[14:16]),16))
+      self.gyroscope = [int((data_decode[16:18] + data_decode[14:16]),16)]
+      #self.gyroscope.append(int((data_decode[16:18] + data_decode[14:16]),16))
       self.gyroscope.append(int((data_decode[20:22] + data_decode[18:20]),16))
       self.gyroscope.append(int((data_decode[24:26] + data_decode[22:24]),16))
-      self.magnetometer.append(int((data_decode[28:30] + data_decode[26:28]),16))
+      self.magnetometer = [int((data_decode[28:30] + data_decode[26:28]),16)]
+      #self.magnetometer.append(int((data_decode[28:30] + data_decode[26:28]),16))
       self.magnetometer.append(int((data_decode[32:34] + data_decode[30:32]),16))
     else:
       self.humidity = int((data_decode[4:6] + data_decode[2:4]),16)
@@ -88,26 +96,41 @@ class wicedsense:
   def notification_loop( self ):
     while True:
       try:
+	print "in notification loop"
+	if(len(self.frequency) >= 50):
+	   print (self.frequency[-1] - self.frequency[0])
+	   break
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
+	self.frequency.append(time.time())
         print "Printing in notification loop"
       except pexpect.TIMEOUT:
         print "TIMEOUT exception!"
         break
       if pnum==0:
+        print "pnum = 0"
         after = self.con.after
         hxstr = after.split()[3:]
         handle = long(float.fromhex(hxstr[0]))
         if True:
-          self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
+	  try:
+            self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
+          except Exception,e:
+            print str(e)
+          print "after callback"
           pass
         else:
           print "TIMEOUT!!"
           pass
+      else:
+        print "else statement"
 
   def register_cb( self, handle, fn ):
-    self.cb[handle]=fn;
+    self.cb[handle]=fn
     return
 
+  def testAccel(self, v):
+    print v[0]
+    return
 
 class SensorCallbacks:
 
@@ -133,22 +156,37 @@ def main():
 
     print cbs.data['addr']
     
-    
-    #tag.register_cb(0x2b,cbs.processdata)
-    tag.char_write_cmd(0x2b,0x01)
+    print "registering"
+    tag.register_cb(0x2d,tag.testAccel)
+    tag.char_write_cmd(0x2b, 0x01)
+    tag.char_write_cmd(0x31, 0x01)
+    #tag.char_write_cmd(0x2e, 0x0100)
+    #tag.char_write_cmd(0x2b,0x01)
     # Read from handle 
-    tag.char_read_hnd(0x2a)
-    #tag.notification_loop()
-
-    # Print the data
-    print "Accel: "+tag.accelerometer 
-    print "Gyro: "+tag.gyroscope
-    print "Magneto: "+tag.magnetometer
-
+    #tag.char_read_hnd(0x2a)
+    #tag.frequency.append(time.time())
+    tag.notification_loop()
+    print "after notification loop"
+    i=1
+    #while i<50:
+    	# Print the data
+    	#print ("Accel: ")
+   	#print(tag.accelerometer) 
+   	#print ("Gyro: ")
+    	#print (tag.gyroscope)
+        #print ("Magneto: ")
+        #print (tag.magnetometer)
+	#tag.char_write_cmd(0x2b,0x01)
+	#tag.char_read_hnd(0x2a)
+	#tag.frequency.append(time.time())
+	#i = i + 1
+        
     # @avi: Add final REST API code to push data to Parse Cloud
+    #print (tag.frequency[-1] - tag.frequency[0])
 
 
-  except:
+  except Exception, e:
+    print str(e)
     pass
 
 if __name__ == "__main__":
