@@ -139,9 +139,10 @@ class wicedsense:
     self.cb[handle]=fn
     return
 
-  def testAccel(self, v):
+  def dataCallback(self, v):
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
+    #if(v[0] == "2a"):
     if (bytelen < 18):
       pass
     else:
@@ -183,7 +184,7 @@ def main():
     #print cbs.data['addr']
     
     #print "registering"
-    tag.register_cb(0x2a,tag.testAccel)
+    tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
     tag.char_write_cmd(0x31, 0x01)
     #tag.char_write_cmd(0x2e, 0x0100)

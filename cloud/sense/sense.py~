@@ -139,12 +139,10 @@ class wicedsense:
     self.cb[handle]=fn
     return
 
-  def testAccel(self, v):
+  def dataCallback(self, v):
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
-    if (bytelen < 18):
-      pass
-    else:
+    if(v[0] == "2a"):
       vx = int( str(v[2]*16 + v[1]) )
       vy = int( str(v[4]*16 + v[3]) )
       vz = int( str(v[6]*16 + v[5]) )
@@ -156,7 +154,7 @@ class wicedsense:
       (xyz,mag) = self.calcAccel(vx,vy,vz)
       print "xyz: " + str(xyz)
       print "mag: " + str(mag)
-    return
+   
 
 class SensorCallbacks:
 
@@ -183,7 +181,7 @@ def main():
     #print cbs.data['addr']
     
     #print "registering"
-    tag.register_cb(0x2a,tag.testAccel)
+    tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
     tag.char_write_cmd(0x31, 0x01)
     #tag.char_write_cmd(0x2e, 0x0100)
