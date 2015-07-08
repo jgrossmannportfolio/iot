@@ -24,38 +24,21 @@ import sys
 import time
 
 
-tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
-tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
-
-<<<<<<< HEAD
 
 tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
 tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
 
-# Wiced sense class
-class wicedsense:
-
-
-
-  def calcAccel(rawX, rawY, rawZ):
-    accel = lambda v: tosignedbyte(v) / 64.0  # Range -2G, +2G
-=======
 # Wiced sense class
 class wicedsense:
 
   # Accelerometer conversion
-  def calcAccel(self, rawX, rawY, rawZ):
-    accel = lambda v: tosignedbyte(v) / 86.0  # Range -2G, +2G
->>>>>>> db6afc15564071ae6151740cdce63eaf540edf7e
-    xyz = [accel(rawX), accel(rawY), accel(rawZ)]
+  def convertData(self, rawX, rawY, rawZ, calibration):
+    data = lambda v: tosigned(v) / calibration 
+    xyz = [data(rawX), data(rawY), data(rawZ)]
     mag = (xyz[0]**2 + xyz[1]**2 + xyz[2]**2)**0.5
     return (xyz, mag)
+    
 
-
-<<<<<<< HEAD
-
-=======
->>>>>>> db6afc15564071ae6151740cdce63eaf540edf7e
   # Init function to connect to wiced sense using mac address
   # Blue tooth address is obtained from blescan.py 
   def __init__( self, bluetooth_adr ):
@@ -160,21 +143,27 @@ class wicedsense:
   def dataCallback(self, v):
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
-    #if(v[0] == "2a"):
-    if (bytelen < 18):
-      pass
-    else:
-      vx = int( str(v[2]*16 + v[1]) )
-      vy = int( str(v[4]*16 + v[3]) )
-      vz = int( str(v[6]*16 + v[5]) )
+    if(v[0] == 11):
+      vx = int( str(v[2]*256 + v[1]) )
+      vy = int( str(v[4]*256 + v[3]) )
+      vz = int( str(v[6]*256 + v[5]) )
+      gx = int( str(v[8]*256 + v[7]) )
+      gy = int( str(v[10]*256 + v[9]) )
+      gz = int( str(v[12]*256 + v[11]) )
       print " "
+      print "gx: " + str(gx)
+      print "gy: " + str(gy)
+      print "gz: " + str(gz)
       print "vx: " + str(vx)
       print "vy: " + str(vy)
       print "vz: " + str(vz)
       #for x in range(0,19): print v[x]
-      (xyz,mag) = self.calcAccel(vx,vy,vz)
-      print "xyz: " + str(xyz)
-      print "mag: " + str(mag)
+      (Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
+      (Axyz, Amag) = self.convertData(vx,vy,vz, 86.0)
+      print "Axyz: " + str(Axyz)
+      print "Amag: " + str(Amag)
+      print "Gxyz: " + str(Gxyz)
+      print "Gmag: " + str(Gmag)
     return
 
 class SensorCallbacks:
