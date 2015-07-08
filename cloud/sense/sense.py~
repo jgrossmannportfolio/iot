@@ -22,6 +22,9 @@
 import pexpect
 import sys
 import time
+import httplib
+import json
+
 
 
 
@@ -30,6 +33,52 @@ tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
 
 # Wiced sense class
 class wicedsense:
+
+  def pushToCloud(self, frames):
+    print frames[0]
+    connection = httplib.HTTPSConnection("api.parse.com", 443)
+    connection.connect()
+    connection.request('PUT', '/1/classes/Putt/12fz4AHTDK', json.dumps({
+       "frames": frames
+     }), {
+       "X-Parse-Application-Id": "iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb",
+       "X-Parse-REST-API-Key": "I0xfoOS0nDqaHxfSBTgLNMuXGtsStl7zO0XZVDZX",
+       "Content-Type": "application/json"
+     }) 
+
+
+  def processData(self):
+    frames = []
+    interval = 1 / 8.0
+    t0 = self.time[0]
+    t1 = self.time[1]
+    i = 1
+    x = 0
+    y = 0
+    z = 0
+    print "processing data"
+    print len(self.accel)
+    while i < len(self.accel):
+        t1 = self.time[i]
+        if((t1 - t0) >= interval):
+            x += (0.5 * self.accel[i][0] * interval**2)
+            y += (0.5 * self.accel[i][1] * interval**2)
+            z += (0.5 * self.accel[i][2] * interval**2)
+            frames.append([x, y, z])
+            print "frames: "+str(frames[0])
+            t0 += interval
+        else:
+            leftover = t1 - t0
+            x += (0.5 * self.accel[i][0] * leftover**2)
+            y += (0.5 * self.accel[i][1] * leftover**2)
+            z += (0.5 * self.accel[i][2] * leftover**2)
+            t0 += leftover
+            i += 1
+             
+
+    return frames
+            
+        
 
   # Accelerometer conversion
   def convertData(self, rawX, rawY, rawZ, calibration):
@@ -54,9 +103,9 @@ class wicedsense:
     self.cb = {}
 
     # Data from sensors
-    self.frequency = []
-    self.accelerometer = []
-    self.gyroscope = []
+    self.time = []
+    self.accel = []
+    self.gyro = []
     self.magnetometer=[]
     self.humidity = 0
     self.temperature = 0
@@ -108,12 +157,12 @@ class wicedsense:
   def notification_loop( self ):
     while True:
       try:
-	#print "in notification loop"
-	if(len(self.frequency) >= 50):
-	   print (self.frequency[-1] - self.frequency[0])
-	   break
+	    #print "in notification loop"
+        if(len(self.time) >= 20):
+          break
+
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
-	self.frequency.append(time.time())
+        self.time.append(time.time())
         #print "Printing in notification loop"
       except pexpect.TIMEOUT:
         print "TIMEOUT exception!"
@@ -135,6 +184,9 @@ class wicedsense:
           pass
       else:
         print "else statement"
+    frames = self.processData()
+    self.pushToCloud(frames)
+    
 
   def register_cb( self, handle, fn ):
     self.cb[handle]=fn
@@ -159,7 +211,9 @@ class wicedsense:
       print "vz: " + str(vz)
       #for x in range(0,19): print v[x]
       (Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
-      (Axyz, Amag) = self.convertData(vx,vy,vz, 86.0)
+      (Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
+      self.accel.append(Axyz)
+      self.gyro.append(Gxyz)
       print "Axyz: " + str(Axyz)
       print "Amag: " + str(Amag)
       print "Gxyz: " + str(Gxyz)
