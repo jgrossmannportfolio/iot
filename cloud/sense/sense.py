@@ -49,7 +49,7 @@ class wicedsense:
 
   def processData(self):
     frames = []
-    interval = 1 / 8.0
+    interval = 1.0 / 10.0
     t0 = self.time[0]
     t1 = self.time[1]
     i = 1
@@ -65,14 +65,16 @@ class wicedsense:
             y += (0.5 * self.accel[i][1] * interval**2)
             z += (0.5 * self.accel[i][2] * interval**2)
             frames.append([x, y, z])
-            print "frames: "+str(frames[0])
+            print "len frames: "+str(len(frames))
             t0 += interval
+            interval = 1.0/10.0
         else:
             leftover = t1 - t0
             x += (0.5 * self.accel[i][0] * leftover**2)
             y += (0.5 * self.accel[i][1] * leftover**2)
             z += (0.5 * self.accel[i][2] * leftover**2)
             t0 += leftover
+            interval -= leftover
             i += 1
              
 
