@@ -25,16 +25,16 @@ div#navbar
                 b(class='caret')
             ul(class='dropdown-menu')
                 li
-                    a(href='/orderhistory') Order History    
+                    a(href='/') Setting1    
                 li 
-                    a(href='/paymentmethods') Payment Information
+                    a(href='/') Setting2
                 li
-                    a(href='/shippingAddresses') Shipping Addresses
+                    a(href='/') Setting3
                 li
-                    a(href='/friends') Friends  
+                    a(href='/') Setting4  
                 li(class='divider')
                 li
-                    a(href='/settings') Settings
+                    a(href='/') Settings
              
         
 block content

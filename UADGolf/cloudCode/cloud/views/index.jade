@@ -4,6 +4,12 @@ block content
     div#project-info
         h3#title Up and Down Golf
         p#description IOT Golf Putting aid.
+        button(type='button', id='startButton') Animate
+        br
+        br
+        canvas(id="puttCanvas", width="600", height="400")
+        each frame in frames
+            p #{frame[0]} #{frame[1]} #{frame[2]}
     
     
 

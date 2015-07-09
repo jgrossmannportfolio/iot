@@ -53,30 +53,37 @@ class wicedsense:
     t0 = self.time[0]
     t1 = self.time[1]
     i = 1
+    vx = 0
+    vy = 0
+    vz = 0
     x = 0
     y = 0
     z = 0
+    time = 0;
     print "processing data"
     print len(self.accel)
     while i < len(self.accel):
         t1 = self.time[i]
         if((t1 - t0) >= interval):
-            x += (0.5 * self.accel[i][0] * interval**2)
-            y += (0.5 * self.accel[i][1] * interval**2)
-            z += (0.5 * self.accel[i][2] * interval**2)
-            frames.append([x, y, z])
-            print "len frames: "+str(len(frames))
-            t0 += interval
+            time = interval
             interval = 1.0/10.0
         else:
-            leftover = t1 - t0
-            x += (0.5 * self.accel[i][0] * leftover**2)
-            y += (0.5 * self.accel[i][1] * leftover**2)
-            z += (0.5 * self.accel[i][2] * leftover**2)
-            t0 += leftover
-            interval -= leftover
+            time = t1 - t0
+            interval -= time
+
+        x += vx*time + (0.5 * self.accel[i][0] * time**2)
+        y += vy*time + (0.5 * self.accel[i][1] * time**2)
+        z += vz*time + (0.5 * self.accel[i][2] * time**2)
+        vx += self.accel[i][0] * time
+        vy += self.accel[i][1] * time
+        vz += self.accel[i][2] * time
+
+        print "len frames: "+str(len(frames))
+        if((t1 - t0) > interval) :
+            frames.append([x, y, z])
+        else:
             i += 1
-             
+        t0 += interval           
 
     return frames
             
