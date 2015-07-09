@@ -78,7 +78,9 @@ class wicedsense:
         vy += self.accel[i][1] * time
         vz += self.accel[i][2] * time
 
-        print "len frames: "+str(len(frames))
+        print "ax, ay, az: "+ str(ax) + ", " + str(ay) + ", " + str(az)
+        print "vx, vy, vz: "+ str(vx) + ", " + str(vy) + ", "+ str(vz)
+        print "x, y, z: "+ str(x) + ", " + str(y) + ", " + str(z)
         if((t1 - t0) > interval) :
             frames.append([x, y, z])
         else:
