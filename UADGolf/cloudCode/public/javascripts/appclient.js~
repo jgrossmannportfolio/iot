@@ -76,9 +76,9 @@ var myapp = (function(){
         // pixels / second
         //var newX = linearSpeed * time / 1000;
         console.log("frame: "+frame);
-        var newX = puttData[frame][0] / 8.0;
-        var newY = puttData[frame][1] / 8.0;
-        var newZ = puttData[frame][2] / 8.0;
+        var newX = puttData[frame][0] / scale;
+        var newY = puttData[frame][1] / scale;
+        var newZ = puttData[frame][2] / scale;
 
         /*if(newX < canvas.width - myRectangle.width - myRectangle.borderWidth / 2) {
           myRectangle.x = newX;
@@ -95,7 +95,7 @@ var myapp = (function(){
         // request new frame
         requestAnimFrame(function() {
           if(frame+1 < puttData.length) {
-            animate(myRectangle, canvas, context, frame+1);
+            animate(myRectangle, canvas, context, frame+1, scale);
           }else {
             animated = false;
             console.log("animation completed");
@@ -121,7 +121,7 @@ var myapp = (function(){
         console.log(puttData);
         if(puttData != [] && puttData != null) {   
             animated = true;    
-            animate(myRectangle, canvas, context, 0, 6);
+            animate(myRectangle, canvas, context, 0, 10.0);
         }else {
             console.log("no putt data loaded");
         }

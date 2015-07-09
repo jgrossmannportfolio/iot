@@ -4,20 +4,6 @@ var myapp = (function(){
     var height = 400;
     var animated = false;
 
-    var removeUsers = function() {
-        console.log("inside remove users");
-        var users = [];
-        $("#remove-table tr.selected td.email").each(function() {
-            users.push($(this).text());
-        });
-       
-        $.post("/remove-user", {users:users}, function(data) {
-            console.log("post is done");
-            alert(data);
-            window.location = "/remove-user";
-            return;
-        });
-    }
 
     function setCanvasDim() {
         width = window.innerWidth;
