@@ -155,11 +155,23 @@ void updateIntensity(int newIntensity, char *climate)
 	}
 	newIntensity = ((newIntensity > 9) ? 9 : newIntensity);*/
 
+
     /* ===========================
         INTENSITY ALGORITHM HERE
         ======================== */
 
+	/* 	if (accelx > 5){ //arbitrarily setting 5 to be the threshold
+			newIntensity += 1;
+		} else {
+			newIntensity -= 1;		
+		}
 
+		if (newIntensity > 10){
+			newIntensity = 10;		
+		} else if (newIntensity < 0){
+			newIntensity = 0;
+		}
+	*/
 	newIntensity = 5;
 
 

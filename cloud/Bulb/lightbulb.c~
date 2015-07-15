@@ -155,11 +155,22 @@ void updateIntensity(int newIntensity, char *climate)
 	}
 	newIntensity = ((newIntensity > 9) ? 9 : newIntensity);*/
 
+
     /* ===========================
         INTENSITY ALGORITHM HERE
         ======================== */
+	/* 	if (accelx > 5){
+			newIntensity += 1;
+		} else {
+			newIntensity -= 1;		
+		}
 
-
+		if (newIntensity > 10){
+			newIntensity = 10;		
+		} else if (newIntensity < 0){
+			newIntensity = 0;
+		}
+	*/
 	newIntensity = 5;
 
 
@@ -296,7 +307,6 @@ int dayIntensity(int time, int sunset, int sunrise) {
 // Function to update the bulb Intensity based on time.
 void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock)
 {
-	printf("HERE\n");
 
  	listen(servSock, 5);
 	int newClient = accept(servSock, (struct sockaddr*) NULL, NULL);
