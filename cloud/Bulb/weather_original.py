@@ -56,15 +56,12 @@ if __name__=="__main__":
 		sunsetTime = time.ctime(contentJson["sys"]["sunset"]).split(" ")[3]
 		sunriseTime = time.ctime(contentJson["sys"]["sunrise"]).split(" ")[3]
 		localInfoText = contentJson["name"] + "\n" + contentJson["sys"]["country"] + "\n" + contentJson["weather"][0]["main"] + "\n" + contentJson["weather"][0]["description"] + "\n"
-		weatherText = contentJson["weather"][0]["main"] + "\n" + sunriseTime + "\n" + sunsetTime + "\n" + "hi" + "\n"
-
-		#print "sunrise python = "
-		#print sunriseTime
+		weatherText = contentJson["weather"][0]["main"] + "\n" + sunriseTime + "\n" + sunsetTime + "\n"
 
 		# Write data and send via port PORT_WEATHER
 		clientSendSocket(PORT_WEATHER, weatherText)
 		clientSendSocket(PORT_LOCALINFO, localInfoText)
-		time.sleep(2)
+		time.sleep(5)
 
 
 

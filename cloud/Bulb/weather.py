@@ -16,7 +16,7 @@ PORT_WEATHER = 50008      # Weather Port
 PORT_LOCALINFO = 50012    # Local Info Port
 
 # Enter city, country to track local weather information. By editing country and city, we can monitor weather for any location.
-city = "New York"
+city = "New%20York"
 country = "USA"
 baseUrl = "http://api.openweathermap.org/data/2.5/weather?q="
 
@@ -56,12 +56,15 @@ if __name__=="__main__":
 		sunsetTime = time.ctime(contentJson["sys"]["sunset"]).split(" ")[3]
 		sunriseTime = time.ctime(contentJson["sys"]["sunrise"]).split(" ")[3]
 		localInfoText = contentJson["name"] + "\n" + contentJson["sys"]["country"] + "\n" + contentJson["weather"][0]["main"] + "\n" + contentJson["weather"][0]["description"] + "\n"
-		weatherText = contentJson["weather"][0]["main"] + "\n" + sunriseTime + "\n" + sunsetTime + "\n"
+		weatherText = contentJson["weather"][0]["main"] + "\n" + sunriseTime + "\n" + sunsetTime + "\n" + "hi" + "\n"
+
+		#print "sunrise python = "
+		#print sunriseTime
 
 		# Write data and send via port PORT_WEATHER
 		clientSendSocket(PORT_WEATHER, weatherText)
 		clientSendSocket(PORT_LOCALINFO, localInfoText)
-		time.sleep(5)
+		time.sleep(3)
 
 
 

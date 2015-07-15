@@ -125,6 +125,13 @@ void updateOnParse(const char *column, int value)
 	sprintf(body, "{\"%s\":%d}", column, value);
 	ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
 	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
+
+
+    /* ================================
+        UPDATE DISPLACEMENT AS A FLOAT! 
+        =============================*/
+    sprintf(body, "{\"%s\":%0.2f}", "Displacement", 9.8);
+    parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
 	
 }
 
@@ -137,6 +144,7 @@ int getIntensity(struct lightBulb *bulb)
 // Function updates bulb intensity. Varies based on climate.
 void updateIntensity(int newIntensity, char *climate)
 {
+    /*
 	//printf("climate: %s\n", climate);
 	if(climate == NULL) {
 		//do nothing
@@ -145,8 +153,17 @@ void updateIntensity(int newIntensity, char *climate)
 	} else if(strcmp(climate, "Rain") == 0) {
 		newIntensity += 4;
 	}
-	newIntensity = ((newIntensity > 9) ? 9 : newIntensity);
-	
+	newIntensity = ((newIntensity > 9) ? 9 : newIntensity);*/
+
+    /* ===========================
+        INTENSITY ALGORITHM HERE
+        ======================== */
+
+
+	newIntensity = 5;
+
+
+
 	bulb.intensity = newIntensity;
 	char strIntensity[2];
 	sprintf(strIntensity, "%d", bulb.intensity);
@@ -162,6 +179,8 @@ int getHealth(struct lightBulb *bulb)
 // Function to update simulated time. We set 1 second in real time as 5 minutes in simulation time
 void *updateBulbTime(void *time)
 {
+
+
     struct timeEmulate *timer = (struct timeEmulate *)time;
     int ticker = 0;
     while (1)
@@ -277,6 +296,7 @@ int dayIntensity(int time, int sunset, int sunrise) {
 // Function to update the bulb Intensity based on time.
 void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock)
 {
+
  	listen(servSock, 5);
 	int newClient = accept(servSock, (struct sockaddr*) NULL, NULL);
 
@@ -289,6 +309,12 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	char *sunriseStr = strtok(NULL, "\n");
 	char *sunsetStr = strtok(NULL, "\n");
 
+	/*======= 
+		Retrieve the acceldata from the socket 
+										=====*/
+	char *testvar = strtok(NULL,"\n");
+	printf("TESTVAR = %s\n", testvar);
+
 	int sunriseHour = 0, sunsetHour = 0;
 	char temp[3];
 
@@ -299,8 +325,9 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 		strncpy(temp, sunriseStr, 2);
 		temp[2] = '\0';
 	}
-	//printf("sunrise: %s\n", temp);
 	sunriseHour = atoi(temp);
+
+
 
 	if(sunsetStr[0] == '0') {
 		strncpy(temp, sunsetStr+1, 1);
@@ -320,6 +347,15 @@ void updateBasedOnTime(struct timeEmulate *bulbTime, int level[10], int servSock
 	} else {
 		intensity = dayIntensity(time, sunsetHour, sunriseHour);
 	}
+
+
+
+
+
+
+
+
+
 
 	updateIntensity(intensity, weather);
 }
@@ -355,7 +391,7 @@ int main() {
         sprintf(str, "%d", getIntensity(&bulb));
         clientSendSocket(PORT_INTENSITY, str);
 	//updateIntensity(8, NULL);
-        while (bulb.health == 2)
+        /*while (bulb.health == 2)
         {
             if (isHealth)
             {
@@ -364,7 +400,7 @@ int main() {
                 isHealth = false;
             }
         } // Avoid crazy looping during bulb DAMAGED condition. Optimization to avoid excess CPU cycle usage.
-        isHealth = true;
+        isHealth = true;*/
     }
     
     return 0;
