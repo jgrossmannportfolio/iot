@@ -5,9 +5,9 @@ x-source: redis
 server: nginx
 connection: keep-alive
 access-control-allow-credentials: true
-date: Wed, 15 Jul 2015 00:38:51 GMT
+date: Wed, 15 Jul 2015 20:06:49 GMT
 access-control-allow-origin: *
 access-control-allow-methods: GET, POST
 content-type: application/json; charset=utf-8
 
-{"coord":{"lon":-74.01,"lat":40.71},"weather":[{"id":803,"main":"Clouds","description":"broken clouds","icon":"04n"}],"base":"cmc stations","main":{"temp":298.59,"pressure":1001,"humidity":83,"temp_min":296.15,"temp_max":301.15},"wind":{"speed":3.1,"deg":120},"clouds":{"all":75},"dt":1436918601,"sys":{"type":1,"id":1975,"message":0.0137,"country":"US","sunrise":1436953051,"sunset":1437006364},"id":5128581,"name":"New York","cod":200}
+{"coord":{"lon":-74.01,"lat":40.71},"weather":[{"id":500,"main":"Rain","description":"light rain","icon":"10d"}],"base":"cmc stations","main":{"temp":298.92,"pressure":1004,"humidity":78,"temp_min":296.15,"temp_max":301.15},"wind":{"speed":3.6,"deg":20},"rain":{"1h":0.25},"clouds":{"all":90},"dt":1436987773,"sys":{"type":1,"id":1975,"message":0.0055,"country":"US","sunrise":1436953089,"sunset":1437006335},"id":5128581,"name":"New York","cod":200}
