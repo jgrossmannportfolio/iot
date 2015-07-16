@@ -39,12 +39,9 @@ weatherPanel = tk.Label(bulbRoot, padx=10, text="Weather,City, and Local Time in
 panel.pack(side="bottom")
 headingPanel.pack(side="top")
 weatherPanel.pack(side="top")
-intensity, currentTime = None, None
+intensity, currentTime = "0", None
 city, country = None, None
 briefWeather, weatherDesc = None, None
-
-
-
 
 
 
@@ -167,7 +164,11 @@ class wicedsense:
     rval = after.split()[1:]
     #print rval
     # decode data obtained from the sensor tag
-    self.processdata(rval)
+    #print "RVAL"
+    #print rval
+    rval = ''.join(rval)
+    #print rval  
+    self.dataCallback(rval)
 
   def processdata(self,data):
 
@@ -177,6 +178,7 @@ class wicedsense:
     mask = int(data_decode[0:2],16)
     print "processing data"
     if(mask==0x0b):
+      print "PROCESSING"
       self.accelerometer = [int((data_decode[4:6] + data_decode[2:4]),16)]
       #self.accelerometer.append(int((data_decode[4:6] + data_decode[2:4]),16))
       self.accelerometer.append(int((data_decode[8:10] + data_decode[6:8]),16))
@@ -192,8 +194,8 @@ class wicedsense:
       self.humidity = int((data_decode[4:6] + data_decode[2:4]),16)
       self.pressure = int((data_decode[4:6] + data_decode[2:4]),16)/10
       self.temperature = int((data_decode[4:6] + data_decode[2:4]),16)/10
-
-
+    #print "ACCELEROMETER"
+    #print self.accelerometer
 
 
 
@@ -206,25 +208,16 @@ class wicedsense:
   def dataCallback(self, v):
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
-    if(v[0] == 11):
-      vx = int( str(v[2]*256 + v[1]) )
-      vy = int( str(v[4]*256 + v[3]) )
-      vz = int( str(v[6]*256 + v[5]) )
-      gx = int( str(v[8]*256 + v[7]) )
-      gy = int( str(v[10]*256 + v[9]) )
-      gz = int( str(v[12]*256 + v[11]) )
-      print " "
-      #print "gx: " + str(gx)
-      #print "gy: " + str(gy)
-      #print "gz: " + str(gz)
-      #print "vx: " + str(vx)
-      #print "vy: " + str(vy)
-      #print "vz: " + str(vz)
-      #for x in range(0,19): print v[x]
-      #(Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
-      #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-      (Axyz, Amag) = self.convertData(vx,vy,vz,1.0)
-      wicedsense.accx = int(Axyz[0])
+    if(v[1] == "b"):
+      #vx = int( str(v[2]*256 + v[1]) )
+      vx = (int(v[3],16))*256 + int(v[2],16)
+      #print int(v[2],16)
+      #print vx
+      #(Axyz, Amag) = self.convertData(vx,0,0,1.0)
+      #wicedsense.accx = int(Axyz[0])
+      wicedsense.accx = vx
+      #print"accx"
+      #print(wicedsense.accx)
       #print "vx: " + str(vx)
       #self.accel.append(Axyz)
       #self.gyro.append(Gxyz)
@@ -249,16 +242,19 @@ class SensorCallbacks:
 
 
 
-
-
-
 # This function is a callback after periodic interval. Called by bulbRoot.after()
 # We also update the GUI of bulb here
-def checkCondition(tag):
+def checkCondition(accx,intensity):
 
-	tag[0].char_read_hnd(0x2a)
+	if accx > 5:
+		intensity = str(int(intensity)+1)
+	else:
+		intensity = str(int(intensity)-1)
 
-
+	if int(intensity) > 10:
+		intensity = "10"
+	if int(intensity) < 0:
+		intensity = "0"
 
 	print "Intensity is", intensity , type(intensity)
 	if intensity == "0":
@@ -305,9 +301,33 @@ def checkCondition(tag):
        "Content-Type": "application/json"
      }) 
 	#print(json.loads(connection.getresponse().read()))
-	bulbRoot.after(2000, checkCondition)
+	print "HERE"
+	return intensity
+	#bulbRoot.after(2000, checkCondition, intensity)
 
 
+
+
+
+def updateloop(tag,intensity):
+  while True:
+    try:
+      a = tag.char_read_hnd(0x2a)
+      #wicedsense.dataCallback()
+      print "accx"
+      print wicedsense.accx
+      print ""
+
+      # Tkinter graphics - potentially create a loop without .after (?)
+      intensity = checkCondition(wicedsense.accx,intensity)
+      
+      #bulbRoot.mainloop()
+      #bulbRoot.tk.dooneevent(tkinter._tkinter.DONT_WAIT)
+      bulbRoot.after(100, updateloop, tag, intensity)
+      bulbRoot.mainloop()
+    except Exception, e:
+      print str(e)
+      pass
 
 
 # main()
@@ -319,24 +339,28 @@ if __name__=="__main__":
   if len(sys.argv) > 2:
       datalog = open(sys.argv[2], 'w+')
 
- # while True:
+ 
   try:   
-    print "[re]starting.."
+      print "[re]starting.."
 
-    tag = wicedsense(bluetooth_adr)
-    cbs = SensorCallbacks(bluetooth_adr)
+      tag = wicedsense(bluetooth_adr)
+      cbs = SensorCallbacks(bluetooth_adr)
 
-    i=1
+      i=1
 
-    tag.char_write_cmd(0x2b,0x01)
+      tag.char_write_cmd(0x2b,0x01)
 
+      intensity = "0"
+     
 
   except Exception, e:
-    print str(e)
-    pass
+      print str(e)
+      pass
 
-  bulbRoot.after(2000, checkCondition,[tag])
-  bulbRoot.mainloop()
+  updateloop(tag,intensity)
+
+
+
 
 	# Once we close the GUI, we need to clean up and close the processes p1 and p2
 	#p1.terminate()
