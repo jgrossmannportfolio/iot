@@ -25,11 +25,37 @@ import time
 import httplib
 import json
 
+import math;
 
 
 
+# Global functions/hex and byte conversions
 tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
 tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
+
+# Global functions/retrieve start time --------------------------------------
+current_milli_time = lambda: int(round(time.time() * 1000))
+start_time = current_milli_time()
+elapsed_time = lambda: float ("{0:.2f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
+
+
+
+# Get the frame, aka displacement from the origin, give the acceleration
+def getFrame(d,velo,a,accelData,frame):
+	a.append( accelData )
+	d.append( velo[-1]*(timestamp[-1]-timestamp[-2]) + (0.5)*(a[-1])*((timestamp[-1]-timestamp[-2])**2) )
+	velo.append( math.sqrt( (velo[-1])**2 + (2.0)*a[-1]*d[-1]) )
+
+
+	# Update displacement frame based on the direction of the acceleration
+	if (a[-1]) < 0.0:
+		frame.append( float ("{0:.2f}".format(frame[-1] - d[-1]) ) )
+	else:
+		frame.append( float ("{0:.2f}".format(frame[-1] + d[-1]) ) )
+
+	return d,velo,a,frame
+
+
 
 # Wiced sense class
 class wicedsense:
@@ -131,47 +157,20 @@ class wicedsense:
     self.con.sendline( cmd )
     return
 
-  # Funcrion to read from a handle
-  def char_read_hnd(self, handle):
-    self.con.sendline('char-read-hnd 0x%02x' % handle)
-    self.con.expect('descriptor: .*? \r')
-    after = self.con.after
-    rval = after.split()[1:]
-    #print rval
-    # decode data obtained from the sensor tag
-    self.processdata(rval)
-
-  def processdata(self,data):
-
-    # This is to decode and get sensor data from the packets we received
-    # please refer to the broadcom data packet format document to understand the structure of the packet
-    data_decode = ''.join(data)
-    mask = int(data_decode[0:2],16)
-    print "processing data"
-    if(mask==0x0b):
-      self.accelerometer = [int((data_decode[4:6] + data_decode[2:4]),16)]
-      #self.accelerometer.append(int((data_decode[4:6] + data_decode[2:4]),16))
-      self.accelerometer.append(int((data_decode[8:10] + data_decode[6:8]),16))
-      self.accelerometer.append(int((data_decode[12:14] + data_decode[10:12]),16))
-      self.gyroscope = [int((data_decode[16:18] + data_decode[14:16]),16)]
-      #self.gyroscope.append(int((data_decode[16:18] + data_decode[14:16]),16))
-      self.gyroscope.append(int((data_decode[20:22] + data_decode[18:20]),16))
-      self.gyroscope.append(int((data_decode[24:26] + data_decode[22:24]),16))
-      self.magnetometer = [int((data_decode[28:30] + data_decode[26:28]),16)]
-      #self.magnetometer.append(int((data_decode[28:30] + data_decode[26:28]),16))
-      self.magnetometer.append(int((data_decode[32:34] + data_decode[30:32]),16))
-    else:
-      self.humidity = int((data_decode[4:6] + data_decode[2:4]),16)
-      self.pressure = int((data_decode[4:6] + data_decode[2:4]),16)/10
-      self.temperature = int((data_decode[4:6] + data_decode[2:4]),16)/10
 
     # Notification handle = 0x002b 
   def notification_loop( self ):
     while True:
       try:
 	    #print "in notification loop"
-        if(len(self.time) >= 50):
+        if(len(self.time) >= 15):
+          # OUTPUT xframes TO SCREEN ------------------
+          print
+          print "xframes (frame indicates the x displacement in meters at a given time):"
+          for x in range(0,len(xframes)): print xframes[x]
+          print
           break
+
 
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
         self.time.append(time.time())
@@ -196,51 +195,77 @@ class wicedsense:
           pass
       else:
         print "else statement"
-    frames = self.processData()
-    self.pushToCloud(frames)
+
+    # frames = self.processData()
+    # self.pushToCloud(frames)
     
 
   def register_cb( self, handle, fn ):
     self.cb[handle]=fn
     return
 
+
   def dataCallback(self, v):
+    global timestamp
+    global dx
+    global vx
+    global ax
+    global xframes
+    # =========================
+    # GET TIMESTAMP
+    # ==========================
+    timestamp.append( elapsed_time() )
+    print(timestamp[-1])
+	
+	
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
     if(v[0] == 11):
-      vx = int( str(v[2]*256 + v[1]) )
-      vy = int( str(v[4]*256 + v[3]) )
-      vz = int( str(v[6]*256 + v[5]) )
-      gx = int( str(v[8]*256 + v[7]) )
-      gy = int( str(v[10]*256 + v[9]) )
-      gz = int( str(v[12]*256 + v[11]) )
+      vx1 = int( str(v[2]*256 + v[1]) )
+      vy1 = int( str(v[4]*256 + v[3]) )
+      vz1 = int( str(v[6]*256 + v[5]) )
+      gx1 = int( str(v[8]*256 + v[7]) )
+      gy1 = int( str(v[10]*256 + v[9]) )
+      gz1 = int( str(v[12]*256 + v[11]) )
       print " "
-      print "gx: " + str(gx)
-      print "gy: " + str(gy)
-      print "gz: " + str(gz)
-      print "vx: " + str(vx)
-      print "vy: " + str(vy)
-      print "vz: " + str(vz)
+      #print "gx: " + str(gx1)
+      #print "gy: " + str(gy1)
+      #print "gz: " + str(gz1)
+      #print "vx: " + str(vx1)
+      #print "vy: " + str(vy1)
+      #print "vz: " + str(vz1)
       #for x in range(0,19): print v[x]
-      (Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
-      (Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-      self.accel.append(Axyz)
-      self.gyro.append(Gxyz)
+      (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 100.0)
+      #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
+      (Axyz, Amag) = self.convertData( vx1,vy1,vz1, (1.0) )
+      print "accelx"
+      print Axyz[0]
+      #self.accel.append(Axyz)
+      #self.gyro.append(Gxyz)
+
+      # ======================
+      # GET DISPLACEMENT
+      # ======================
+      
+      dx,vx,ax,xframes = getFrame(dx,vx,ax,Axyz[0],xframes)
+      
       print "Axyz: " + str(Axyz)
       print "Amag: " + str(Amag)
-      print "Gxyz: " + str(Gxyz)
-      print "Gmag: " + str(Gmag)
+      #print "Gxyz: " + str(Gxyz)
+      #print "Gmag: " + str(Gmag)
     return
 
+
 class SensorCallbacks:
-
   data = {}
-
   def __init__(self,addr):
     self.data['addr'] = addr
 
+
 # main function USAGE python sense.py <mac address>
 def main():
+
+
 
   bluetooth_adr = sys.argv[1]
   #data['addr'] = bluetooth_adr
@@ -254,12 +279,37 @@ def main():
     tag = wicedsense(bluetooth_adr)
     cbs = SensorCallbacks(bluetooth_adr)
 
+
+    # Preallocating Global lists (Iteration 0) -----------------------------------
+    global timestamp
+    global dx
+    global vx
+    global ax
+    global xframes
+    global start_time
+    start_time = current_milli_time()
+    timestamp = []
+    timestamp.append( elapsed_time() )
+    print 
+    print "timestamp (in s)"
+    print timestamp[0]
+    vx = []
+    vx.append( 0.0 )
+    ax = []
+    ax.append( float(0.0) )
+    dx = []
+    dx.append( 0.0 )
+    xframes = []
+    xframes.append( 0.0 )
+    # ----------------------------------------------------------------------------
+
     #print cbs.data['addr']
-    
     #print "registering"
     tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
     tag.char_write_cmd(0x31, 0x01)
+
+
     #tag.char_write_cmd(0x2e, 0x0100)
     #tag.char_write_cmd(0x2b,0x01)
     # Read from handle 
@@ -290,4 +340,9 @@ def main():
     pass
 
 if __name__ == "__main__":
-  main()
+    main()
+
+
+
+
+
