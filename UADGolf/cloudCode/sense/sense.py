@@ -19,6 +19,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
+
+#hcitool lescan
+
 import pexpect
 import sys
 import time
@@ -207,7 +211,7 @@ class wicedsense:
   def dataCallback(self, v):
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
-    if(v[0] == 11):
+    if(v[0] == 3):
       vx = int( str(v[2]*256 + v[1]) )
       vy = int( str(v[4]*256 + v[3]) )
       vz = int( str(v[6]*256 + v[5]) )
@@ -223,7 +227,7 @@ class wicedsense:
       print "vz: " + str(vz)
       #for x in range(0,19): print v[x]
       (Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
-      (Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
+      (Axyz, Amag) = self.convertData(vx,vy,vz, 8192.0) #(86.0/(9.80665 * 3779.53)))
       self.accel.append(Axyz)
       self.gyro.append(Gxyz)
       print "Axyz: " + str(Axyz)
@@ -251,6 +255,7 @@ def main():
   try:   
     print "[re]starting.."
 
+    print bluetooth_adr
     tag = wicedsense(bluetooth_adr)
     cbs = SensorCallbacks(bluetooth_adr)
 
@@ -259,7 +264,7 @@ def main():
     #print "registering"
     tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
-    tag.char_write_cmd(0x31, 0x01)
+    #tag.char_write_cmd(0x31, 0x01)
     #tag.char_write_cmd(0x2e, 0x0100)
     #tag.char_write_cmd(0x2b,0x01)
     # Read from handle 

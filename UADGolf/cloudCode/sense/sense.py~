@@ -19,6 +19,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+
+
+#hcitool lescan
+
 import pexpect
 import sys
 import time
@@ -82,7 +86,7 @@ class wicedsense:
         print "vx, vy, vz: "+ str(vx) + ", " + str(vy) + ", "+ str(vz)
         print "x, y, z: "+ str(x) + ", " + str(y) + ", " + str(z)
         print "time, interval: "+ str(time) + ", "+str(interval)
-        if((interval == (1.0/10.0)) :
+        if(interval == (1.0/10.0)):
             frames.append([x, y, z])
         else:
             i += 1
@@ -207,7 +211,7 @@ class wicedsense:
   def dataCallback(self, v):
     bytelen = len(v)
     # Make sure 18 (?) bytes are received
-    if(v[0] == 11):
+    if(v[0] == 3):
       vx = int( str(v[2]*256 + v[1]) )
       vy = int( str(v[4]*256 + v[3]) )
       vz = int( str(v[6]*256 + v[5]) )
@@ -251,6 +255,7 @@ def main():
   try:   
     print "[re]starting.."
 
+    print bluetooth_adr
     tag = wicedsense(bluetooth_adr)
     cbs = SensorCallbacks(bluetooth_adr)
 
@@ -259,7 +264,7 @@ def main():
     #print "registering"
     tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
-    tag.char_write_cmd(0x31, 0x01)
+    #tag.char_write_cmd(0x31, 0x01)
     #tag.char_write_cmd(0x2e, 0x0100)
     #tag.char_write_cmd(0x2b,0x01)
     # Read from handle 
