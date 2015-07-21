@@ -39,21 +39,30 @@ start_time = current_milli_time()
 elapsed_time = lambda: float ("{0:.2f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
 
 
-
 # Get the frame, aka displacement from the origin, give the acceleration
-def getFrame(d,velo,a,accelData,frame):
+def getFrame(d,v,a,accelData,frame):
+
+	global timestamp
+	global delta_t
+
+	# acceleration
 	a.append( accelData )
-	d.append( velo[-1]*(timestamp[-1]-timestamp[-2]) + (0.5)*(a[-1])*((timestamp[-1]-timestamp[-2])**2) )
-	velo.append( math.sqrt( (velo[-1])**2 + (2.0)*a[-1]*d[-1]) )
+	
+	# displacement
+	d1 = v[-1]*(delta_t)
+	d2 = (0.5)*(a[-1])*((delta_t)**2)
+	d.append( d1 + d2 )
 
+	# velocity
+	v1 = v[-1]
+	v2 = a[-1]*delta_t
+	v.append( v1 + v2 )
 
-	# Update displacement frame based on the direction of the acceleration
-	if (a[-1]) < 0.0:
-		frame.append( float ("{0:.2f}".format(frame[-1] - d[-1]) ) )
-	else:
-		frame.append( float ("{0:.2f}".format(frame[-1] + d[-1]) ) )
+	# frame
+	frame.append( float ("{0:.2f}".format(frame[-1] + d[-1]) ) )
 
-	return d,velo,a,frame
+	return d,v,a,frame
+
 
 
 
@@ -207,6 +216,7 @@ class wicedsense:
 
   def dataCallback(self, v):
     global timestamp
+    global delta_t
     global dx
     global vx
     global ax
@@ -215,6 +225,7 @@ class wicedsense:
     # GET TIMESTAMP
     # ==========================
     timestamp.append( elapsed_time() )
+    delta_t = timestamp[-1] - timestamp[-2]
     print(timestamp[-1])
 	
 	
@@ -237,7 +248,7 @@ class wicedsense:
       #for x in range(0,19): print v[x]
       (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 100.0)
       #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-      (Axyz, Amag) = self.convertData( vx1,vy1,vz1, (1.0) )
+      (Axyz, Amag) = self.convertData( vx1,vy1,vz1, (8192.0/9.80665) )
       print "accelx"
       print Axyz[0]
       #self.accel.append(Axyz)
