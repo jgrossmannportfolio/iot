@@ -81,11 +81,12 @@ class wicedsense:
         vx += self.accel[i][0] * time
         vy += self.accel[i][1] * time
         vz += self.accel[i][2] * time
-
+        
         print "ax, ay, az: "+ str(self.accel[i][0]) + ", " + str(self.accel[i][1]) + ", " + str(self.accel[i][2])
         print "vx, vy, vz: "+ str(vx) + ", " + str(vy) + ", "+ str(vz)
         print "x, y, z: "+ str(x) + ", " + str(y) + ", " + str(z)
         print "time, interval: "+ str(time) + ", "+str(interval)
+        
         if(interval == (1.0/10.0)):
             frames.append([x, y, z])
         else:
@@ -126,7 +127,29 @@ class wicedsense:
     self.humidity = 0
     self.temperature = 0
     self.pressure = 0
+
+	# Calibration vars
+    self.xCal = [0,0,0]
+    self.yCal = [0,0,0]
+    self.zCal = [0,0,0]
+	
     return
+
+  def calibration (self, x, y, z):
+    self.xCal[0] += x
+    self.xCal[1] = min(self.xCal[1],x)
+    self.xCal[2] = max(self.xCal[2],x)
+
+    self.yCal[0] += y
+    self.yCal[1] = min(self.yCal[1],y)
+    self.yCal[2] = max(self.yCal[2],y)    
+    
+    self.zCal[0] += z
+    self.zCal[1] = min(self.zCal[1],z)
+    self.zCal[2] = max(self.zCal[2],z)
+
+
+     
 
   # Function to write a value to a particular handle  
   def char_write_cmd( self, handle, value ):
@@ -171,11 +194,29 @@ class wicedsense:
 
     # Notification handle = 0x002b 
   def notification_loop( self ):
+    iterations = 25
     while True:
       try:
 	    #print "in notification loop"
-        if(len(self.time) >= 50):
+        if(len(self.time) >= iterations):
+          print
           break
+        '''
+          print
+          print "CALIBRATIONS:"
+          self.xCal[0] /= iterations
+          print self.xCal
+          self.yCal[0] /= iterations
+          print self.yCal
+          self.zCal[0] /= iterations
+          print self.zCal
+          
+
+        [15.4533, -20.0, 54.0]
+        [-5.1469, -49.0, 38.0]
+        [8210.8074, 0, 8280.0]
+
+        '''
 
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
         self.time.append(time.time())
@@ -227,13 +268,16 @@ class wicedsense:
       print "vz: " + str(vz)
       #for x in range(0,19): print v[x]
       (Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
-      (Axyz, Amag) = self.convertData(vx,vy,vz, 8192.0) #(86.0/(9.80665 * 3779.53)))
+      (Axyz, Amag) = self.convertData(vx,vy,vz, 8192.0/9.80665) #(86.0/(9.80665 * 3779.53)))
       self.accel.append(Axyz)
       self.gyro.append(Gxyz)
       print "Axyz: " + str(Axyz)
       print "Amag: " + str(Amag)
       print "Gxyz: " + str(Gxyz)
       print "Gmag: " + str(Gmag)
+
+      self.calibration(Axyz[0], Axyz[1], Axyz[2])
+
     return
 
 class SensorCallbacks:
