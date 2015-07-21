@@ -12,10 +12,12 @@ interval = [0,.1,.1,.1,.1,.1,.1,.1,.1,.1,.1]
 	# (Make sure that the accel list length is larger than the interval list)
 #accelx = [0,10,10,10,10,10,-10,-10,-10,-10,-10]
 #accelx = [0,10,10,10,10,10,10,10,10,10,10]
-accelx = [0,10,-10,10,-10,10,-10,10,-10,10,-10]
+#accelx = [0,10,-10,10,-10,10,-10,10,-10,10,-10]
+#accelx = [0,-10,10,-10,10,-10,10,-10,10,-10,10]
 #accelx = [0,-10,-10,-10,-10,-10,-10,-10,-10,-10,-10]
-
-
+#accelx = [0,10,-10,0,0,0,0,0,0,0,0]
+#accelx = [0,-10,10,0,0,0,0,0,0,0,0]
+accelx = [0,-10,10,15,0,0,0,0,0,0,0]
 
 # --------------------------------------------------------------------------
 # calculate endtime based on the interval list
@@ -29,50 +31,33 @@ start_time = current_milli_time()
 elapsed_time = lambda: float ("{0:.2f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
 
 
-def interpolateAccel(a,d,v):
-	global timestamp
-	timef = timestamp[-1]
-	times = timestamp[-2]
-	timem = float ( "{0:.2f}".format(times + (timef-times)/2.0) )
-	timestamp[-1] = timem
-	timestamp.append( timef )
-	
-	a.append( 0.0 )
-	d.append( v[-1]*(timestamp[-2]-timestamp[-3]) + (0.5)*(a[-1])*((timestamp[-2]-timestamp[-3])**2) )
-	v.append( math.sqrt( (v[-1])**2 + (2.0)*a[-1]*d[-1]) )
-	return a,d,v
-
-
 # Get the frame, aka displacement from the origin, give the acceleration
 def getFrame(d,v,a,accelData,frame):
+
 	global timestamp
+	global delta_t
 
+	# acceleration
 	a.append( accelData )
+	
+	# displacement
+	d1 = v[-1]*(delta_t)
+	d2 = (0.5)*(a[-1])*((delta_t)**2)
+	d.append( d1 + d2 )
 
+	# velocity
+	v1 = v[-1]
+	v2 = a[-1]*delta_t
+	v.append( v1 + v2 )
 
-
-
-	d.append( v[-1]*(timestamp[-1]-timestamp[-2]) + (0.5)*(a[-1])*((timestamp[-1]-timestamp[-2])**2) )
-
-	vpart1 = (v[-1])**2 
-	vpart2 = (2.0)*a[-1]*d[-1]
-	vabs = math.fabs(vpart1 + vpart2)
-	v.append( math.sqrt(vabs) )
-
-	# Update displacement frame based on the direction of the acceleration
-	if (a[-1]) < 0.0:
-		frame.append( float ("{0:.2f}".format(frame[-1] - d[-1]) ) )
-	else:
-		frame.append( float ("{0:.2f}".format(frame[-1] + d[-1]) ) )
+	# frame
+	frame.append( float ("{0:.2f}".format(frame[-1] + d[-1]) ) )
 
 	return d,v,a,frame
 
 
 
 # Preallocating lists/Iteration 0 ------------------------------------------
-
-global timestamp
-
 timestamp = []
 timestamp.append( elapsed_time() )
 print 
@@ -96,9 +81,9 @@ xframes.append( 0.0 )
 # MAIN loop ================================================================
 i = 1 	# begin loop with iteration 1
 while i < int( math.floor(endtime*10.0)) +2:
-	global timestamp
 	time.sleep(interval[i])
 	timestamp.append( elapsed_time() )
+	delta_t = timestamp[-1]-timestamp[-2]
 
 	print(timestamp[i])
 	dx,vx,ax,xframes = getFrame(dx,vx,ax,accelx[i],xframes)
@@ -109,9 +94,10 @@ while i < int( math.floor(endtime*10.0)) +2:
 # OUTPUT xframes TO SCREEN -------------------------------------------------
 print
 print "xframes (frame indicates the x displacement in meters at a given time):"
-for x in range(0,len(xframes) ): print xframes[x]
+for x in range(0,len(xframes)): print xframes[x]
 print
-print "timestamp:"
-for j in range(0,len(timestamp)): print timestamp[j]
+#print "timestamp"
+#for x in range(0,len(timestamp)): print timestamp[x]
+
 
 
