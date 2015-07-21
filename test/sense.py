@@ -19,7 +19,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# MAC: 20:73:7A:15:13:DE
+# MAC: 
+#20:73:7A:15:13:DE
 
 import pexpect
 import sys
@@ -27,7 +28,16 @@ import time
 import httplib
 import json
 
-import math;
+import math
+import operator
+
+
+
+# Global inputs
+    # frequency of BLE transmissions
+delta_t = .12 # in seconds (preset to 120ms)
+    # total duration
+endtime = .61 # in seconds
 
 
 
@@ -41,27 +51,47 @@ start_time = current_milli_time()
 elapsed_time = lambda: float ("{0:.2f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
 
 
+# Global lists
+    # x
+vx = 0.0
+ax = 0.0
+dx = 0.0
+    # y
+vy = 0.0
+ay = 0.0
+dy = 0.0
+    # z
+vz = 0.0
+az = 0.0
+dz = 0.0
+
+xframes = [0.0]
+yframes = [0.0]
+zframes = [0.0]
+xyzframes = []
+xyzframes.append([0.0,0.0,0.0])
+
+timestamp = []
+iters = 0.0
+
+
 # Get the frame, aka displacement from the origin, give the acceleration
 def getFrame(d,v,a,accelData,frame):
 
-	global timestamp
 	global delta_t
-
-	# acceleration
-	a.append( accelData )
 	
 	# displacement
-	d1 = v[-1]*(delta_t)
-	d2 = (0.5)*(a[-1])*((delta_t)**2)
-	d.append( d1 + d2 )
+	d1 = v*(delta_t)
+	d2 = (0.5)*(accelData)*((delta_t)**2)
+	d = d1 + d2
 
 	# velocity
-	v1 = v[-1]
-	v2 = a[-1]*delta_t
-	v.append( v1 + v2 )
+	v1 = v
+	v2 = accelData*delta_t
+	v = v1 + v2
 
 	# frame
-	frame.append( float ("{0:.2f}".format(frame[-1] + d[-1]) ) )
+	frame.append(float ("{0:.2f}".format(frame[-1] + d) ) )
 
 	return d,v,a,frame
 
@@ -71,8 +101,9 @@ def getFrame(d,v,a,accelData,frame):
 # Wiced sense class
 class wicedsense:
 
+
   def pushToCloud(self, frames):
-    print frames[0]
+    #print frames[1]
     connection = httplib.HTTPSConnection("api.parse.com", 443)
     connection.connect()
     connection.request('PUT', '/1/classes/Putt/12fz4AHTDK', json.dumps({
@@ -82,52 +113,6 @@ class wicedsense:
        "X-Parse-REST-API-Key": "I0xfoOS0nDqaHxfSBTgLNMuXGtsStl7zO0XZVDZX",
        "Content-Type": "application/json"
      }) 
-
-
-  def processData(self):
-    frames = []
-    interval = 1.0 / 10.0
-    t0 = self.time[0]
-    t1 = self.time[1]
-    i = 1
-    vx = 0
-    vy = 0
-    vz = 0
-    x = 0
-    y = 0
-    z = 0
-    time = 0;
-    print "processing data"
-    print len(self.accel)
-    while i < len(self.accel):
-        t1 = self.time[i]
-        if((t1 - t0) >= interval):
-            time = interval
-            interval = 1.0/10.0
-        else:
-            time = t1 - t0
-            interval -= time
-
-        x += vx*time + (0.5 * self.accel[i][0] * time**2)
-        y += vy*time + (0.5 * self.accel[i][1] * time**2)
-        z += vz*time + (0.5 * self.accel[i][2] * time**2)
-        vx += self.accel[i][0] * time
-        vy += self.accel[i][1] * time
-        vz += self.accel[i][2] * time
-
-        print "ax, ay, az: "+ str(self.accel[i][0]) + ", " + str(self.accel[i][1]) + ", " + str(self.accel[i][2])
-        print "vx, vy, vz: "+ str(vx) + ", " + str(vy) + ", "+ str(vz)
-        print "x, y, z: "+ str(x) + ", " + str(y) + ", " + str(z)
-        print "time, interval: "+ str(time) + ", "+str(interval)
-        if(interval == (1.0/10.0)):
-            frames.append([x, y, z])
-        else:
-            i += 1
-        t0 += time          
-
-    return frames
-            
-        
 
   # Accelerometer conversion
   def convertData(self, rawX, rawY, rawZ, calibration):
@@ -171,22 +156,22 @@ class wicedsense:
 
     # Notification handle = 0x002b 
   def notification_loop( self ):
-    while True:
+    global delta_t
+    global endtime
+    global timestamp
+    global start_time
+    global iters
+    global xyzframes
+
+    total = math.ceil( endtime/delta_t )
+
+    iters = 0
+    while total > iters:
       try:
-	    #print "in notification loop"
-        if(len(self.time) >= 15):
-          # OUTPUT xframes TO SCREEN ------------------
-          print
-          print "xframes (frame indicates the x displacement in meters at a given time):"
-          for x in range(0,len(xframes)): print xframes[x]
-          print
-          break
-
-
-        #pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
-        self.time.append(time.time())
-        #print "Printing in notification loop"
+        print
+        iters += 1
+
       except pexpect.TIMEOUT:
         print "TIMEOUT exception!"
         break
@@ -208,8 +193,25 @@ class wicedsense:
       else:
         print "else statement"
 
-    # frames = self.processData()
-    # self.pushToCloud(frames)
+    # OUTPUT xframes TO SCREEN ------------------
+    print
+    print "xyzframes (frame indicates the x displacement in meters at a given time):"
+    for x in range(0,len(xyzframes)): print xyzframes[x]
+    #print xyzframes
+    print
+    print "total duration (in s) "
+    print total*delta_t
+    print
+    print "total samples"
+    print int (total) + 1 # add one for time 0
+    print
+
+
+    if (total + 1) != len(xyzframes):
+      print "Length of frames does not match anticipated number of total samples"
+      pass
+    else:
+      self.pushToCloud(xyzframes)
     
 
   def register_cb( self, handle, fn ):
@@ -218,23 +220,43 @@ class wicedsense:
 
 
   def dataCallback(self, v):
-    global timestamp
-    global delta_t
-    global dx
-    global vx
-    global ax
-    global xframes
+      global delta_t
+      global endtime
+      global timestamp
+      global start_time
+      global iters
+    
+      global dx
+      global vx
+      global ax
+
+      global dy
+      global vy
+      global ay
+
+      global dz
+      global vz
+      global az
+
+      global xframes
+      global yframes
+      global zframes
+      global xyzframes
 	
-	
-    bytelen = len(v)
+
+      timestamp.append( elapsed_time() )
+      print
+      print "Python timestamp: " + str(timestamp[-1])
+      print "Real time: " + str( iters*delta_t )
+
+      bytelen = len(v)
     # Make sure 18 (?) bytes are received
-    if(v[0] == 3):
+    #if(v[0] == 3):
+    #  print "CORRECT HANDLE"
       # =========================
       # GET TIMESTAMP
       # ==========================
-      timestamp.append( elapsed_time() )
-      delta_t = timestamp[-1] - timestamp[-2]
-      print(timestamp[-1])
+      
 
       vx1 = int( str(v[2]*256 + v[1]) )
       vy1 = int( str(v[4]*256 + v[3]) )
@@ -252,23 +274,27 @@ class wicedsense:
       #for x in range(0,19): print v[x]
       (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 100.0)
       #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-      (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8195.0)#(8192.0/9.80665) )
+      (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0)#(8192.0/9.80665) )
       #print "accelx"
       #print Axyz[0]
       #self.accel.append(Axyz)
       #self.gyro.append(Gxyz)
 
       # ======================
-      # GET DISPLACEMENT
+      # GET DISPLACEMENT FRAMES
       # ======================
       
       dx,vx,ax,xframes = getFrame(dx,vx,ax,Axyz[0],xframes)
-      
+      dy,vy,ay,yframes = getFrame(dy,vy,ay,Axyz[1],yframes)
+      dz,vz,az,zframes = getFrame(dz,vz,az,Axyz[2],zframes)
+
+      xyzframes.append( [xframes[-1],yframes[-1],zframes[-1]] )
+
       #print "Axyz: " + str(Axyz)
       #print "Amag: " + str(Amag)
       #print "Gxyz: " + str(Gxyz)
       #print "Gmag: " + str(Gmag)
-    return
+      return
 
 
 class SensorCallbacks:
@@ -296,26 +322,19 @@ def main():
 
 
     # Preallocating Global lists (Iteration 0) -----------------------------------
+    global delta_t
+    global endtime
     global timestamp
-    global dx
-    global vx
-    global ax
-    global xframes
     global start_time
+    global iters
+
+    #timestamp for debugging
     start_time = current_milli_time()
-    timestamp = []
     timestamp.append( elapsed_time() )
     print 
-    print "timestamp (in s)"
-    print timestamp[0]
-    vx = []
-    vx.append( 0.0 )
-    ax = []
-    ax.append( float(0.0) )
-    dx = []
-    dx.append( 0.0 )
-    xframes = []
-    xframes.append( 0.0 )
+    print "Python timestamp (in s): " + str(timestamp[-1])
+    print "Real time (in s): " + str( iters*delta_t )
+    print
     # ----------------------------------------------------------------------------
 
     #print cbs.data['addr']
