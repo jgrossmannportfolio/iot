@@ -19,7 +19,13 @@ from threading import Thread
 import pexpect
 import sys
 import time
+import math
 
+# MAC address (with modified firmware)
+#20:73:7A:15:13:DE
+
+# MAC address (Vera, Salar, and Wei's tag)
+#00:10:18:01:0B:39
 
 
 # Constants
@@ -210,14 +216,19 @@ class wicedsense:
     # Make sure 18 (?) bytes are received
     if(v[1] == "b"):
       #vx = int( str(v[2]*256 + v[1]) )
-      vx = (int(v[3],16))*256 + int(v[2],16)
+      vx = (int(v[2],16))*256 + int(v[3],16)
       #print int(v[2],16)
-      #print vx
-      #(Axyz, Amag) = self.convertData(vx,0,0,1.0)
+      print "v[2] v[3] :"
+      print v[2]
+      print v[3]
+      print
+      (Axyz, Amag) = self.convertData(vx,0,0,1.0)
       #wicedsense.accx = int(Axyz[0])
-      wicedsense.accx = vx
-      #print"accx"
-      #print(wicedsense.accx)
+      wicedsense.accx = int(round(math.fabs(Axyz[0])))
+      print
+      print"wicedsense.accx"
+      print(wicedsense.accx)
+      print
       #print "vx: " + str(vx)
       #self.accel.append(Axyz)
       #self.gyro.append(Gxyz)
@@ -246,6 +257,11 @@ class SensorCallbacks:
 # We also update the GUI of bulb here
 def checkCondition(accx,intensity):
 
+	print
+	print "accx"
+	print accx
+	print
+    
 	if accx > 5:
 		intensity = str(int(intensity)+1)
 	else:
@@ -298,7 +314,6 @@ def checkCondition(accx,intensity):
        "Content-Type": "application/json"
      }) 
 	#print(json.loads(connection.getresponse().read()))
-	print "HERE"
 	return intensity
 	#bulbRoot.after(2000, checkCondition, intensity)
 
