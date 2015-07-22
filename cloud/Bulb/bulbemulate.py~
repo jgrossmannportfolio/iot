@@ -216,19 +216,11 @@ class wicedsense:
     # Make sure 18 (?) bytes are received
     if(v[1] == "b"):
       #vx = int( str(v[2]*256 + v[1]) )
-      vx = (int(v[4],16))*1024 + (int(v[5],16))*512 + (int(v[2],16))*256 + int(v[3],16)
+      vx = (int(v[2],16))*256 + int(v[3],16)
       #print int(v[2],16)
-      print "v[2] v[3] :"
-      print v[2]
-      print v[3]
-      print
       (Axyz, Amag) = self.convertData(vx,0,0,1.0)
       #wicedsense.accx = int(Axyz[0])
       wicedsense.accx = int(round(math.fabs(Axyz[0])))
-      print
-      print "wicedsense.accx"
-      print (wicedsense.accx)
-      print
       #print "vx: " + str(vx)
       #self.accel.append(Axyz)
       #self.gyro.append(Gxyz)
