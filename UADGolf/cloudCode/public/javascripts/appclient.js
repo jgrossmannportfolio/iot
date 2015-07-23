@@ -173,14 +173,58 @@ function putterDemo(scrnID)
       newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
       taggedFace, cube1,
       width = 20,
-      colors1 = ["green", "green", "green", "green", "green", "green"];
+      colors1 = ["green", "green", "green", "green", "green", "green"],
+      bottom,
+      putterhead;
+
       console.log(g.cnvs.offsetWidth);
+
+
+
+
+
+
+
+    function makePutterHeadlayer(input, z) {
+        
+        input = g.createGroup3D();
+        
+        plateL = g.compileShape3D(shapes3D.circle(20), "#D3D3D3");
+        plateL.transform.translate(0,50,z);
+        input.addObj(plateL);
+    
+        plateR = g.compileShape3D(shapes3D.circle(20), "#D3D3D3");
+        plateR.transform.translate(0,-50,z);
+        input.addObj(plateR);
+
+        headAppendL = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendL.transform.translate(0,40,z);
+        input.addObj(headAppendL);
+
+        headAppendLhalf = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendLhalf.transform.translate(0,20,z);
+        input.addObj(headAppendLhalf);
+
+        headAppendR = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendR.transform.translate(0,0,z);
+        input.addObj(headAppendR);
+
+        headAppendRhalf = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendRhalf.transform.translate(0,-20,z);
+        input.addObj(headAppendRhalf);
+
+        headAppendC =g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendC.transform.translate(0,-40,z);
+        input.addObj(headAppendC);
+        
+        return input;
+    } 
 
   function movePutter()
   {
     // use target's parent group drawing origin as reference
-    cube1.transform.rotate(0,1,0,-25);
-    g.renderFrame(cube1);
+    bottom.transform.rotate(0,1,0,-25);
+    g.renderFrame(bottom);
    /* newPos.x = mousePos.x-this.grabOfs.x;
     newPos.y = mousePos.y-this.grabOfs.y;
     newPos.z = mousePos.z-this.grabOfs.z;
@@ -194,11 +238,34 @@ function putterDemo(scrnID)
   g.setFOV(45);
   g.setPropertyDefault("backgroundColor", "lightyellow");
 
-  cube1 = buildCube(g, width, colors1);
+
+
+   bottom = g.createGroup3D();
+
+   putterhead = makePutterHeadlayer(bottom,0);
+   bottom.addObj(putterhead);
+
+    var layers = 10;
+    var i = 1;
+    for (i; i < layers; i++){
+        bottom.addObj(makePutterHeadlayer(bottom,i))
+    }
+
+    bottom.backHidden = true;
+
+    bottom.transform.translate(35,-60,-10);
+    bottom.transform.rotate(1,1,0,30);
+    
+    g.render(bottom);
+
+
+
+
+  /*cube1 = buildCube(g, width, colors1);
   cube1.rotate(1, 1, 0, 30);
   cube1.translate(35, -60, -10);
-
-  setInterval(movePutter, 50);
+  */
+  setInterval(movePutter, 500);
  // g.render(grp);
 }
 
@@ -228,6 +295,9 @@ function putterDemo(scrnID)
   setInterval(turnPlate, 50)        // keep doing this forever
 }
    
+
+
+
 
     return {
         init: function() {
