@@ -1,0 +1,70 @@
+var express = require('express.io');
+var app = express().http().io();
+
+var baseurl = "http://localhost:3000"; // default development URL
+if (process.env.BASE_URL) {            // if env var is set, use it
+  baseurl = process.env.BASE_URL;
+}
+var url = require('url');
+var port = url.parse(baseurl).port;    // parse out the port number
+if (process.env.PORT) {
+    port = process.env.PORT;
+}
+console.log("Using baseurl: " + baseurl);
+console.log("Port: " + port);
+
+var flash = require('connect-flash');
+app.configure(function() {
+  app.set('view engine', 'jade');
+  app.set('views', __dirname + '/views');
+  app.use(express.logger());
+  app.use(express.cookieParser('keyboard cat'));
+  app.use(express.json());
+  app.use(express.urlencoded());
+  app.use(express.methodOverride());
+  app.use(express.session({cookie: { maxAge: 60000 }, secret: 'secretkeywhichmustnotbenamed'}));
+  app.use(flash());
+  app.use(app.router);
+  app.use(express.static(__dirname + '/public'));
+  
+});
+
+// set up socket.io routes
+//var database = require('./database.js');
+//app.io.route('test_database', database.test_dat
+
+// set up "normal" http routes
+var views = require('./views.js');
+app.get('/', views.index);
+app.get('/#', views.index);
+app.get('/home', views.index);
+app.get('/wishlist', views.wishlist);
+app.get('/gift', views.gift);
+app.get('/settings', views.settings);
+app.get('/new-user', views.newUser);
+app.get('/remove-user', views.removeUser);
+app.get('/additem', views.addItem);
+app.get('/friends', views.friends);
+app.get('/addfriend', views.addFriendIndex);
+app.get('/orderhistory', views.getOrderHistory);
+app.get('/shippingAddresses', views.getShippingAddresses);
+app.get('/paymentmethods', views.getPaymentMethods);
+app.get("/addPaymentMethod", views.addPaymentIndex);
+
+app.post('/new-user', views.createNewUser);
+app.post('/remove-user', views.deleteUsers);
+app.post('/additem', views.addItem);
+app.post('/removeItem', views.removeItem);
+app.post('/new-event', views.newEvent);
+app.post('/addfriend', views.addFriend);
+app.post('/removefriend', views.removeFriend);
+app.post('/gift', views.giftItem);
+app.post('/vendorList', views.getVendorList);
+app.post('/removeAddress', views.removeAddress);
+app.post("/newAddress", views.addAddress);
+app.post("/newPayment", views.addPaymentMethod);
+app.post("/removePaymentMethod", views.removePaymentMethod);
+
+
+app.listen(port);
+console.log("App started on port " + port);

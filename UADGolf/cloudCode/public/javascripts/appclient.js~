@@ -4,20 +4,6 @@ var myapp = (function(){
     var height = 400;
     var animated = false;
 
-    var removeUsers = function() {
-        console.log("inside remove users");
-        var users = [];
-        $("#remove-table tr.selected td.email").each(function() {
-            users.push($(this).text());
-        });
-       
-        $.post("/remove-user", {users:users}, function(data) {
-            console.log("post is done");
-            alert(data);
-            window.location = "/remove-user";
-            return;
-        });
-    }
 
     function setCanvasDim() {
         width = window.innerWidth;
@@ -26,6 +12,7 @@ var myapp = (function(){
         $("#puttCanvas").attr("height", height / 2.0);
         console.log("width: "+$("#puttCanvas").attr("width"));
         console.log("set canvas dimensions");
+        putterDemo("puttCanvas");
     };
 
     function getPuttData() {
@@ -127,6 +114,95 @@ var myapp = (function(){
         }
       }, 1000);
     };
+
+
+function buildCube(g, width, colors) // pass width and array of 6 colors
+{
+  var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+      foldTbl = [-90, 90, -90, 90, -90, 90],
+      bend = -90,
+      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
+      side,
+      i;
+
+  for (i=0; i<6; i++)
+  {
+    side = g.compileShape3D(sq, colors[i]);
+    side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
+  }
+  return faces;
+}
+
+
+
+
+function putterDemo(scrnID)
+{
+  var g = new Cango3D(scrnID),
+      newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
+      taggedFace, cube1,
+      width = 20,
+      colors1 = ["green", "green", "green", "green", "green", "green"];
+      console.log(g.cnvs.offsetWidth);
+
+  function movePutter()
+  {
+    // use target's parent group drawing origin as reference
+    cube1.transform.rotate(0,1,0,-25);
+    g.renderFrame(cube1);
+   /* newPos.x = mousePos.x-this.grabOfs.x;
+    newPos.y = mousePos.y-this.grabOfs.y;
+    newPos.z = mousePos.z-this.grabOfs.z;
+    cube1.transform.reset();          // reset to identity matrix
+    cube1.transform.translate(newPos.x, newPos.y, newPos.z);
+
+    g.renderFrame(grp);*/
+  }
+
+  g.setWorldCoords3D(-100, -80, 300);
+  g.setFOV(45);
+  g.setPropertyDefault("backgroundColor", "lightyellow");
+
+  cube1 = buildCube(g, width, colors1);
+  cube1.rotate(1, 1, 0, 30);
+  cube1.translate(35, -60, -10);
+
+  setInterval(movePutter, 50);
+ // g.render(grp);
+}
+
+    function drawDemo(cvsID)
+{
+  var stick, plate, plateNstick,
+      g = new Cango3D(cvsID);  // create a graphics context
+
+  function turnPlate()
+  {
+    plateNstick.transform.rotate(0, 1, 0, -25);     // apply 25 deg rotation to matrix
+    g.renderFrame(plateNstick);           // request a re-draw
+  }
+
+  g.setPropertyDefault("backgroundColor", "aliceblue");
+  g.setWorldCoords3D(-75, -120, 150);
+  g.setLightSource(0, 100, 200);
+
+  stick = g.compilePath3D(["M",0,0,0, "Q", 0,50,0, -15, 100, 0], "sienna", 3);
+  stick.rotate(0, 1, 0, 90);  // rotate out of XY plane
+  plate = g.compileShape3D(shapes3D.circle(50), "yellow", "yellow");
+  plate.rotate(1, 0, 0, 75);  // flip to near horizontal
+  stick.translate(0, -96, 0); // move down Y axis under plate
+  // make a group comprising stick and plate
+  plateNstick = g.createGroup3D(stick, plate);
+
+  setInterval(turnPlate, 50)        // keep doing this forever
+}
    
 
     return {
@@ -135,6 +211,7 @@ var myapp = (function(){
             Parse.initialize("iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb", "d4q6T1YxleQ2za17PdTtfaAD8x6tAB9rdW4y9vMD");
             $(window).load(getPuttData);
             jQuery("#startButton").click(animatePutt);
+            //$(window).load(putterDemo("puttCanvas"))
             //console.log("Client-side app starting up")
             
 			//jQuery("#testbutton").click(test);
