@@ -1,5 +1,6 @@
 var myapp = (function(){
-    var puttData = [];
+    var accelData = [];
+    var gyroData = [];
     var width = 600;
     var height = 400;
     var animated = false;
@@ -23,15 +24,19 @@ var myapp = (function(){
         var query = new Parse.Query(putt);
         query.get("12fz4AHTDK", {
             success: function(data) {
-                puttData = data.get("frames");   
+                accelData = data.get("frames");   
+                gyroData = data.get("gyro");
                 console.log("got data");
-                console.log(puttData);   
+                console.log(accelData);   
             },
             error: function(object, error) {
                 console.log("Error getting putt data");
                 console.log(error);
+
             }
+
         });
+        
     };
 
     function animatePutt() {
@@ -118,7 +123,58 @@ var myapp = (function(){
 
 function buildCube(g, width, colors) // pass width and array of 6 colors
 {
+/*
   var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+      foldTbl = [-90, 90, -90, 90, -90, 90],
+      bend = -90,
+      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
+      side,
+      i;
+
+  for (i=0; i<6; i++)
+  {
+    side = g.compileShape3D(sq, colors[i]);
+    side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
+  }
+
+*/
+  var xorg = -10,
+      yorg = -10,
+      zorg = -10;
+
+  var sq = ['M',xorg,yorg,zorg, 'L',xorg+width,yorg+0,zorg+0, xorg+width,yorg+width,zorg+0, xorg+0,yorg+width,zorg+0, 'z'],
+      foldTbl = [-90, 90, 90, 90, -90, 90],
+      bend = 0,
+      moveTbl_1 = [-width/2, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width/2, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
+      side,
+      i;
+
+  for (i=0; i<1; i++)
+  {
+    side = g.compileShape3D(sq, colors[i]);
+    //side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
+  }
+
+  return faces;
+}
+
+function buildPutter(g, width, colors) //pass width and array of 6 colors
+{
+    var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
       foldTbl = [-90, 90, -90, 90, -90, 90],
       bend = -90,
       moveTbl_1 = [-width, 0, -width, 0, -width, 0],
@@ -149,13 +205,62 @@ function putterDemo(scrnID)
       newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
       taggedFace, cube1,
       width = 20,
-      colors1 = ["green", "green", "green", "green", "green", "green"];
+      colors1 = ["green", "green", "green", "green", "green", "green"],
+      bottom,
+      putterhead,
+      iter = 0;
+
       console.log(g.cnvs.offsetWidth);
+
+
+
+
+
+
+
+    function makePutterHeadlayer(input, z) {
+        
+        input = g.createGroup3D();
+        
+        plateL = g.compileShape3D(shapes3D.circle(20), "#D3D3D3");
+        plateL.transform.translate(0,50,z);
+        input.addObj(plateL);
+    
+        plateR = g.compileShape3D(shapes3D.circle(20), "#D3D3D3");
+        plateR.transform.translate(0,-50,z);
+        input.addObj(plateR);
+
+        headAppendL = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendL.transform.translate(0,40,z);
+        input.addObj(headAppendL);
+
+        headAppendLhalf = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendLhalf.transform.translate(0,20,z);
+        input.addObj(headAppendLhalf);
+
+        headAppendR = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendR.transform.translate(0,0,z);
+        input.addObj(headAppendR);
+
+        headAppendRhalf = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendRhalf.transform.translate(0,-20,z);
+        input.addObj(headAppendRhalf);
+
+        headAppendC =g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendC.transform.translate(0,-40,z);
+        input.addObj(headAppendC);
+        
+        return input;
+    } 
 
   function movePutter()
   {
     // use target's parent group drawing origin as reference
-    cube1.transform.rotate(0,1,0,-25);
+    //cube1.transform.rotate(0,1,0,-25);
+    /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
+    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
+    cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
+    cube1.transform.rotate(1,0,0,10);
     g.renderFrame(cube1);
    /* newPos.x = mousePos.x-this.grabOfs.x;
     newPos.y = mousePos.y-this.grabOfs.y;
@@ -166,15 +271,41 @@ function putterDemo(scrnID)
     g.renderFrame(grp);*/
   }
 
-  g.setWorldCoords3D(-100, -80, 300);
+  g.setWorldCoords3D(-150, -80, 300);
   g.setFOV(45);
   g.setPropertyDefault("backgroundColor", "lightyellow");
 
-  cube1 = buildCube(g, width, colors1);
-  cube1.rotate(1, 1, 0, 30);
-  cube1.translate(35, -60, -10);
 
-  setInterval(movePutter, 50);
+
+   bottom = g.createGroup3D();
+
+   putterhead = makePutterHeadlayer(bottom,0);
+
+   
+    bottom.addObj(putterhead);
+
+    var layers = 10;
+    var i = 1;
+    for (i; i < layers; i++){
+        bottom.addObj(makePutterHeadlayer(bottom,i))
+    }
+
+    bottom.backHidden = true;
+
+    //bottom.transform.translate(35,-60,-10);
+    //bottom.transform.rotate(1,1,0,30);
+    
+    //g.render(bottom);
+
+
+
+
+  cube1 = buildCube(g, width, colors1);
+  //cube1.rotate(1, 1, 0, 30);
+  //cube1.translate(35, -60, -10);
+  //g.render(cube1);
+//cube1.transform.rotate(0,1,0,30);
+  setInterval(movePutter, 200);
  // g.render(grp);
 }
 
@@ -204,6 +335,9 @@ function putterDemo(scrnID)
   setInterval(turnPlate, 50)        // keep doing this forever
 }
    
+
+
+
 
     return {
         init: function() {

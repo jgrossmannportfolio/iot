@@ -60,6 +60,9 @@ elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - f
     # x
 
 calibrate = False
+accelCal = [0.0, 0.0, 0.0]
+gyroCal = [0.0, 0.0, 0.0]
+
 vx = 0.0
 ax = [0.0]
 dx = 0.0
@@ -164,12 +167,12 @@ class wicedsense:
     self.con.sendline( cmd )
     return
 
-  def writeToFile(filename, text):
+  def writeToFile(self, filename, text):
     file = open(filename, 'w')
     file.write(text)
     file.close
 
-  def readFromFile(filename):
+  def readFromFile(self, filename):
     file = open(filename, 'r')
     return file.read()
 
@@ -211,10 +214,17 @@ class wicedsense:
     global gyroZ
     global calibrate
 
+    if(calibrate == False):
+        calText = self.readFromFile("calibration.txt")
+        calArray = calText.split(",")
+        gyroCal = calArray[0:3]
+        accelCal = calArray[3:]
+        print gyroCal
+        print accelCal
 
     # LOOP UNTIL TIME EXPIRES
-    if(calibration):
-        total = math.ceil(10.0 / delta_t)
+    if(calibrate):
+        total = math.ceil(30.0 / delta_t)
     else:
         total = math.ceil( endtime/delta_t )
     iters = 0    
@@ -250,8 +260,8 @@ class wicedsense:
 
 
     # After the while loop has broken...
-    gyroAvg = []
-    accelAvg = []
+    gyroAvg = [0, 0, 0]
+    accelAvg = [0, 0, 0]
     if(calibrate == True):
         calText = ""
         gyroAvg[0] = sum(gyroX) / len(gyroX)
@@ -260,24 +270,29 @@ class wicedsense:
         accelAvg[0] = sum(ax) / len(ax)
         accelAvg[1] = sum(ay) / len(ay)
         accelAvg[2] = sum(az) / len(az)
-        calText += str(0 - gyroAvg[0]) + ", " + str(0 - gyroAvg[1]) + ", " + str(0 - gyroAvg[2]) + ", "
-        calText += str(0 - accelAvg[0]) + ", " + str(0 - accelAvg[1]) + ", " + str(9.80665 - accelAvg[2])
-        writeToFile("calibration.txt", calText)
+        calText += str(0 - gyroAvg[0]) + "," + str(0 - gyroAvg[1]) + "," + str(0 - gyroAvg[2]) + ","
+        calText += str(0 - accelAvg[0]) + "," + str(0 - accelAvg[1]) + "," + str(8192 - accelAvg[2])
+        print "writing to file"
+        self.writeToFile("calibration.txt", calText)
     
     else:
-        
-        calText = readFromFile("calibration.txt")
-        calArray = calText.split(",")
-        gyroCal = calArray[0:3]
-        accelCal = calArray[3:]
-        print gyroCal
-        print accelCal
-        return
+
+        for x in range(len(ax)):
+            ax[:] = [i + float(accelCal[0]) for i in ax]
+            ay[:] = [i + float(accelCal[1]) for i in ay]
+            az[:] = [i + float(accelCal[2]) for i in az]
+            gyroX[:] = [g + float(gyroCal[0]) for g in gyroX]
+            gyroY[:] = [g + float(gyroCal[1]) for g in gyroY]
+            gyroZ[:] = [g + float(gyroCal[2]) for g in gyroZ]
+
         # FILTER OUT INITIAL ACCELERATION VALUES --------------
         thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
         axnew = []   # new acceleration list in the x direction
         aynew = []   # ... y direction
         aznew = []   # ... z direction
+        gyroXnew = []
+        gyroYnew = []
+        gyroZnew = []
         print
         print "magnitude"
         for x in range(len(magnitude)):
@@ -365,6 +380,10 @@ class wicedsense:
       global gyroX
       global gyroY
       global gyroZ
+    
+      global calibrate
+      global acccelCal
+      global gyroCal
 
       # clear first ten recordings because BT timing needs to settle
       # garbageiterations = 10
@@ -398,15 +417,19 @@ class wicedsense:
               #print "vy: " + str(vy1)
               #print "vz: " + str(vz1)
               #for x in range(0,19): print v[x]
-              (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0/.0175) # FS = 500dps
-              #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-              (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0/9.80665)#(8192.0/9.80665)
+              if(calibrate == True):
+                  (Gxyz, Gmag) = self.convertData(gx1 + int(gyroCal[0]), gy1 + int(gyroCal[1]), gz1 + int(gyroCal[2]), 1.0)
+                  (Axyz, Amag) = self.convertData(vx1 + int(accelCal[0]), vy1 + int(accelCal[1]), vz1 + int(accelCal[2]), 1.0)
+              else:
+                  (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0/.0175) # FS = 500dps
+                  #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
+                  (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0/9.80665)#(8192.0/9.80665)
               #print "accelx"
               #print Axyz[0]
               #self.accel.append(Axyz)
               #self.gyro.append(Gxyz)
               #print "Gyro (x,y,z)"
-              print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2])
+              print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + str(Axyz[0]) + ", " + str(Axyz[1]) + ", " + str(Axyz[2]) 
 
               gyroX.append(Gxyz[0])
               gyroY.append(Gxyz[1])
@@ -433,12 +456,13 @@ class SensorCallbacks:
 
 # main function USAGE python sense.py <mac address>
 def main():
-
+  global calibrate
   bluetooth_adr = sys.argv[1]
   #data['addr'] = bluetooth_adr
+  
   if len(sys.argv) > 2:
-    if(sys.argv[2] == True):
-      calibrate = True;
+    if(sys.argv[2] == "true" or sys.argv[2] == "True"):
+      calibrate = True
       #datalog = open(sys.argv[2], 'w+')
 
  # while True:
