@@ -1,0 +1,88 @@
+<!DOCTYPE HTML>
+<html>
+  <head>  
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script type="text/javascript" src="http://arc.id.au/Cango3D-7v09.js"></script>
+        <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+      
+</head>
+<body>
+ <canvas id="canvasID" width="800" height="800" style="border:1px solid black;"></canvas>
+    
+    <script type="text/javascript">
+    var turnReps = 1
+    var translateReps = 1
+    window.onload = function() {
+        //alert( "welcome" );
+    };
+
+    $(document).ready(function () {	        
+	   drawDemo("canvasID");
+    });     
+                          
+    function drawDemo(cvsID)
+    {
+      var stick, plate, plateNstick,
+          g = new Cango3D(cvsID);  // create a graphics context
+    
+
+      g.setPropertyDefault("backgroundColor", "aliceblue");
+      g.setWorldCoords3D(-10, -120, 150);
+      g.setLightSource(0, 100, 200);
+
+      stick = g.compilePath3D(["M",0,0,0, "Q", 0,0,0, -15, 100, 0], "sienna", 3);
+      stick.rotate(0, 1, 0, 90);  // rotate out of XY plane
+      plate = g.compileShape3D(shapes3D.square(50), "slategray", "slategray");
+      plate.rotate(1, 0, 0, 75);  // flip to near horizontal
+      stick.translate(0, -96, 0); // move down Y axis under plate
+      // make a group comprising stick and plate
+      plateNstick = g.createGroup3D(stick, plate);
+
+      //setTimeout(turnPlate, 1000)        // keep doing this forever
+      setTimeout(translateObj1, 1000);        // keep doing this forever
+      
+      
+        
+
+          function translateObj1()
+          {
+            plateNstick.transform.translate(translateReps, 0, 0);    // apply translation in x direction
+            g.renderFrame(plateNstick);                 // request a re-draw
+              
+            //translateReps = translateReps;
+            console.log(translateReps);
+            
+            setTimeout(translateObj2,250);
+            
+          }
+        
+          function translateObj2() //resets the displacement of the object to the origin
+          {
+            plateNstick.transform.translate(-translateReps, 0, 0);    // apply translation in x direction
+            //g.renderFrame(plateNstick);                 // request a re-draw
+              
+            translateReps = translateReps + 1;
+            console.log(translateReps);
+            
+            setTimeout(translateObj1,250); 
+          }
+        
+          function turnPlate()
+          {
+            plateNstick.transform.rotate(0, 10, 0, -25);    // apply 25 deg rotation to matrix
+            g.renderFrame(plateNstick);                     // request a re-draw
+            setTimeout(translateObj1,250);
+          }
+        
+    }
+
+
+    </script>
+    
+  </body>
+</html>  

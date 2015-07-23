@@ -1,0 +1,54 @@
+<!DOCTYPE HTML>
+<html>
+  <head>  
+    <script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+	<script type="text/javascript" src="http://arc.id.au/Cango3D-7v09.js"></script>
+        <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+      
+</head>
+<body>
+ <canvas id="canvasID" width="800" height="800" style="border:1px solid black;"></canvas>
+    
+    <script type="text/javascript">
+    var g = new Cango3D("canvasID");  // create a graphics context
+
+    var cube = buildCube(g, 100, ["red","orange","yellow","green","blue","purple"]);
+    cube.transform.rotate(10, 10, 0, -50) // rotate the cube
+    cube.transform.translate(400, 400, 0) // center the cube
+    g.render(cube);
+    console.log("DONE")
+    
+function buildCube(g, width, colors) // pass width and array of 6 colors
+{
+  var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+      foldTbl = [-90, 90, -90, 90, -90, 90],
+      bend = -90,
+      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
+      side,
+      i;
+
+  for (i=0; i<6; i++)
+  {
+    console.log(i)
+    side = g.compileShape3D(sq, colors[i]);
+    side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
+  }
+  return faces;
+}
+
+    </script>
+    
+  </body>
+</html>  
