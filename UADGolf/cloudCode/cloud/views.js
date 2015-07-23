@@ -21,7 +21,7 @@ exports.index = function (req, res) {
     
 };
 
-exports.documentation = function(res, req) {
-    res.render('documentation', {title: "UADGolf"});
+exports.documentation = function(req, res) {
+    res.render('documentation', {title: "UADGolf", home:true, users:[]});
 };
 

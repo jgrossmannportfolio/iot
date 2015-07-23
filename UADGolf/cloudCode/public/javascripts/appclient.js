@@ -17,25 +17,28 @@ var myapp = (function(){
     };
 
     function getPuttData() {
-        setCanvasDim();
-        
-        console.log("getting put data");
-        var putt = Parse.Object.extend("Putt");
-        var query = new Parse.Query(putt);
-        query.get("12fz4AHTDK", {
-            success: function(data) {
-                accelData = data.get("frames");   
-                gyroData = data.get("gyro");
-                console.log("got data");
-                console.log(accelData);   
-            },
-            error: function(object, error) {
-                console.log("Error getting putt data");
-                console.log(error);
+        if($("#puttCanvas").length) {
+            console.log("found canvas");
+            setCanvasDim();
+            
+            console.log("getting put data");
+            var putt = Parse.Object.extend("Putt");
+            var query = new Parse.Query(putt);
+            query.get("12fz4AHTDK", {
+                success: function(data) {
+                    accelData = data.get("frames");   
+                    gyroData = data.get("gyro");
+                    console.log("got data");
+                    console.log(accelData);   
+                },
+                error: function(object, error) {
+                    console.log("Error getting putt data");
+                    console.log(error);
 
-            }
+                }
 
-        });
+            });
+        }
         
     };
 
