@@ -213,7 +213,10 @@ class wicedsense:
 
 
     # LOOP UNTIL TIME EXPIRES
-    total = math.ceil( endtime/delta_t )
+    if(calibration):
+        total = math.ceil(10.0 / delta_t)
+    else:
+        total = math.ceil( endtime/delta_t )
     iters = 0    
     while total > iters:
       try:
@@ -269,7 +272,7 @@ class wicedsense:
         accelCal = calArray[3:]
         print gyroCal
         print accelCal
-        
+        return
         # FILTER OUT INITIAL ACCELERATION VALUES --------------
         thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
         axnew = []   # new acceleration list in the x direction
