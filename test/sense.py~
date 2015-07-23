@@ -290,9 +290,6 @@ class wicedsense:
         axnew = []   # new acceleration list in the x direction
         aynew = []   # ... y direction
         aznew = []   # ... z direction
-        gyroXnew = []
-        gyroYnew = []
-        gyroZnew = []
         print
         print "magnitude"
         for x in range(len(magnitude)):
