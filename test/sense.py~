@@ -267,8 +267,6 @@ class wicedsense:
         calArray = calText.split(",")
         gyroCal = calArray[0:3]
         accelCal = calArray[3:]
-        print gyroCal
-        print accelCal
         
         # FILTER OUT INITIAL ACCELERATION VALUES --------------
         thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
