@@ -15,13 +15,15 @@
  <canvas id="canvasID" width="800" height="800" style="border:1px solid black;"></canvas>
     
     <script type="text/javascript">
+    
     var g = new Cango3D("canvasID");  // create a graphics context
-
+    g.setLightSource(0, 100, 200);
+    
     var cube = buildCube(g, 100, ["red","orange","yellow","green","blue","purple"]);
     cube.transform.rotate(10, 10, 0, -50) // rotate the cube
     cube.transform.translate(400, 400, 0) // center the cube
-    g.render(cube);
-    console.log("DONE")
+    g.render(cube)
+    
     
 function buildCube(g, width, colors) // pass width and array of 6 colors
 {
