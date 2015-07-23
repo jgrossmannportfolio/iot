@@ -37,7 +37,7 @@ import operator
     # frequency of BLE transmissions
 delta_t = .0125 # in seconds (preset to 12.5 ms)
     # total duration
-endtime = 100.0 # in seconds
+endtime = 4.0 # in seconds
 garbageiterations = 10
 
 # Global initialization triggers
@@ -78,7 +78,6 @@ xframes = [0.0]
 yframes = [0.0]
 zframes = [0.0]
 xyzframes = []
-xyzframes.append([0.0,0.0,0.0])
 magnitude = []
 
 timestamp = []
@@ -112,12 +111,13 @@ def getFrame(d,v,accelData,frame):
 class wicedsense:
 
 
-  def pushToCloud(self, frames):
+  def pushToCloud(self, frames, gyrodata):
     #print frames[1]
     connection = httplib.HTTPSConnection("api.parse.com", 443)
     connection.connect()
     connection.request('PUT', '/1/classes/Putt/12fz4AHTDK', json.dumps({
-       "frames": frames
+       "frames": frames,
+       "gyro": gyrodata
      }), {
        "X-Parse-Application-Id": "iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb",
        "X-Parse-REST-API-Key": "I0xfoOS0nDqaHxfSBTgLNMuXGtsStl7zO0XZVDZX",
@@ -249,6 +249,9 @@ class wicedsense:
           axnew = ax[x:]
           aynew = ay[x:]
           aznew = az[x:]
+          gyroXnew = gyroX[x:]
+          gyroYnew = gyroY[x:]
+          gyroZnew = gyroZ[x:]
           break
     
     # ========================
@@ -284,16 +287,22 @@ class wicedsense:
 
     '''
     # gyro averages
+    '''
     print
     print "GYRO averages (x,y,z):"
     print sum(gyroX)/len(gyroX)
     print sum(gyroY)/len(gyroY)
     print sum(gyroZ)/len(gyroZ)
-    
+    '''
+
+    gyrodata = []
+    for x in range(len(gyroXnew)):
+        gyrodata.append( [ gyroXnew[x],gyroYnew[x],gyroZnew[x] ] )
+
     # =======================
     # PUSH FRAMES TO PARSE
     # =======================
-    self.pushToCloud(xyzframes)
+    self.pushToCloud(xyzframes, gyrodata)
     
 
   def register_cb( self, handle, fn ):
@@ -351,7 +360,7 @@ class wicedsense:
               #print "vy: " + str(vy1)
               #print "vz: " + str(vz1)
               #for x in range(0,19): print v[x]
-              (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0)#1/.0175) # FS = 500dps
+              (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0/.0175) # FS = 500dps
               #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
               (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0/9.80665)#(8192.0/9.80665)
               #print "accelx"
