@@ -21,3 +21,7 @@ exports.index = function (req, res) {
     
 };
 
+exports.documentation = function(res, req) {
+    res.render('documentation', {title: "UADGolf"});
+};
+
