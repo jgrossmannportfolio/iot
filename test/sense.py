@@ -35,9 +35,14 @@ import operator
 
 # Global inputs
     # frequency of BLE transmissions
-delta_t = .12 # in seconds (preset to 120ms)
+delta_t = .0125 # in seconds (preset to 12.5 ms)
     # total duration
-endtime = .61 # in seconds
+endtime = 100.0 # in seconds
+garbageiterations = 10
+
+# Global initialization triggers
+inittime = 0 
+starttimer = 0 # wait for garbageiterations before the timer starts
 
 
 
@@ -48,35 +53,40 @@ tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
 # Global functions/retrieve start time --------------------------------------
 current_milli_time = lambda: int(round(time.time() * 1000))
 start_time = current_milli_time()
-elapsed_time = lambda: float ("{0:.2f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
+elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
 
 
 # Global lists
     # x
 vx = 0.0
-ax = 0.0
+ax = [0.0]
 dx = 0.0
     # y
 vy = 0.0
-ay = 0.0
+ay = [0.0]
 dy = 0.0
     # z
 vz = 0.0
-az = 0.0
+az = [0.0]
 dz = 0.0
+
+gyroX = []
+gyroY = []
+gyroZ = []
 
 xframes = [0.0]
 yframes = [0.0]
 zframes = [0.0]
 xyzframes = []
 xyzframes.append([0.0,0.0,0.0])
+magnitude = []
 
 timestamp = []
 iters = 0.0
 
 
 # Get the frame, aka displacement from the origin, give the acceleration
-def getFrame(d,v,a,accelData,frame):
+def getFrame(d,v,accelData,frame):
 
 	global delta_t
 	
@@ -91,9 +101,9 @@ def getFrame(d,v,a,accelData,frame):
 	v = v1 + v2
 
 	# frame
-	frame.append(float ("{0:.2f}".format(frame[-1] + d) ) )
+	frame.append( float(frame[-1] + d)  )
 
-	return d,v,a,frame
+	return d,v,frame
 
 
 
@@ -126,7 +136,7 @@ class wicedsense:
   # Blue tooth address is obtained from blescan.py 
   def __init__( self, bluetooth_adr ):
     self.con = pexpect.spawn('gatttool -b ' + bluetooth_adr + ' --interactive')
-    self.con.logfile = sys.stdout
+    #self.con.logfile = sys.stdout
     self.con.expect('\[LE\]>', timeout=600)
     print "Preparing to connect. You might need to press the side button..."
     self.con.sendline('connect')
@@ -137,7 +147,6 @@ class wicedsense:
     self.cb = {}
 
     # Data from sensors
-    self.time = []
     self.accel = []
     self.gyro = []
     self.magnetometer=[]
@@ -162,15 +171,43 @@ class wicedsense:
     global start_time
     global iters
     global xyzframes
+    
+    global dx
+    global vx
+    global ax
 
+    global dy
+    global vy
+    global ay
+
+    global dz
+    global vz
+    global az
+
+    global xframes
+    global yframes
+    global zframes
+    global xyzframes
+
+    global magnitude
+    global starttimer
+    global garbageiterations
+
+    global gyroX
+    global gyroY
+    global gyroZ
+
+
+    # LOOP UNTIL TIME EXPIRES
     total = math.ceil( endtime/delta_t )
-
-    iters = 0
+    iters = 0    
     while total > iters:
       try:
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
-        print
-        iters += 1
+        
+        # wait for the BT to settle -> wait for program to cycle through garbage iterations
+        if starttimer == 1:
+          iters += 1
 
       except pexpect.TIMEOUT:
         print "TIMEOUT exception!"
@@ -183,35 +220,80 @@ class wicedsense:
         if True:
 	  try:
             self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
+
           except Exception,e:
             print str(e)
-          #print "after callback"
+
           pass
         else:
           print "TIMEOUT!!"
           pass
       else:
-        print "else statement"
+        print 
 
-    # OUTPUT xframes TO SCREEN ------------------
+
+    # After the while loop has broken...
+
+
+    # FILTER OUT INITIAL ACCELERATION VALUES --------------
+    thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
+    axnew = []   # new acceleration list in the x direction
+    aynew = []   # ... y direction
+    aznew = []   # ... z direction
     print
+    print "magnitude"
+    for x in range(len(magnitude)):
+      print magnitude[x]
+      if magnitude[x] > thresh:
+          print "PUTTING................."
+          axnew = ax[x:]
+          aynew = ay[x:]
+          aznew = az[x:]
+          break
+    
+    # ========================
+    # GET DISPLACEMENT FRAMES
+    # ========================
+    for x in range(len(axnew)):
+      dx,vx,xframes = getFrame(dx,vx,axnew[x],xframes)
+      dy,vy,yframes = getFrame(dy,vy,aynew[x],yframes)
+      dz,vz,zframes = getFrame(dz,vz,aznew[x],zframes)
+      xyzframes.append( [xframes[-1],yframes[-1],zframes[-1]] )
+
+    # OUTPUT TO SCREEN ------------------
+    '''
+    print "axnew:"
+    for x in range(0,len(axnew)): print axnew[x]
+    print
+
+    print "axnew length"
+    print len(axnew)
+    print
+
     print "xyzframes (frame indicates the x displacement in meters at a given time):"
     for x in range(0,len(xyzframes)): print xyzframes[x]
-    #print xyzframes
     print
+    
     print "total duration (in s) "
-    print total*delta_t
+    print (float(len(axnew)))*delta_t
     print
+
     print "total samples"
-    print int (total) + 1 # add one for time 0
+    print int (len(axnew)) + 1 # add one for time 0
     print
 
-
-    if (total + 1) != len(xyzframes):
-      print "Length of frames does not match anticipated number of total samples"
-      pass
-    else:
-      self.pushToCloud(xyzframes)
+    '''
+    # gyro averages
+    print
+    print "GYRO averages (x,y,z):"
+    print sum(gyroX)/len(gyroX)
+    print sum(gyroY)/len(gyroY)
+    print sum(gyroZ)/len(gyroZ)
+    
+    # =======================
+    # PUSH FRAMES TO PARSE
+    # =======================
+    self.pushToCloud(xyzframes)
     
 
   def register_cb( self, handle, fn ):
@@ -225,75 +307,74 @@ class wicedsense:
       global timestamp
       global start_time
       global iters
-    
-      global dx
-      global vx
+
       global ax
-
-      global dy
-      global vy
       global ay
-
-      global dz
-      global vz
       global az
+      global inittime
+      global garbageiterations
+      global starttimer
 
-      global xframes
-      global yframes
-      global zframes
-      global xyzframes
-	
+      global gyroX
+      global gyroY
+      global gyroZ
 
-      timestamp.append( elapsed_time() )
-      print
-      print "Python timestamp: " + str(timestamp[-1])
-      print "Real time: " + str( iters*delta_t )
+      # clear first ten recordings because BT timing needs to settle
+      # garbageiterations = 10
+      if inittime > garbageiterations-1:
 
-      bytelen = len(v)
-    # Make sure 18 (?) bytes are received
-    #if(v[0] == 3):
-    #  print "CORRECT HANDLE"
-      # =========================
-      # GET TIMESTAMP
-      # ==========================
-      
+        if starttimer == 0:
+              starttimer = 1
+              start_time = current_milli_time()
+              timestamp.append( 0.0 )
+              #print "Python timestamp (in s): " + str(timestamp[-1])
 
-      vx1 = int( str(v[2]*256 + v[1]) )
-      vy1 = int( str(v[4]*256 + v[3]) )
-      vz1 = int( str(v[6]*256 + v[5]) )
-      gx1 = int( str(v[8]*256 + v[7]) )
-      gy1 = int( str(v[10]*256 + v[9]) )
-      gz1 = int( str(v[12]*256 + v[11]) )
-      print " "
-      #print "gx: " + str(gx1)
-      #print "gy: " + str(gy1)
-      #print "gz: " + str(gz1)
-      #print "vx: " + str(vx1)
-      #print "vy: " + str(vy1)
-      #print "vz: " + str(vz1)
-      #for x in range(0,19): print v[x]
-      (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 100.0)
-      #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-      (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0)#(8192.0/9.80665) )
-      #print "accelx"
-      #print Axyz[0]
-      #self.accel.append(Axyz)
-      #self.gyro.append(Gxyz)
+        else: # the garbage iterations have passed
+              timestamp.append( elapsed_time() )
+              #print "Python timestamp (in s): " + str(timestamp[-1])
 
-      # ======================
-      # GET DISPLACEMENT FRAMES
-      # ======================
-      
-      dx,vx,ax,xframes = getFrame(dx,vx,ax,Axyz[0],xframes)
-      dy,vy,ay,yframes = getFrame(dy,vy,ay,Axyz[1],yframes)
-      dz,vz,az,zframes = getFrame(dz,vz,az,Axyz[2],zframes)
+              bytelen = len(v) # v is the handle data
 
-      xyzframes.append( [xframes[-1],yframes[-1],zframes[-1]] )
+            # Make sure bytes are received by the correct handle
+            #if(v[0] == 3):
 
-      #print "Axyz: " + str(Axyz)
-      #print "Amag: " + str(Amag)
-      #print "Gxyz: " + str(Gxyz)
-      #print "Gmag: " + str(Gmag)
+              vx1 = int( str(v[2]*256 + v[1]) )
+              vy1 = int( str(v[4]*256 + v[3]) )
+              vz1 = int( str(v[6]*256 + v[5]) )
+              gx1 = int( str(v[8]*256 + v[7]) )
+              gy1 = int( str(v[10]*256 + v[9]) )
+              gz1 = int( str(v[12]*256 + v[11]) )
+              #print "gx: " + str(gx1)
+              #print "gy: " + str(gy1)
+              #print "gz: " + str(gz1)
+              #print "vx: " + str(vx1)
+              #print "vy: " + str(vy1)
+              #print "vz: " + str(vz1)
+              #for x in range(0,19): print v[x]
+              (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0)#1/.0175) # FS = 500dps
+              #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
+              (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0/9.80665)#(8192.0/9.80665)
+              #print "accelx"
+              #print Axyz[0]
+              #self.accel.append(Axyz)
+              #self.gyro.append(Gxyz)
+              #print "Gyro (x,y,z)"
+              print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2])
+
+              gyroX.append(Gxyz[0])
+              gyroY.append(Gxyz[1])
+              gyroZ.append(Gxyz[2])
+
+              # append magnitude of the acceleration
+              magnitude.append( Amag )
+              # append acceleration values
+              ax.append( Axyz[0] )
+              ay.append( Axyz[1] )
+              az.append( Axyz[2] )
+
+       
+      else:
+        inittime += 1  # increment 10 times before evaluating values      
       return
 
 
@@ -329,12 +410,10 @@ def main():
     global iters
 
     #timestamp for debugging
-    start_time = current_milli_time()
-    timestamp.append( elapsed_time() )
-    print 
-    print "Python timestamp (in s): " + str(timestamp[-1])
-    print "Real time (in s): " + str( iters*delta_t )
-    print
+    #start_time = current_milli_time()
+    #timestamp.append( elapsed_time() )
+
+
     # ----------------------------------------------------------------------------
 
     #print cbs.data['addr']
@@ -342,6 +421,7 @@ def main():
     tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
     #tag.char_write_cmd(0x31, 0x01)
+
 
 
     #tag.char_write_cmd(0x2e, 0x0100)
