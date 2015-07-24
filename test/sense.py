@@ -215,12 +215,12 @@ class wicedsense:
       xframes = [MathUtil.displacement(self.dx,self.vx,axnew[0], self.delta_t)[0]]
       yframes = [MathUtil.displacement(self.dy,self.vy,aynew[0], self.delta_t)[0]]
       zframes = [MathUtil.displacement(self.dz,self.vz,aznew[0], self.delta_t)[0]]
-      roll.append(MathUtil.roll(aynew[0], aznew[0]))
+      roll.append(MathUtil.roll(axnew[0], aynew[0], aznew[0]))
       pitch.append(MathUtil.pitch(axnew[0], aynew[0], aznew[0]))
       xyzframes = [xframes[-1], yframes[-1], zframes[-1]] 
       for x in range(1, len(axnew)):
         
-        roll.append(MathUtil.roll(aynew[x], aznew[x]))
+        roll.append(MathUtil.roll(axnew[x], aynew[x], aznew[x]))
         pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
         self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,axnew[x], self.delta_t)
         xframes.append( float(xframes[-1] + self.dx)  )
@@ -260,7 +260,7 @@ class wicedsense:
       gyrodata.append([roll[0], pitch[0], MathUtil.getAngle(gyroZnew[0], self.delta_t)])
       for x in range(1, len(gyroXnew)):
         gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
-                        kalmanX.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
+                        kalmanY.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
                         MathUtil.getAngle(gyroZnew[x], self.delta_t) ])
         #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
 

@@ -9,9 +9,9 @@ Updates a 1 dimensional angle of rotation based on stream of data:
 
 class Kalman:
     #static bias and error variables
-    Q_angle = 0.004
-    Q_bias = 0.003
-    R_measure = 0.03
+    Q_angle = 0.001
+    Q_bias = 0.01
+    R_measure = 0.05
 
     angle = 0.0
     bias = 0.0
