@@ -15,37 +15,62 @@
  <canvas id="canvasID" width="800" height="800" style="border:1px solid black;"></canvas>
     
     <script type="text/javascript">
-    
     var g = new Cango3D("canvasID");  // create a graphics context
-    g.setLightSource(0, 100, 200);
-    
-    var cube = buildCube(g, 100, ["red","orange","yellow","green","blue","purple"]);
-    cube.transform.rotate(10, 10, 0, -50) // rotate the cube
-    cube.transform.translate(400, 400, 0) // center the cube
-    g.render(cube)
-    
+    g.setWorldCoords3D(-150, -150, 300);
+    var cube = buildCube(g, 20, ["red","orange","yellow","green","blue","purple"]);
+
+    var centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
+    cube.addObj(centerX);
+    var centerY = g.compilePath3D(["M",0,-50,0, "L",0,50,0], "black", 1);
+    cube.addObj(centerY);
+    var centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
+    cube.addObj(centerZ);
+
+    setInterval(movePutter, 100);
+    //g.render(cube);
+
+
+  function movePutter()
+  {
+    // use target's parent group drawing origin as reference
+    //cube1.transform.rotate(0,1,0,-25);
+    /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
+    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
+    cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
+    cube.transform.rotate(1,1,0,10);
+    g.renderFrame(cube);
+   /* newPos.x = mousePos.x-this.grabOfs.x;
+    newPos.y = mousePos.y-this.grabOfs.y;
+    newPos.z = mousePos.z-this.grabOfs.z;
+    cube1.transform.reset();          // reset to identity matrix
+    cube1.transform.translate(newPos.x, newPos.y, newPos.z);
+
+    g.renderFrame(grp);*/
+  }
     
 function buildCube(g, width, colors) // pass width and array of 6 colors
 {
   var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
-      foldTbl = [-90, 90, -90, 90, -90, 90],
-      bend = -90,
-      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
-      moveTbl_2 = [width, 0, width, 0, width, 0],
       faces = g.createGroup3D(),
       side,
+      translateX = [-width/2,-width/2,-width/2,-width/2,-width/2,-width/2],
+      translateY = [-width/2,-width/2,-width/2, -width/2,-width/2,-width/2],
+      translateZ = [width/2,width/2,width/2,width/2,width/2,width/2],
+      rotateX = [1,1,1,1,0,0],
+      rotateY = [1,0,0,0,1,1],
+      rotateZ = [1,0,0,0,0,0],
+      rotateMag = [0,90,-90,180,90,-90],
       i;
 
   for (i=0; i<6; i++)
   {
     console.log(i)
     side = g.compileShape3D(sq, colors[i]);
+    side.translate(translateX[i], translateY[i], translateZ[i]);
+    side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
     side.backHidden = true;
     faces.addObj(side);
-    faces.translate(0, moveTbl_1[i], 0);
-    faces.rotate(0, 0, 1, foldTbl[i]);
-    faces.rotate(0, 1, 0, bend);
-    faces.translate(0, moveTbl_2[i], 0);
+
   }
   return faces;
 }
