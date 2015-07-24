@@ -154,13 +154,9 @@ function buildCube(g, width, colors) // pass width and array of 6 colors
     faces.addObj(centerY);
     centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
     faces.addObj(centerZ);
-    
-    
+        
   return faces;
 }
-
-}
-
 
 
 
@@ -172,7 +168,11 @@ function putterDemo(scrnID)
       taggedFace, cube1,
       width = 20,
       colors1 = ["red","orange","yellow","green","blue","purple"],
-      iter = 0;
+      iter = 0,
+      coordsX = -150,
+      coordsY = -80,
+      coordsZ = 300,
+      incCoords = 0;
 
       console.log(g.cnvs.offsetWidth);
 
@@ -185,7 +185,10 @@ function putterDemo(scrnID)
     /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
     cube1.transform.rotate(0,1,0,gyroData[iter][1]);
     cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
-    cube1.transform.rotate(1,1,0,10);
+    g.setWorldCoords3D(coordsX+incCoords, coordsY+incCoords, coordsZ);
+    incCoords = incCoords + 1;
+      
+    cube1.rotate(1,1,1,10);
     g.renderFrame(cube1);
    /* newPos.x = mousePos.x-this.grabOfs.x;
     newPos.y = mousePos.y-this.grabOfs.y;
@@ -196,7 +199,7 @@ function putterDemo(scrnID)
     g.renderFrame(grp);*/
   }
 
-  g.setWorldCoords3D(-150, -80, 300);
+  g.setWorldCoords3D(coordsX, coordsY, coordsZ);
   g.setFOV(45);
   g.setPropertyDefault("backgroundColor", "lightyellow");
 
