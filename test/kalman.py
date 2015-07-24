@@ -9,7 +9,7 @@ Updates a 1 dimensional angle of rotation based on stream of data:
 
 class Kalman:
     #static bias and error variables
-    Q_angle = 0.004
+    Q_angle = 0.001
     Q_bias = 0.003
     R_measure = 0.03
 
@@ -51,13 +51,13 @@ class Kalman:
         self.bias += K[1] * y
 
         #Calculate estimation error covariance - Update the error covariance
-        temp00 = P[0][0]
-        temp01 = P[0][1]
+        temp00 = self.P[0][0]
+        temp01 = self.P[0][1]
 
-        P[0][0] -= K[0] * temp00
-        P[0][1] -= K[0] * temp01
-        P[1][0] -= K[1] * temp00
-        P[1][1] -= K[1] * temp01
+        self.P[0][0] -= K[0] * temp00
+        self.P[0][1] -= K[0] * temp01
+        self.P[1][0] -= K[1] * temp00
+        self.P[1][1] -= K[1] * temp01
 
         return self.angle
 

@@ -34,19 +34,15 @@ import operator
 import MathUtil
 import kalman
 
-
-# Global functions/hex and byte conversions
-tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
-tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
-
 # Global functions/retrieve start time --------------------------------------
 current_milli_time = lambda: int(round(time.time() * 1000))
 start_time = current_milli_time()
-elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - float(start_time))/1000 ) ) 
+elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - float(start_time))/1000 ) )
 
 
 # Wiced sense class
 class wicedsense:
+
   # frequency of data
   delta_t = .0125 # in seconds (preset to 12.5 ms)
   # total duration
@@ -94,7 +90,7 @@ class wicedsense:
 
   # Init function to connect to wiced sense using mac address
   # Blue tooth address is obtained from blescan.py 
-  def __init__( self, bluetooth_adr ):
+  def __init__( self, bluetooth_adr, calibrate ):
     self.con = pexpect.spawn('gatttool -b ' + bluetooth_adr + ' --interactive')
     #self.con.logfile = sys.stdout
     self.con.expect('\[LE\]>', timeout=600)
@@ -103,7 +99,7 @@ class wicedsense:
     # test for success of connect
     self.con.expect('Connection successful.*\[LE\]>')
     print "Connection successful"
-
+    self.calibrate = calibrate
     self.cb = {}
     return
 
@@ -151,28 +147,28 @@ class wicedsense:
       except pexpect.TIMEOUT:
         print "TIMEOUT exception!"
         break
-      if pnum==0:
-        #print "pnum = 0"
-        after = self.con.after
-        hxstr = after.split()[3:]
-        handle = long(float.fromhex(hxstr[0]))
-        #if True:
-	    try:
-        self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
+
+      try:
+        if pnum==0:
+          after = self.con.after
+          hxstr = after.split()[3:]
+          handle = long(float.fromhex(hxstr[0]))
+          self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
+        else:
+          print "pnum not equal to 0"
 
       except Exception,e:
         print str(e)
         '''else:
           print "TIMEOUT!!"
           pass'''
-      else:
-        print "pnum not equal to 0"
+      
 
 
     # After the while loop has broken...
     gyroAvg = [0, 0, 0]
     accelAvg = [0, 0, 0]
-    if(calibrate == True):
+    if(self.calibrate == True):
       calText = ""
       gyroAvg[0] = fsum(self.gyroX) / len(self.gyroX)
       gyroAvg[1] = fsum(self.gyroY) / len(self.gyroY)
@@ -196,9 +192,9 @@ class wicedsense:
       gyroZnew = []
       print
       print "magnitude"
-      for x in range(len(magnitude)):
-        print magnitude[x]
-        if magnitude[x] > thresh:
+      for x in range(len(self.magnitude)):
+        print self.magnitude[x]
+        if self.magnitude[x] > thresh:
           print "PUTTING................."
           axnew = self.ax[x:]
           aynew = self.ay[x:]
@@ -207,22 +203,31 @@ class wicedsense:
           gyroYnew = self.gyroY[x:]
           gyroZnew = self.gyroZ[x:]
           break
-      print sum(gyroXnew)
+
       # ========================
       # GET DISPLACEMENT FRAMES
       # ========================
 
-      xframes = []
-      yframes = []
-      zframes = []
-      xyzframes = []
-      for x in range(len(axnew)):
+      roll = []
+      pitch = []
+      yaw = []
+
+      xframes = [MathUtil.displacement(self.dx,self.vx,axnew[0], self.delta_t)[0]]
+      yframes = [MathUtil.displacement(self.dy,self.vy,aynew[0], self.delta_t)[0]]
+      zframes = [MathUtil.displacement(self.dz,self.vz,aznew[0], self.delta_t)[0]]
+      roll.append(MathUtil.roll(aynew[0], aznew[0]))
+      pitch.append(MathUtil.pitch(axnew[0], aynew[0], aznew[0]))
+      xyzframes = [xframes[-1], yframes[-1], zframes[-1]] 
+      for x in range(1, len(axnew)):
+        
+        roll.append(MathUtil.roll(aynew[x], aznew[x]))
+        pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
         self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,axnew[x], self.delta_t)
-        xframes = xframes.append( float(xframes[-1] + self.dx)  )
+        xframes.append( float(xframes[-1] + self.dx)  )
         self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,aynew[x], self.delta_t)
-        yframes = yframes.append( float(yframes[-1] + self.dy)  )
+        yframes.append( float(yframes[-1] + self.dy)  )
         self.dz,self.vz = MathUtil.displacement(self.dz,self.vz,aznew[x], self.delta_t)
-        zframes = zframes.append( float(zframes[-1] + self.dz)  )
+        zframes.append( float(zframes[-1] + self.dz)  )
         xyzframes.append( [xframes[-1], yframes[-1], zframes[-1]] )
 
       # OUTPUT TO SCREEN ------------------
@@ -249,12 +254,15 @@ class wicedsense:
 
       '''
       gyrodata = []
-      kalmanX = kalman.Kalman(gyroXnew[0])
-      kalmanY = kalman.Kalman(gyroYnew[0])
-      kalmanZ = kalman.Kalman(gyroZnew[0])
+      kalmanX = kalman.Kalman(roll[0])
+      kalmanY = kalman.Kalman(pitch[0])
+      #kalmanZ = kalman.Kalman(gyroZnew[0])
+      gyrodata.append([roll[0], pitch[0], MathUtil.getAngle(gyroZnew[x], self.delta_t)])
       for x in range(1, len(gyroXnew)):
-        
-        gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
+        gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
+                        kalmanX.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
+                        MathUtil.getAngle(gyroZnew[x], self.delta_t) ])
+        #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
 
       # =======================
       # PUSH FRAMES TO PARSE
@@ -272,61 +280,60 @@ class wicedsense:
     # garbageiterations = 10
     if self.inittime > self.garbageiterations-1:
 
-    if self.starttimer == 0:
-      self.starttimer = 1
-      start_time = current_milli_time()
-      self.timestamp.append( 0.0 )
-      #print "Python timestamp (in s): " + str(timestamp[-1])
+      if self.starttimer == 0:
+        self.starttimer = 1
+        start_time = current_milli_time()
+        self.timestamp.append( 0.0 )
+        #print "Python timestamp (in s): " + str(timestamp[-1])
 
-    else: # the garbage iterations have passed
-      self.timestamp.append( elapsed_time() )
-      #print "Python timestamp (in s): " + str(timestamp[-1])
+      else: # the garbage iterations have passed
+        self.timestamp.append( elapsed_time() )
+        #print "Python timestamp (in s): " + str(timestamp[-1])
 
-      bytelen = len(v) # v is the handle data
+        bytelen = len(v) # v is the handle data
 
-      # Make sure bytes are received by the correct handle
-      #if(v[0] == 3):
+        # Make sure bytes are received by the correct handle
+        #if(v[0] == 3):
 
-      vx1 = int( str(v[2]*256 + v[1]) )
-      vy1 = int( str(v[4]*256 + v[3]) )
-      vz1 = int( str(v[6]*256 + v[5]) )
-      gx1 = int( str(v[8]*256 + v[7]) )
-      gy1 = int( str(v[10]*256 + v[9]) )
-      gz1 = int( str(v[12]*256 + v[11]) )
-      #print "gx: " + str(gx1)
-      #print "gy: " + str(gy1)
-      #print "gz: " + str(gz1)
-      #print "vx: " + str(vx1)
-      #print "vy: " + str(vy1)
-      #print "vz: " + str(vz1)
+        vx1 = int( str(v[2]*256 + v[1]) )
+        vy1 = int( str(v[4]*256 + v[3]) )
+        vz1 = int( str(v[6]*256 + v[5]) )
+        gx1 = int( str(v[8]*256 + v[7]) )
+        gy1 = int( str(v[10]*256 + v[9]) )
+        gz1 = int( str(v[12]*256 + v[11]) )
+        #print "gx: " + str(gx1)
+        #print "gy: " + str(gy1)
+        #print "gz: " + str(gz1)
+        #print "vx: " + str(vx1)
+        #print "vy: " + str(vy1)
+        #print "vz: " + str(vz1)
 
-      if(calibrate == True):
-        (Gxyz, Gmag) = MathUtil.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
-        (Axyz, Amag) = MathUtil.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
-      else:
-        (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(gyroCal[0])), gy1 + int(float(gyroCal[1])), gz1 + int(float(gyroCal[2])), 1.0/.0175)
-        (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(accelCal[0])), vy1 + int(float(accelCal[1])), vz1 + int(float(accelCal[2])), 8192.0/9.80665)
-                  
-      print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + str(Axyz[0]) + ", " + str(Axyz[1]) + ", " + str(Axyz[2]) 
+        if(self.calibrate == True):
+          (Gxyz, Gmag) = MathUtil.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
+          (Axyz, Amag) = MathUtil.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
+        else:
+          (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.0175)
+          (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 8192.0/9.80665)
+                    
+        print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + str(Axyz[0]) + ", " + str(Axyz[1]) + ", " + str(Axyz[2]) 
 
-      self.gyroX.append(Gxyz[0])
-      self.gyroY.append(Gxyz[1])
-      self.gyroZ.append(Gxyz[2])
+        self.gyroX.append(Gxyz[0])
+        self.gyroY.append(Gxyz[1])
+        self.gyroZ.append(Gxyz[2])
 
-      self.magnitude.append( Amag )
+        self.magnitude.append( Amag )
 
-      self.ax.append( Axyz[0] )
-      self.ay.append( Axyz[1] )
-      self.az.append( Axyz[2] )
+        self.ax.append( Axyz[0] )
+        self.ay.append( Axyz[1] )
+        self.az.append( Axyz[2] )
  
-      else:
-        self.inittime += 1  # increment 10 times before evaluating values      
-      return
+    else:
+      self.inittime += 1  # increment 10 times before evaluating values      
 
 
 # main function USAGE python sense.py <mac address>
 def main():
-  global calibrate
+  calibrate = False
   bluetooth_adr = sys.argv[1]
   
   if len(sys.argv) > 2:
@@ -337,7 +344,7 @@ def main():
   try:   
     print "[re]starting.."
 
-    tag = wicedsense(bluetooth_adr)
+    tag = wicedsense(bluetooth_adr, calibrate)
 
     tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)

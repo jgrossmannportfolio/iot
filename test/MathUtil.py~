@@ -1,19 +1,24 @@
 # Math utility functions
+import math
 
 PI = 3.1415926536
 
+# Global functions/hex and byte conversions
+tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
+tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
+
 def roll(accelY, accelZ):
-  return (atan2(accelY, accelZ) * 180.0) / PI
+  return (math.atan2(accelY, accelZ) * 180.0) / PI
 
 
 def pitch(accelX, accelY, accelZ):
-  return (atan2(accelX, sqrt(accelY**2, accelZ**2)) * 180.0) / PI
+  return (math.atan2(accelX, math.sqrt(accelY**2, accelZ**2)) * 180.0) / PI
 
 
 def yaw(roll, pitch, magX, magY, magZ):
-  x = magX * cos(pitch) + magY * sin(pitch) * sin(roll)
-  y = magY * cos(roll) + magZ * sin(roll)
-  return (atan2(-y / x) * 180.0) / PI
+  x = magX * math.cos(pitch) + magY * math.sin(pitch) * math.sin(roll)
+  y = magY * math.cos(roll) + magZ * math.sin(roll)
+  return (math.atan2(-y / x) * 180.0) / PI
 
 
 def displacement(d, v, a, dt):
@@ -38,6 +43,6 @@ def convertData(rawX, rawY, rawZ, calibration):
   return (xyz, mag)
 
 
-def getAngule(gyroData, dt):
+def getAngle(gyroData, dt):
     return gyroData * dt
 
