@@ -90,24 +90,37 @@ iters = 0.0
 
 
 # Get the frame, aka displacement from the origin, give the acceleration
-def getFrame(d,v,accelData,frame):
+def getFrame(d,v,accelData, accelDataOld,frame):
 
-	global delta_t
+    global delta_t
 	
+    tempAccel = ((accelData - accelDataOld) / 2) + accelDataOld
 	# displacement
-	d1 = v*(delta_t)
-	d2 = (0.5)*(accelData)*((delta_t)**2)
-	d = d1 + d2
+    d1 = v*(delta_t)
+    d2 = (0.5)*accelData*((delta_t)**2)
+    d = d1 + d2
 
 	# velocity
-	v1 = v
-	v2 = accelData*delta_t
-	v = v1 + v2
+    v1 = v
+    v2 = AccelData*(delta_t)
+    v = v1 + v2
 
-	# frame
-	frame.append( float(frame[-1] + d)  )
+    # frame
+    frame.append( float(frame[-1] + d)  )
 
-	return d,v,frame
+    '''d1 = v*(delta_t / 2)
+    d2 = (0.5)*accelData*((delta_t / 2)**2)
+    d = d1 + d2
+
+    # velocity
+    v1 = v
+    v2 = accelData*(delta_t / 2)
+    v = v1 + v2
+
+    # frame
+    frame.append( float(frame[-1] + d)  )'''
+
+    return d,v,frame
 
 
 
@@ -276,20 +289,23 @@ class wicedsense:
         self.writeToFile("calibration.txt", calText)
     
     else:
-
-        for x in range(len(ax)):
-            ax[:] = [i + float(accelCal[0]) for i in ax]
-            ay[:] = [i + float(accelCal[1]) for i in ay]
-            az[:] = [i + float(accelCal[2]) for i in az]
-            gyroX[:] = [g + float(gyroCal[0]) for g in gyroX]
-            gyroY[:] = [g + float(gyroCal[1]) for g in gyroY]
-            gyroZ[:] = [g + float(gyroCal[2]) for g in gyroZ]
+        print ax[0]
+        ax[:] = [i + float(accelCal[0]) for i in ax]
+        ay[:] = [i + float(accelCal[1]) for i in ay]
+        az[:] = [i + float(accelCal[2]) for i in az]
+        gyroX[:] = [g + float(gyroCal[0]) for g in gyroX]
+        gyroY[:] = [g + float(gyroCal[1]) for g in gyroY]
+        gyroZ[:] = [g + float(gyroCal[2]) for g in gyroZ]
+        print ax[0]
 
         # FILTER OUT INITIAL ACCELERATION VALUES --------------
         thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
         axnew = []   # new acceleration list in the x direction
         aynew = []   # ... y direction
         aznew = []   # ... z direction
+        gyroXnew = []
+        gyroYnew = []
+        gyroZnew = []
         print
         print "magnitude"
         for x in range(len(magnitude)):
@@ -307,11 +323,12 @@ class wicedsense:
         # ========================
         # GET DISPLACEMENT FRAMES
         # ========================
-        for x in range(len(axnew)):
-          dx,vx,xframes = getFrame(dx,vx,axnew[x],xframes)
-          dy,vy,yframes = getFrame(dy,vy,aynew[x],yframes)
-          dz,vz,zframes = getFrame(dz,vz,aznew[x],zframes)
-          xyzframes.append( [xframes[-1],yframes[-1],zframes[-1]] )
+        for x in range(1, len(axnew)):
+          dx,vx,xframes = getFrame(dx,vx,axnew[x], axnew[x-1],xframes)
+          dy,vy,yframes = getFrame(dy,vy,aynew[x], aynew[x-1],yframes)
+          dz,vz,zframes = getFrame(dz,vz,aznew[x], aznew[x-1],zframes)
+          #xyzframes.append( [xframes[-2],yframes[-2],zframes[-2]] )
+          xyzframes.append( [xframes[-1], yframes[-1], zframes[-1]])
 
         # OUTPUT TO SCREEN ------------------
         '''
@@ -414,6 +431,7 @@ class wicedsense:
               #print "vy: " + str(vy1)
               #print "vz: " + str(vz1)
               #for x in range(0,19): print v[x]
+              print calibrate
               if(calibrate == True):
                   (Gxyz, Gmag) = self.convertData(gx1 + int(gyroCal[0]), gy1 + int(gyroCal[1]), gz1 + int(gyroCal[2]), 1.0)
                   (Axyz, Amag) = self.convertData(vx1 + int(accelCal[0]), vy1 + int(accelCal[1]), vz1 + int(accelCal[2]), 1.0)
