@@ -37,7 +37,7 @@ import operator
     # frequency of BLE transmissions
 delta_t = .0125 # in seconds (preset to 12.5 ms)
     # total duration
-endtime = 4.0 # in seconds
+endtime = 2.0 # in seconds
 garbageiterations = 10
 
 # Global initialization triggers
@@ -289,14 +289,6 @@ class wicedsense:
         self.writeToFile("calibration.txt", calText)
     
     else:
-        print ax[0]
-        ax[:] = [i + float(accelCal[0]) for i in ax]
-        ay[:] = [i + float(accelCal[1]) for i in ay]
-        az[:] = [i + float(accelCal[2]) for i in az]
-        gyroX[:] = [g + float(gyroCal[0]) for g in gyroX]
-        gyroY[:] = [g + float(gyroCal[1]) for g in gyroY]
-        gyroZ[:] = [g + float(gyroCal[2]) for g in gyroZ]
-        print ax[0]
 
         # FILTER OUT INITIAL ACCELERATION VALUES --------------
         thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
@@ -319,7 +311,7 @@ class wicedsense:
               gyroYnew = gyroY[x:]
               gyroZnew = gyroZ[x:]
               break
-        
+        print sum(gyroXnew)
         # ========================
         # GET DISPLACEMENT FRAMES
         # ========================
@@ -431,14 +423,14 @@ class wicedsense:
               #print "vy: " + str(vy1)
               #print "vz: " + str(vz1)
               #for x in range(0,19): print v[x]
-              print calibrate
+              #print calibrate
               if(calibrate == True):
-                  (Gxyz, Gmag) = self.convertData(gx1 + int(gyroCal[0]), gy1 + int(gyroCal[1]), gz1 + int(gyroCal[2]), 1.0)
-                  (Axyz, Amag) = self.convertData(vx1 + int(accelCal[0]), vy1 + int(accelCal[1]), vz1 + int(accelCal[2]), 1.0)
+                  (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
+                  (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
               else:
-                  (Gxyz, Gmag) = self.convertData(gx1, gy1, gz1, 1.0/.0175) # FS = 500dps
-                  #(Axyz, Amag) = self.convertData(vx,vy,vz, (86.0/(9.80665 * 3779.53)))
-                  (Axyz, Amag) = self.convertData( vx1,vy1,vz1, 8192.0/9.80665)#(8192.0/9.80665)
+                  (Gxyz, Gmag) = self.convertData(gx1 + int(float(gyroCal[0])), gy1 + int(float(gyroCal[1])), gz1 + int(float(gyroCal[2])), 1.0/.0175)
+                  (Axyz, Amag) = self.convertData(vx1 + int(float(accelCal[0])), vy1 + int(float(accelCal[1])), vz1 + int(float(accelCal[2])), 8192.0/9.80665)
+                  
               #print "accelx"
               #print Axyz[0]
               #self.accel.append(Axyz)
