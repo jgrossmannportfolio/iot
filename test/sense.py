@@ -212,11 +212,18 @@ class wicedsense:
       # GET DISPLACEMENT FRAMES
       # ========================
 
+      roll = []
+      pitch = []
+      yaw = []
+
       xframes = []
       yframes = []
       zframes = []
       xyzframes = []
       for x in range(len(axnew)):
+        roll.append(MathUtil.roll(aynew[x], aznew[x]))
+        pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
+  
         self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,axnew[x], self.delta_t)
         xframes = xframes.append( float(xframes[-1] + self.dx)  )
         self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,aynew[x], self.delta_t)
@@ -249,8 +256,15 @@ class wicedsense:
 
       '''
       gyrodata = []
-      for x in range(len(gyroXnew)):
-        gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
+      kalmanX = kalman.Kalman(rolll[0])
+      kalmanY = kalman.Kalman(pitch[0])
+      #kalmanZ = kalman.Kalman(gyroZnew[0])
+      gyrodata.append([roll[0], pitch[0], MathUtil.getAngle(gyroZnew[x], self.delta_t)])
+      for x in range(1, len(gyroXnew)):
+        gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
+                        kalmanX.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
+                        MathUtil.getAngle(gyroZnew[x], self.delta_t) ]
+        #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
 
       # =======================
       # PUSH FRAMES TO PARSE
