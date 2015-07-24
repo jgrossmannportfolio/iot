@@ -146,32 +146,15 @@ function buildCube(g, width, colors) // pass width and array of 6 colors
     side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
     side.backHidden = true;
     faces.addObj(side);
-
   }
-  return faces;
-}
-
-function buildPutter(g, width, colors) //pass width and array of 6 colors
-{
-    var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
-      foldTbl = [-90, 90, -90, 90, -90, 90],
-      bend = -90,
-      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
-      moveTbl_2 = [width, 0, width, 0, width, 0],
-      faces = g.createGroup3D(),
-      side,
-      i;
-
-  for (i=0; i<6; i++)
-  {
-    side = g.compileShape3D(sq, colors[i]);
-    side.backHidden = true;
-    faces.addObj(side);
-    faces.translate(0, moveTbl_1[i], 0);
-    faces.rotate(0, 0, 1, foldTbl[i]);
-    faces.rotate(0, 1, 0, bend);
-    faces.translate(0, moveTbl_2[i], 0);
-  }
+    // Axes added for visual debugging
+    centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
+    faces.addObj(centerX);
+    centerY = g.compilePath3D(["M",0,-50,0, "L",0,50,0], "black", 1);
+    faces.addObj(centerY);
+    centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
+    faces.addObj(centerZ);
+        
   return faces;
 }
 
@@ -182,10 +165,14 @@ function putterDemo(scrnID)
 {
   var g = new Cango3D(scrnID),
       newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
-      taggedFace, cube1, centerX, centerY, centerZ
+      taggedFace, cube1,
       width = 20,
       colors1 = ["red","orange","yellow","green","blue","purple"],
-      iter = 0;
+      iter = 0,
+      coordsX = -150,
+      coordsY = -80,
+      coordsZ = 300,
+      incCoords = 0;
 
       console.log(g.cnvs.offsetWidth);
 
@@ -198,7 +185,10 @@ function putterDemo(scrnID)
     /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
     cube1.transform.rotate(0,1,0,gyroData[iter][1]);
     cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
-    cube1.transform.rotate(1,1,0,10);
+    g.setWorldCoords3D(coordsX+incCoords, coordsY+incCoords, coordsZ);
+    incCoords = incCoords + 1;
+      
+    cube1.rotate(1,1,1,10);
     g.renderFrame(cube1);
    /* newPos.x = mousePos.x-this.grabOfs.x;
     newPos.y = mousePos.y-this.grabOfs.y;
@@ -209,7 +199,7 @@ function putterDemo(scrnID)
     g.renderFrame(grp);*/
   }
 
-  g.setWorldCoords3D(-150, -80, 300);
+  g.setWorldCoords3D(coordsX, coordsY, coordsZ);
   g.setFOV(45);
   g.setPropertyDefault("backgroundColor", "lightyellow");
 
@@ -225,13 +215,7 @@ function putterDemo(scrnID)
 
 
   cube1 = buildCube(g, width, colors1);
-  centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
-    cube1.addObj(centerX);
-  centerY = g.compilePath3D(["M",0,-50,0, "L",0,50,0], "black", 1);
-    cube1.addObj(centerY);
-  centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
-    cube1.addObj(centerZ);
-   
+
 
   //cube1.rotate(1, 1, 0, 30);
   //cube1.translate(35, -60, -10);
