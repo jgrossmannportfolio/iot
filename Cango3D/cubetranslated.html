@@ -36,12 +36,18 @@
         var displacementframes = generateRandPath(); //generates displacement array with path data
         var convertedframes = applyZoffset(displacementframes); //apply z offset to displacement
     
-    // build the object
-    var cube = buildCube(g, 20, ["red","orange","yellow","green","blue","purple"]);
 
+    
+    // build the object
+    var cube = buildPutter(g, 10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
+    //var cube = buildCube(g, 10, ["red","orange","yellow","green","blue","violet"]);
+
+    //var angleZ = 90;
+    //g.setWorldCoords3D(coordsX, -coordsY, coordsZ);
     // Configure animation
     var timerinterval = 10;
     var timer = setInterval(movePutter, timerinterval);
+
 
 
 
@@ -67,7 +73,7 @@
     Y = convertedframes[index][1];
     Z = convertedframes[index][2];
     
-    cube.transform.rotate(1,1,0,5);  
+    cube.transform.rotate(1,1,0,1);  
     g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
     g.renderFrame(cube);
       
@@ -110,6 +116,8 @@
       
     return newframes;
   }
+
+
 
 
   function generateRandPath(){
@@ -157,8 +165,61 @@
 
 
 
-  function buildCube(g, width, colors){
-    var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+  function buildPutter(g, width, colors){
+    
+    var sq = [['M',0,0,0, 'L',width*4,0,0, width*4,width,0, 0,width,0, 'z']];
+      sq.push(sq[0]);
+      sq.push(sq[0]);
+      sq.push(sq[0]);
+      sq.push(['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z']);
+      sq.push(sq[4]);
+      sq.push(['M',0,0,0, 'L',width/2,0,0, width/2,width/2,0, 0,width/2,0, 'z']); // dot on putter head
+    
+      var faces = g.createGroup3D(),
+      side,
+      translateX = [-width*2,-width*2,-width*2,-width*2,-width/2,-width/2,-width/4],
+      translateY = [0,-width/2,-width/2, -width,0,0,width/4],
+      translateZ = [width/2,0,width,width/2,width*2,width*2,width/2+1],
+      rotateX = [1,1,1,1,0,0,0],
+      rotateY = [1,0,0,0,1,1,1],
+      rotateZ = [1,0,0,0,0,0,0],
+      rotateMag = [0,90,-90,180,90,-90,180],
+      i;
+
+    for (i=0; i<7; i++){
+        //console.log(i)
+        side = g.compileShape3D(sq[i], colors[i]);
+        side.translate(translateX[i], translateY[i], translateZ[i]);
+        side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
+        //side.backHidden = true;
+        faces.addObj(side);
+    }
+    
+    // creating the shaft
+    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,3*width,0], "#686868", width/6);
+    faces.addObj(lowerShaft);
+      
+    upperShaft = g.compilePath3D(["M",-width,3*width,0, "L",-26/15*width,13*width,0], "#A8A8A8", width/4);
+    faces.addObj(upperShaft);
+      
+    grip = g.compilePath3D(["M",-26/15*width,13*width,0, "L",-2*width,17*width,0], "#202020", width/3);
+    faces.addObj(grip);
+      
+      
+    // add axes for visual debugging
+    centerX = g.compilePath3D(["M",-4*width,0,0, "L",4*width,0,0], "green", 1);
+    faces.addObj(centerX);
+    centerY = g.compilePath3D(["M",0,-4*width,0, "L",0,4*width,0], "green", 1);
+    faces.addObj(centerY);
+    centerZ = g.compilePath3D(["M",0,0,-4*width, "L",0,0,4*width], "green", 1);
+    faces.addObj(centerZ);
+    
+    
+    return faces;
+  }
+
+function buildCube(g, width, colors){ // pass width and array of 6 colors
+  var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
       faces = g.createGroup3D(),
       side,
       translateX = [-width/2,-width/2,-width/2,-width/2,-width/2,-width/2],
@@ -170,26 +231,25 @@
       rotateMag = [0,90,-90,180,90,-90],
       i;
 
-    for (i=0; i<6; i++){
-        //console.log(i)
-        side = g.compileShape3D(sq, colors[i]);
-        side.translate(translateX[i], translateY[i], translateZ[i]);
-        side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
-        side.backHidden = true;
-        faces.addObj(side);
-    }
-    
+  for (i=0; i<6; i++)
+  {
+    console.log(i)
+    side = g.compileShape3D(sq, colors[i]);
+    side.translate(translateX[i], translateY[i], translateZ[i]);
+    side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
+    side.backHidden = true;
+    faces.addObj(side);
+  }
+    // Axes added for visual debugging
     centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
     faces.addObj(centerX);
     centerY = g.compilePath3D(["M",0,-50,0, "L",0,50,0], "black", 1);
     faces.addObj(centerY);
     centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
     faces.addObj(centerZ);
-    
-    
-    return faces;
-  }
-
+        
+  return faces;
+}
 
   </script>
     
