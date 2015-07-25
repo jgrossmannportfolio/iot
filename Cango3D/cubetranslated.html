@@ -20,6 +20,7 @@
     var cvsID = "canvasID";
     setCanvasDim();
 
+    // Vars for world coordinates
     var coordsX = -($("#"+cvsID).attr("width")/2), // bottom leftmost pixel x
         coordsY = -($("#"+cvsID).attr("height")/2), // bottom leftmost pixel y
         coordsZ = -(coordsX + coordsY);
@@ -32,9 +33,9 @@
     
     // Generate Random Path Data
         var index = 0; // index for displacement array
-        var displacement = [[0,0,0]]; // initialize displacement array
-        generateRandPath1(); //loads displacement array with path data
-
+        var displacementframes = generateRandPath(); //generates displacement array with path data
+        var convertedframes = applyZoffset(displacementframes); //apply z offset to displacement
+    
     // build the object
     var cube = buildCube(g, 20, ["red","orange","yellow","green","blue","purple"]);
 
@@ -45,107 +46,104 @@
 
 
 // =============================================
+  function setCanvasDim(){
+    width = 400;
+    height = 400;
+    $("#"+cvsID).attr("width", width);
+    $("#"+cvsID).attr("height", height);   
+  }
 
-    function setCanvasDim(){
-        width = 400;
-        height = 400;
-        $("#"+cvsID).attr("width", width);
-        $("#"+cvsID).attr("height", height);   
-    }
-
-  function movePutter()
+  function movePutter() // move putter based on convertedframes
   {
-      
-    if (index > displacement.length - 2){
+    
+    if (index > convertedframes.length - 2){ //when the displacement array ends
         index = 0;
         clearInterval(timer); // clear putt
         timer = setInterval(movePutter, timerinterval); // loop putt
     }
     
-    X = displacement[index][0];
-    Y = displacement[index][1];
-    Z = displacement[index][2];
-      
-      
-    //cube.transform.rotate(1,1,0,5);  
+    // grab displacement values from array
+    X = convertedframes[index][0];
+    Y = convertedframes[index][1];
+    Z = convertedframes[index][2];
+    
+    cube.transform.rotate(1,1,0,5);  
     g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
-    index = index + 1;
-
-
     g.renderFrame(cube);
-
+      
+    index = index + 1; // advance to next array index
   }
 
-  function generateRandPath2(){
+
+
+
+  function applyZoffset(displacement){ //applies the z offset to a frame from the sensor
+    // desired displacement (in terms of x,y,z pixel positions)
+    //xyzdisplacement = [1,1,10],
+    console.log("applyZoffset");
+    newframes = [[0,0,0]];
+    // Offset for displacement in the Z direction (can take decimal numbers!)
+    Zoffset = [.5,.5,-1];
+    
+    // iterate through old frames
+    var j = 1;  
+    for (j = 1; j< displacement.length - 1; j++){
+        
+        // Calculate position increment from displacement data
+        xdisp = displacement[j][0] - displacement[j-1][0];
+        ydisp = displacement[j][1] - displacement[j-1][1];
+        zdisp = displacement[j][2] - displacement[j-1][2];
+        
+        // take into account z bias and position increments
+        xincrementer = xdisp + Zoffset[0]*(zdisp);
+        yincrementer = ydisp + Zoffset[1]*(zdisp);
+        zincrementer = Zoffset[2]*(zdisp);
+    
+        // update displacement frames based on z bias
+        newframesX = newframes[j-1][0] + xincrementer;
+        newframesY = newframes[j-1][1] + yincrementer;
+        newframesZ = newframes[j-1][2] + zincrementer;
+        
+        // append new array
+        newframes.push([newframesX,newframesY,newframesZ]);    
+    }
+      
+    return newframes;
+  }
+
+
+  function generateRandPath(){
     var randIter = 1,
-        
-        // desired displacement
-        xyzdisplacement = [0,0,0]
-        
-        // offset for displacement
-        biasXYZ = [1,1,-2],
-    
-        // take into account bias when incrementing world coordinates
-        xincrementer = xyzdisplacement[0] + biasXYZ[0],
-        yincrementer = xyzdisplacement[1] + biasXYZ[1],
-        zincrementer = xyzdisplacement[2] + biasXYZ[2];
-    
+        displacement = [[0,0,0]],
+        xPositionincrementer = 1,
+        yPositionincrementer = 1,
+        zPositionincrementer = 4;
+      
     for (randIter; randIter < 100; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
     }
-  }
-
-  function generateRandPath1(){
-    var randIter = 1,
-        
-        xincrementer = 1,
-        yincrementer = 1,
-        zincrementer = -2;
-    for (randIter; randIter < 100; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
-    }
-        xincrementer = 1,
-        yincrementer = 0,
-        zincrementer = 0;
+        xPositionincrementer = -1,
+        yPositionincrementer = -1,
+        zPositionincrementer = -4;
     for (randIter; randIter < 200; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
     }
-        xincrementer = -1,
-        yincrementer = 0,
-        zincrementer = 0;
+        xPositionincrementer = 0,
+        yPositionincrementer = 0,
+        zPositionincrementer = -4;
     for (randIter; randIter < 300; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
     }
-        xincrementer = -1,
-        yincrementer = -1,
-        zincrementer = 2;
-    for (randIter; randIter < 400; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
-    }
-        xincrementer = -1,
-        yincrementer = -1,
-        zincrementer = 2;
-    for (randIter; randIter < 599; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
-    }
+    return displacement;
   }
 
 
