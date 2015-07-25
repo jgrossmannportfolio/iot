@@ -12,31 +12,90 @@
       
 </head>
 <body>
- <canvas id="canvasID" width="800" height="800" style="border:1px solid black;"></canvas>
+ <canvas id="canvasID" width="400" height="400" style="border:1px solid black;"></canvas>
     
     <script type="text/javascript">
     var g = new Cango3D("canvasID");  // create a graphics context
-    var inc = -150;
-    g.setWorldCoords3D(inc,-150, 300);
+    var coordsX = -200, coordsY = -200, coordsZ = 400;
+
+  g.setFOV(50);
+  g.setPropertyDefault("backgroundColor", "lightyellow");
+    
+    var index = 0,
+        displacement = [[0,0,0]];
+    
+    // Generate Random Data
+    var randIter = 1,
+        
+        xincrementer = 1,
+        yincrementer = 1,
+        zincrementer = 3;
+    for (randIter; randIter < 200; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-zincrementer,yprev-zincrementer,zprev+zincrementer]);
+    }/*
+    for (randIter; randIter < 200; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev,yprev+incrementer,zprev]);
+    }*/
+/*
+    for (randIter; randIter < 40; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-incrementer,yprev,zprev]);
+    } for (randIter; randIter < 80; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev,yprev,zprev+2*incrementer]);
+    } for (randIter; randIter < 120; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev+incrementer,yprev,zprev]);
+    } for (randIter; randIter < 160; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev,yprev,zprev-2*incrementer]);
+    }*/
+
+    //console.log("ITer val");
+    //console.log(randIter);
+    //console.log(displacement.length);
+
+
+    g.setWorldCoords3D(coordsX, coordsY, coordsZ);
 
     var cube = buildCube(g, 20, ["red","orange","yellow","green","blue","purple"]);
 
     //cube.translate(0,0,0);
-    setInterval(movePutter, 100);
+    var timer = setInterval(movePutter, 50);
     //g.render(cube);
-
+    //clearInterval(movePutter, 100);
 
   function movePutter()
   {
-    // use target's parent group drawing origin as reference
-    //cube1.transform.rotate(0,1,0,-25);
-    /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
-    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
-    cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
-    g.setWorldCoords3D(inc, inc, 300);
-    inc = inc + 1;
       
-    cube.rotate(1,1,1,10);
+    if (index > displacement.length - 2){
+        index = 0;
+        //clearInterval(timer);
+        //console.log("DONE");
+    }
+    
+    X = displacement[index][0];
+    Y = displacement[index][1];
+    Z = displacement[index][2];
+      
+    g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
+    index = index + 1;
+
+    cube.rotate(1,1,0,10);
     g.renderFrame(cube);
    /* newPos.x = mousePos.x-this.grabOfs.x;
     newPos.y = mousePos.y-this.grabOfs.y;
@@ -65,7 +124,7 @@ function buildCube(g, width, colors) // pass width and array of 6 colors
 
   for (i=0; i<6; i++)
   {
-    console.log(i)
+    //console.log(i)
     side = g.compileShape3D(sq, colors[i]);
     side.translate(translateX[i], translateY[i], translateZ[i]);
     side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);

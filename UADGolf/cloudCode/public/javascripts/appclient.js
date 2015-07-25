@@ -169,9 +169,9 @@ function putterDemo(scrnID)
       width = 20,
       colors1 = ["red","orange","yellow","green","blue","purple"],
       iter = 0,
-      coordsX = -150,
-      coordsY = -80,
-      coordsZ = 300,
+      coordsX = -$("#puttCanvas").attr("width")/2, // bottom leftmost pixel x location
+      coordsY = -$("#puttCanvas").attr("height")/2, // bottom leftmose pixel y location
+      xyspan = -coordsX*2,
       incCoords = 0;
 
       console.log(g.cnvs.offsetWidth);
@@ -182,14 +182,35 @@ function putterDemo(scrnID)
   {
     // use target's parent group drawing origin as reference
     //cube1.transform.rotate(0,1,0,-25);
-    /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
-    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
-    cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
-    g.setWorldCoords3D(coordsX+incCoords, coordsY+incCoords, coordsZ);
-    incCoords = incCoords + 1;
-      
-    cube1.rotate(1,1,1,10);
+    console.log("movePutter()");
+    console.log(gyroData[iter][0]);
+
+    if (iter == 0){
+        cube1.transform.rotate(1,0,0,gyroData[iter][0]);
+        cube1.transform.rotate(0,1,0,gyroData[iter][1]);
+        //cube1.transform.rotate(0,0,1,gyroData[iter][2]);
+
+    } else if (iter == gyroData.length - 1) {
+
+        //console.log("end of iterations");
+        iter = -1;
+        cube1.transform.reset();
+        //cube1 = buildCube(g, width, colors1);
+
+    } else {
+        cube1.transform.rotate(1,0,0,-(gyroData[iter][0] - gyroData[iter-1][0]));
+        cube1.transform.rotate(0,1,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
+        //cube1.transform.rotate(0,0,1,-(gyroData[iter][2] - gyroData[iter-1][2]));
+    }
+    iter = iter + 1;
+
     g.renderFrame(cube1);
+
+
+    //g.setWorldCoords3D(coordsX, coordsY, xyspan);
+    //incCoords = incCoords + 1;
+      
+    //cube1.rotate(1,1,1,10);
    /* newPos.x = mousePos.x-this.grabOfs.x;
     newPos.y = mousePos.y-this.grabOfs.y;
     newPos.z = mousePos.z-this.grabOfs.z;
@@ -199,58 +220,18 @@ function putterDemo(scrnID)
     g.renderFrame(grp);*/
   }
 
-  g.setWorldCoords3D(coordsX, coordsY, coordsZ);
+  g.setWorldCoords3D(coordsX, coordsY, xyspan);
   g.setFOV(45);
   g.setPropertyDefault("backgroundColor", "lightyellow");
-
-
-
-
-    //bottom.transform.translate(35,-60,-10);
-    //bottom.transform.rotate(1,1,0,30);
-    
-    //g.render(bottom);
-
-
 
 
   cube1 = buildCube(g, width, colors1);
 
 
-  //cube1.rotate(1, 1, 0, 30);
-  //cube1.translate(35, -60, -10);
-  //g.render(cube1);
-//cube1.transform.rotate(0,1,0,30);
-  setInterval(movePutter, 100);
+  setInterval(movePutter, 12.5); // in msec
  // g.render(grp);
 }
 
-    function drawDemo(cvsID)
-{
-  var stick, plate, plateNstick,
-      g = new Cango3D(cvsID);  // create a graphics context
-
-  function turnPlate()
-  {
-    plateNstick.transform.rotate(0, 1, 0, -25);     // apply 25 deg rotation to matrix
-    g.renderFrame(plateNstick);           // request a re-draw
-  }
-
-  g.setPropertyDefault("backgroundColor", "aliceblue");
-  g.setWorldCoords3D(-75, -120, 150);
-  g.setLightSource(0, 100, 200);
-
-  stick = g.compilePath3D(["M",0,0,0, "Q", 0,50,0, -15, 100, 0], "sienna", 3);
-  stick.rotate(0, 1, 0, 90);  // rotate out of XY plane
-  plate = g.compileShape3D(shapes3D.circle(50), "yellow", "yellow");
-  plate.rotate(1, 0, 0, 75);  // flip to near horizontal
-  stick.translate(0, -96, 0); // move down Y axis under plate
-  // make a group comprising stick and plate
-  plateNstick = g.createGroup3D(stick, plate);
-
-  setInterval(turnPlate, 50)        // keep doing this forever
-}
-   
 
 
 
