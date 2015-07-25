@@ -125,10 +125,19 @@
         zprev = displacement[randIter-1][2];
         displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
     }
-        xPositionincrementer = -1,
+        xPositionincrementer = 0,
         yPositionincrementer = -1,
-        zPositionincrementer = -4;
+        zPositionincrementer = 0;
     for (randIter; randIter < 200; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+    }
+        xPositionincrementer = -1,
+        yPositionincrementer = 0,
+        zPositionincrementer = -4;
+    for (randIter; randIter < 300; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
@@ -137,7 +146,7 @@
         xPositionincrementer = 0,
         yPositionincrementer = 0,
         zPositionincrementer = -4;
-    for (randIter; randIter < 300; randIter = randIter + 1 ){
+    for (randIter; randIter < 400; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
