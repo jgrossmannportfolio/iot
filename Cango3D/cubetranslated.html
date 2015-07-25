@@ -12,105 +12,146 @@
       
 </head>
 <body>
- <canvas id="canvasID" width="400" height="400" style="border:1px solid black;"></canvas>
+ <canvas id="canvasID" width="0" height="0" style="border:1px solid black;"></canvas>
     
     <script type="text/javascript">
-    var g = new Cango3D("canvasID");  // create a graphics context
-    var coordsX = -200, coordsY = -200, coordsZ = 400;
 
-  g.setFOV(50);
-  g.setPropertyDefault("backgroundColor", "lightyellow");
+    // Set CANVAS width and height
+    var cvsID = "canvasID";
+    setCanvasDim();
+
+    var coordsX = -($("#"+cvsID).attr("width")/2), // bottom leftmost pixel x
+        coordsY = -($("#"+cvsID).attr("height")/2), // bottom leftmost pixel y
+        coordsZ = -(coordsX + coordsY);
     
-    var index = 0,
-        displacement = [[0,0,0]];
-    
-    // Generate Random Data
-    var randIter = 1,
-        
-        xincrementer = 1,
-        yincrementer = 1,
-        zincrementer = 3;
-    for (randIter; randIter < 200; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-zincrementer,yprev-zincrementer,zprev+zincrementer]);
-    }/*
-    for (randIter; randIter < 200; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev,yprev+incrementer,zprev]);
-    }*/
-/*
-    for (randIter; randIter < 40; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-incrementer,yprev,zprev]);
-    } for (randIter; randIter < 80; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev,yprev,zprev+2*incrementer]);
-    } for (randIter; randIter < 120; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev+incrementer,yprev,zprev]);
-    } for (randIter; randIter < 160; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev,yprev,zprev-2*incrementer]);
-    }*/
-
-    //console.log("ITer val");
-    //console.log(randIter);
-    //console.log(displacement.length);
-
-
+    // Initialize Cango3D graphics context
+    var g = new Cango3D(cvsID);
+    g.setFOV(45);
+    g.setPropertyDefault("backgroundColor", "lightyellow");
     g.setWorldCoords3D(coordsX, coordsY, coordsZ);
+    
+    // Generate Random Path Data
+        var index = 0; // index for displacement array
+        var displacement = [[0,0,0]]; // initialize displacement array
+        generateRandPath1(); //loads displacement array with path data
 
+    // build the object
     var cube = buildCube(g, 20, ["red","orange","yellow","green","blue","purple"]);
 
-    //cube.translate(0,0,0);
-    var timer = setInterval(movePutter, 50);
-    //g.render(cube);
-    //clearInterval(movePutter, 100);
+    // Configure animation
+    var timerinterval = 20;
+    var timer = setInterval(movePutter, timerinterval);
+
+
+
+// =============================================
+
+    function setCanvasDim(){
+        width = 400;
+        height = 400;
+        $("#"+cvsID).attr("width", width);
+        $("#"+cvsID).attr("height", height);   
+    }
 
   function movePutter()
   {
       
     if (index > displacement.length - 2){
         index = 0;
-        //clearInterval(timer);
-        //console.log("DONE");
+        clearInterval(timer); // clear putt
+        timer = setInterval(movePutter, timerinterval); // loop putt
     }
     
     X = displacement[index][0];
     Y = displacement[index][1];
     Z = displacement[index][2];
       
+      
+    //cube.transform.rotate(1,1,0,5);  
     g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
     index = index + 1;
 
-    cube.rotate(1,1,0,10);
-    g.renderFrame(cube);
-   /* newPos.x = mousePos.x-this.grabOfs.x;
-    newPos.y = mousePos.y-this.grabOfs.y;
-    newPos.z = mousePos.z-this.grabOfs.z;
-    cube1.transform.reset();          // reset to identity matrix
-    cube1.transform.translate(newPos.x, newPos.y, newPos.z);
 
-    g.renderFrame(grp);*/
+    g.renderFrame(cube);
+
+  }
+
+  function generateRandPath2(){
+    var randIter = 1,
+        
+        // desired displacement
+        xyzdisplacement = [0,0,0]
+        
+        // offset for displacement
+        biasXYZ = [1,1,-2],
+    
+        // take into account bias when incrementing world coordinates
+        xincrementer = xyzdisplacement[0] + biasXYZ[0],
+        yincrementer = xyzdisplacement[1] + biasXYZ[1],
+        zincrementer = xyzdisplacement[2] + biasXYZ[2];
+    
+    for (randIter; randIter < 100; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+    }
+  }
+
+  function generateRandPath1(){
+    var randIter = 1,
+        
+        xincrementer = 1,
+        yincrementer = 1,
+        zincrementer = -2;
+    for (randIter; randIter < 100; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+    }
+        xincrementer = 1,
+        yincrementer = 0,
+        zincrementer = 0;
+    for (randIter; randIter < 200; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+    }
+        xincrementer = -1,
+        yincrementer = 0,
+        zincrementer = 0;
+    for (randIter; randIter < 300; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+    }
+        xincrementer = -1,
+        yincrementer = -1,
+        zincrementer = 2;
+    for (randIter; randIter < 400; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+    }
+        xincrementer = -1,
+        yincrementer = -1,
+        zincrementer = 2;
+    for (randIter; randIter < 599; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xincrementer,yprev-yincrementer,zprev-zincrementer]);
+    }
   }
 
 
 
-function buildCube(g, width, colors) // pass width and array of 6 colors
-{
-  var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+  function buildCube(g, width, colors){
+    var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
       faces = g.createGroup3D(),
       side,
       translateX = [-width/2,-width/2,-width/2,-width/2,-width/2,-width/2],
@@ -122,15 +163,14 @@ function buildCube(g, width, colors) // pass width and array of 6 colors
       rotateMag = [0,90,-90,180,90,-90],
       i;
 
-  for (i=0; i<6; i++)
-  {
-    //console.log(i)
-    side = g.compileShape3D(sq, colors[i]);
-    side.translate(translateX[i], translateY[i], translateZ[i]);
-    side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
-    side.backHidden = true;
-    faces.addObj(side);
-  }
+    for (i=0; i<6; i++){
+        //console.log(i)
+        side = g.compileShape3D(sq, colors[i]);
+        side.translate(translateX[i], translateY[i], translateZ[i]);
+        side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
+        side.backHidden = true;
+        faces.addObj(side);
+    }
     
     centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
     faces.addObj(centerX);
@@ -140,11 +180,11 @@ function buildCube(g, width, colors) // pass width and array of 6 colors
     faces.addObj(centerZ);
     
     
-  return faces;
-}
+    return faces;
+  }
 
 
-    </script>
+  </script>
     
   </body>
 </html>  
