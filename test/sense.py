@@ -170,12 +170,12 @@ class wicedsense:
     accelAvg = [0, 0, 0]
     if(self.calibrate == True):
       calText = ""
-      gyroAvg[0] = fsum(self.gyroX) / len(self.gyroX)
-      gyroAvg[1] = fsum(self.gyroY) / len(self.gyroY)
-      gyroAvg[2] = fsum(self.gyroZ) / len(self.gyroZ)
-      accelAvg[0] = fsum(self.ax) / len(self.ax)
-      accelAvg[1] = fsum(self.ay) / len(self.ay)
-      accelAvg[2] = fsum(self.az) / len(self.az)
+      gyroAvg[0] = math.fsum(self.gyroX) / len(self.gyroX)
+      gyroAvg[1] = math.fsum(self.gyroY) / len(self.gyroY)
+      gyroAvg[2] = math.fsum(self.gyroZ) / len(self.gyroZ)
+      accelAvg[0] =math.fsum(self.ax) / len(self.ax)
+      accelAvg[1] = math.fsum(self.ay) / len(self.ay)
+      accelAvg[2] = math.fsum(self.az) / len(self.az)
       calText += str(0 - gyroAvg[0]) + "," + str(0 - gyroAvg[1]) + "," + str(0 - gyroAvg[2]) + ","
       calText += str(0 - accelAvg[0]) + "," + str(0 - accelAvg[1]) + "," + str(8192 - accelAvg[2])
       print "writing to file"
@@ -284,23 +284,24 @@ class wicedsense:
         self.starttimer = 1
         start_time = current_milli_time()
         self.timestamp.append( 0.0 )
-        #print "Python timestamp (in s): " + str(timestamp[-1])
+        print "Python timestamp (in s): " + str(self.timestamp[-1])
 
       else: # the garbage iterations have passed
         self.timestamp.append( elapsed_time() )
-        #print "Python timestamp (in s): " + str(timestamp[-1])
+        print "Python timestamp (in s): " + str(self.timestamp[-1])
 
         bytelen = len(v) # v is the handle data
 
         # Make sure bytes are received by the correct handle
         #if(v[0] == 3):
-
+        print "v: " + str(v)
         vx1 = int( str(v[2]*256 + v[1]) )
         vy1 = int( str(v[4]*256 + v[3]) )
         vz1 = int( str(v[6]*256 + v[5]) )
         gx1 = int( str(v[8]*256 + v[7]) )
         gy1 = int( str(v[10]*256 + v[9]) )
         gz1 = int( str(v[12]*256 + v[11]) )
+        #mx1 = int( str(v[14]
         #print "gx: " + str(gx1)
         #print "gy: " + str(gy1)
         #print "gz: " + str(gz1)
