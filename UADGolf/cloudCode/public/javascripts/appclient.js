@@ -326,7 +326,7 @@ var myapp = (function(){
       displacementData = applyZoffset(displacementData); // data processing routine for graphics
   
 
-      setInterval(movePutter, 12.5); // in msec
+      setInterval(movePutter, 25); // in msec
 
   }
 
