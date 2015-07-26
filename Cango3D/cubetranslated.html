@@ -23,7 +23,7 @@
     // Vars for world coordinates
     var coordsX = -($("#"+cvsID).attr("width")/2), // bottom leftmost pixel x
         coordsY = -($("#"+cvsID).attr("height")/2), // bottom leftmost pixel y
-        coordsZ = -(coordsX + coordsY);
+        coordsZ = -(2*coordsX);
     
     // Initialize Cango3D graphics context
     var g = new Cango3D(cvsID);
@@ -39,7 +39,7 @@
 
     
     // build the object
-    var cube = buildPutter(g, 10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
+    var cube = buildPutter(g, 17*10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
     //var cube = buildCube(g, 10, ["red","orange","yellow","green","blue","violet"]);
 
     //var angleZ = 90;
@@ -49,13 +49,12 @@
     var timer = setInterval(movePutter, timerinterval);
 
 
-
-
 // =============================================
   function setCanvasDim(){
-    width = 400;
-    height = 400;
+    width = 700;
+    height = 700;
     $("#"+cvsID).attr("width", width);
+    //console.log($("#"+cvsID).attr("width"));
     $("#"+cvsID).attr("height", height);   
   }
 
@@ -74,8 +73,8 @@
         Y = convertedframes[index][1];
         Z = convertedframes[index][2];
 
-        cube.transform.rotate(1,1,0,1);  
-        //g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
+        //cube.transform.rotate(1,1,0,1);  
+        g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
     }
         
     g.renderFrame(cube);
@@ -93,8 +92,20 @@
 
     console.log("applyZoffset");
     newframes = [[0,0,0]];
-    // Offset for displacement in the Z direction (can take decimal numbers!)
-    Zoffset = [.5,.5,-1];
+
+    //Check screen size
+    pageWidth = $("#"+cvsID).attr("width")-2; //subtraction eliminates border pixels (also str to int)
+    pageHeight = $("#"+cvsID).attr("height")-2;
+    if (pageWidth > pageHeight ){
+        z1 = .5;
+        z2 = pageHeight/(2*pageWidth);
+    } else {
+        z1 = pageWidth/(pageWidth+pageHeight);
+        z2 = pageHeight/(pageWidth+pageHeight);
+    }
+
+    z3 = -1;
+    Zoffset = [z1,z2,z3]; 
     
     // iterate through old frames
     var j = 1;  
@@ -128,16 +139,16 @@
   function generateRandPath(){
     var randIter = 1,
         displacement = [[0,0,0]],
-        xPositionincrementer = 1,
-        yPositionincrementer = 1,
+        xPositionincrementer = 0,
+        yPositionincrementer = 0,
         zPositionincrementer = 4;
       
-    for (randIter; randIter < 100; randIter = randIter + 1 ){
+    for (randIter; randIter < 300; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
         displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-    }
+    }/*
         xPositionincrementer = 0,
         yPositionincrementer = -1,
         zPositionincrementer = 0;
@@ -164,13 +175,19 @@
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
         displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-    }
+    }*/
     return displacement;
   }
 
 
 
-  function buildPutter(g, width, colors){
+  function buildPutter(g, height, colors){
+        
+    shaft2ShaftPlusGripRatio = 7/10;// height input in pixels scaled to the canvas height
+    // Customize your putter
+    buttDisplacementScalar = 6; // essentially the x displacement from tip of the shaft to the putter head
+    putterHeightScalar = 17;
+    width = height/putterHeightScalar;
     
     var sq = [['M',0,0,0, 'L',width*4,0,0, width*4,width,0, 0,width,0, 'z']];
       sq.push(sq[0]);
@@ -200,16 +217,19 @@
         faces.addObj(side);
     }
     
+    shaft2ShaftPlusGripRatio = 7/10;
     // creating the shaft
-    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,3*width,0], "#686868", width/6);
+    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,2*width,0], "#686868", width/3);
     faces.addObj(lowerShaft);
       
-    upperShaft = g.compilePath3D(["M",-width,3*width,0, "L",-26/15*width,13*width,0], "#A8A8A8", width/4);
+    upperShaft = g.compilePath3D(["M",-width,2*width,0, "L",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0], "#A8A8A8", width/4);
     faces.addObj(upperShaft);
       
-    grip = g.compilePath3D(["M",-26/15*width,13*width,0, "L",-2*width,17*width,0], "#202020", width/3);
+    grip = g.compilePath3D(["M",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0, "L",(-buttDisplacementScalar*width),(putterHeightScalar*width),0], "#202020", width/3);
     faces.addObj(grip);
       
+    // reference putter head to the center
+    faces.translate(0,-width/2,0);
       
     // add axes for visual debugging
     centerX = g.compilePath3D(["M",-4*width,0,0, "L",4*width,0,0], "green", 1);
@@ -218,6 +238,8 @@
     faces.addObj(centerY);
     centerZ = g.compilePath3D(["M",0,0,-4*width, "L",0,0,4*width], "green", 1);
     faces.addObj(centerZ);
+      
+    
     
     
     return faces;

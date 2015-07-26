@@ -1,8 +1,8 @@
 var myapp = (function(){
     var displacementData = [[]];
     var gyroData = [];
-    var width = 600;
-    var height = 400;
+    //var width = 600;
+    ///var height = 400;
     var animated = false;
 
 
@@ -29,31 +29,33 @@ var myapp = (function(){
             var query = new Parse.Query(putt);
             query.get("12fz4AHTDK", {
                 success: function(data) {
-                    // receive data
-                    displacementData = data.get("frames");
-                    gyroData = data.get("gyro");
-
-                    displacementData = parseIncomingArray(displacementData);
-                    gyroData = parseIncomingArray(gyroData);
-
-                    // Debug tool - verify that the lengths are valid in the console
-                    console.log("received data (gyro, displacement)");
-                    console.log(gyroData);
-                    console.log(displacementData);
                     
-                    // data processing routine for translation graphics
-                    displacementData = applyZoffset(displacementData); 
-
-                    // converting data to pixels
-                    displacementData = toPixels(displacementData,100);   
+                        // receive data
+                        displacementData = data.get("frames");
+                        gyroData = data.get("gyro");
                     
-                    console.log("processed data (gyro, displacement)");
-                    console.log(gyroData);
-                    console.log(displacementData);
+                        displacementData = parseIncomingArray(displacementData);
+                        gyroData = parseIncomingArray(gyroData);
+
+                        // Debug tool - verify that the lengths are valid in the console
+                        console.log("received data (gyro, displacement)");
+                        console.log(gyroData);
+                        console.log(displacementData);
+                        
+                        // data processing routine for translation graphics
+                        displacementData = applyZoffset(displacementData); 
+
+                        // converting data to pixels
+                        //displacementData = toPixels(displacementData,1);   
+                        
+                        console.log("processed data (gyro, displacement)");
+                        console.log(gyroData);
+                        console.log(displacementData);
+                    
+
                     putterDemo("puttCanvas");   
 
 
-                    // Fix buggy python code -JS incoming data is not always sent to parse as an array of arrays
                     function parseIncomingArray (incomingArray){
                         if (incomingArray[0].length != 3){
                             // append the incorrect parsings as the first array in the array
@@ -68,30 +70,42 @@ var myapp = (function(){
                     function applyZoffset(displacementframes){ 
                     // applies the z offset to the displacement frames from the sensor
                     //   -> returns the new displacement frames
-                      var displacementframes = displacementframes;
+                      //var displacementframes = displacementframes;
                       console.log("applyZoffset()");
                       newframes = [[0,0,0]];
-                    // Offset for displacement in the Z direction (can take decimal numbers!)
-                      Zoffset = [.5,.5,-1];
+
+                        //Create Z-offset matrix via screen size
+                        pageWidth = $("#puttCanvas").attr("width")-2; //subtraction eliminates border pixels (also str to int)
+                        pageHeight = $("#puttCanvas").attr("height")-2;
+                        if (pageWidth > pageHeight ){
+                            z1 = .5;
+                            z2 = pageHeight/(2*pageWidth);
+                        } else {
+                            z1 = pageWidth/(pageWidth+pageHeight);
+                            z2 = pageHeight/(pageWidth+pageHeight);
+                        }
+                        z3 = -1;
+                        Zoffset = [z1,z2,z3]; 
 
                     // iterate through old frames
                       var j = 1;  
                       for (j = 1; j< displacementframes.length; j++){
-                        
+
+
                         // Calculate position increment from displacement data
                         xdisp = displacementframes[j][0] - displacementframes[j-1][0];
                         ydisp = displacementframes[j][1] - displacementframes[j-1][1];
                         zdisp = displacementframes[j][2] - displacementframes[j-1][2];
                         
                         // take into account z bias and position increments
-                        xincrementer = xdisp + Zoffset[0]*(zdisp);
-                        yincrementer = ydisp + Zoffset[1]*(zdisp);
-                        zincrementer = Zoffset[2]*(zdisp);
-
+                        yincrementer = ydisp + Zoffset[0]*(xdisp);
+                        zincrementer = zdisp + Zoffset[1]*(xdisp);
+                        xincrementer = Zoffset[2]*(xdisp);
+                    
                         // update displacement frames based on z bias
-                        newframesX = newframes[j-1][0] + xincrementer;
                         newframesY = newframes[j-1][1] + yincrementer;
                         newframesZ = newframes[j-1][2] + zincrementer;
+                        newframesX = newframes[j-1][0] + xincrementer;
                         
                         // append new array
                         newframes.push([newframesX,newframesY,newframesZ]);    
@@ -217,9 +231,13 @@ var myapp = (function(){
 // ----------------------------------------------------
 
 
-  function buildPutter(g, width, colors) {
+  function buildPutter(g, height, colors){
+    // height input in pixels scaled to the canvas height
+    // Customize your putter
+    buttDisplacementScalar = 6; // essentially the x displacement from tip of the shaft to the putter head
+    putterHeightScalar = 17;
+    width = height/putterHeightScalar;
     
-    // build the putter head
     var sq = [['M',0,0,0, 'L',width*4,0,0, width*4,width,0, 0,width,0, 'z']];
       sq.push(sq[0]);
       sq.push(sq[0]);
@@ -238,8 +256,7 @@ var myapp = (function(){
       rotateZ = [1,0,0,0,0,0,0],
       rotateMag = [0,90,-90,180,90,-90,180],
       i;
-    
-    // make the 6 components of the putter head
+
     for (i=0; i<7; i++){
         //console.log(i)
         side = g.compileShape3D(sq[i], colors[i]);
@@ -249,15 +266,19 @@ var myapp = (function(){
         faces.addObj(side);
     }
     
+    shaft2ShaftPlusGripRatio = 7/10;
     // creating the shaft
-    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,3*width,0], "#686868", width/6);
+    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,2*width,0], "#686868", width/3);
     faces.addObj(lowerShaft);
       
-    upperShaft = g.compilePath3D(["M",-width,3*width,0, "L",-26/15*width,13*width,0], "#A8A8A8", width/4);
+    upperShaft = g.compilePath3D(["M",-width,2*width,0, "L",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0], "#A8A8A8", width/4);
     faces.addObj(upperShaft);
       
-    grip = g.compilePath3D(["M",-26/15*width,13*width,0, "L",-2*width,17*width,0], "#202020", width/3);
+    grip = g.compilePath3D(["M",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0, "L",(-buttDisplacementScalar*width),(putterHeightScalar*width),0], "#202020", width/3);
     faces.addObj(grip);
+      
+    // reference putter head to the center
+    faces.translate(0,-width/2,0);
       
     // add axes for visual debugging
     centerX = g.compilePath3D(["M",-4*width,0,0, "L",4*width,0,0], "green", 1);
@@ -266,66 +287,27 @@ var myapp = (function(){
     faces.addObj(centerY);
     centerZ = g.compilePath3D(["M",0,0,-4*width, "L",0,0,4*width], "green", 1);
     faces.addObj(centerZ);
+
     
     return faces;
   }
 
 
 
-  function buildCube(g, width, colors) { // pass width and array of 6 colors
-
-      var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
-          faces = g.createGroup3D(),
-          side,
-          translateX = [-width/2,-width/2,-width/2,-width/2,-width/2,-width/2],
-          translateY = [-width/2,-width/2,-width/2, -width/2,-width/2,-width/2],
-          translateZ = [width/2,width/2,width/2,width/2,width/2,width/2],
-          rotateX = [1,1,1,1,0,0],
-          rotateY = [1,0,0,0,1,1],
-          rotateZ = [1,0,0,0,0,0],
-          rotateMag = [0,90,-90,180,90,-90],
-          i;
-
-      for (i=0; i<6; i++)
-      {
-        console.log(i)
-        side = g.compileShape3D(sq, colors[i]);
-        side.translate(translateX[i], translateY[i], translateZ[i]);
-        side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
-        side.backHidden = true;
-        faces.addObj(side);
-      }
-        // Axes added for visual debugging
-        centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
-        faces.addObj(centerX);
-        centerY = g.compilePath3D(["M",0,-50,0, "L",0,50,0], "black", 1);
-        faces.addObj(centerY);
-        centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
-        faces.addObj(centerZ);
-            
-      return faces;
-  }
 
 
-    
-
-   
-
-
-
+// ============================ ACTION ==================================
   function putterDemo(scrnID)
   {
     var g = new Cango3D(scrnID),
       newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
       taggedFace, cube1,
       width = 20,
-      colors0 = ["#686868","#686868","#686868","#686868","#686868","#686868", "red"],
-      colors1 = ["red","orange","yellow","green","blue","purple"],
+      colors = ["#686868","#686868","#686868","#686868","#686868","#686868", "red"],
       iter = 0,
-      coordsX = -$("#puttCanvas").attr("width")/2, // bottom leftmost pixel x location
-      coordsY = -$("#puttCanvas").attr("height")/2, // bottom leftmose pixel y location
-      xyspan = -coordsX*2,
-      incCoords = 0;
+      coordsX = -($("#puttCanvas").attr("width")/2), // bottom leftmost pixel x location
+      coordsY = -($("#puttCanvas").attr("height")/2), // bottom leftmose pixel y location
+      xyspan = -(2*coordsX);
       console.log(g.cnvs.offsetWidth);
 
     // Initialize subfunction within putterDemo()
@@ -336,9 +318,13 @@ var myapp = (function(){
             // note that z graphics are in towards the screen, thus Z and Y are switched
                 X = convertedframes[iter][0];
                 Y = convertedframes[iter][1];
-                //Z = convertedframes[iter][2];
-                Z = 0;
-                g.setWorldCoords3D(coordsX+X, coordsY+Z, xyspan+Y);
+                Z = convertedframes[iter][2];
+                //Z = 0;
+                console.log();
+                console.log(X);
+                console.log(Y);
+                console.log(Z);
+                g.setWorldCoords3D(coordsX-Y, coordsY-Z, xyspan-X);
             }
 
             var useDataMode = 1; // set this to one to use parse data
@@ -372,17 +358,14 @@ var myapp = (function(){
       } // ends movePutter()
 
 
-
       g.setWorldCoords3D(coordsX, coordsY, xyspan);
       g.setFOV(45);
       g.setPropertyDefault("backgroundColor", "lightyellow");
 
-
-      //cube1 = buildCube(g, width, colors1);
-      cube1 = buildPutter(g, 10, colors0); // note for builfing cube/putter: len(colors1) != len(colors0)
-
+      // build putter object
+      cube1 = buildPutter(g, 10*10, colors); // note for builfing cube/putter: len(colors1) != len(colors0)
     
-      setInterval(movePutter, 25); // in msec
+      setInterval(movePutter, 30); // in msec
   } 
 
 
