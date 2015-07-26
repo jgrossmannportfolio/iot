@@ -21,9 +21,15 @@ def pitch(accelX, accelY, accelZ):
 
 
 def yaw(roll, pitch, magX, magY, magZ):
-  x = magX * math.cos(pitch) + magY * math.sin(pitch) * math.sin(roll)
-  y = magY * math.cos(roll) + magZ * math.sin(roll)
-  return (math.atan2(-y / x) * 180.0) / PI
+  roll = math.radians(roll)
+  pitch = math.radians(pitch)
+
+  x = magX * math.cos(pitch) + magZ * math.sin(pitch)
+  y = magX * math.sin(roll) * math.sin(pitch) + magY * math.cos(roll) - magZ * math.sin(roll) * math.cos(pitch)
+
+  #x = magX * math.cos(pitch) + magY * math.sin(pitch) * math.sin(roll)
+  #y = magY * math.cos(roll) + magZ * math.sin(roll)
+  return (math.atan2(y, x) * 180.0) / PI
 
 
 def displacement(d, v, a, dt):

@@ -36,7 +36,7 @@ import kalman
 
 # Global functions/retrieve start time --------------------------------------
 current_milli_time = lambda: int(round(time.time() * 1000))
-start_time = current_milli_time()
+start_time = 0.0
 elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - float(start_time))/1000 ) )
 
 
@@ -44,7 +44,7 @@ elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - f
 class wicedsense:
 
   # frequency of data
-  delta_t = .0125 # in seconds (preset to 12.5 ms)
+  delta_t = .025 # in seconds (preset to 12.5 ms)
   # total duration
   endtime = 4.0 # in seconds
   garbageiterations = 10
@@ -57,31 +57,36 @@ class wicedsense:
   gyroCal = [0.0, 0.0, 0.0]
 
   vx = 0.0
-  ax = [0.0]
+  ax = []
   dx = 0.0
   # y
   vy = 0.0
-  ay = [0.0]
+  ay = []
   dy = 0.0
   # z
   vz = 0.0
-  az = [0.0]
+  az = []
   dz = 0.0
 
   gyroX = []
   gyroY = []
   gyroZ = []
 
+  magX = []
+  magY = []
+  magZ = []
+
   magnitude = []
   timestamp = []
 
-  def pushToCloud(self, frames, gyrodata):
+  def pushToCloud(self, frames, gyrodata, accel):
     #print frames[1]
     connection = httplib.HTTPSConnection("api.parse.com", 443)
     connection.connect()
     connection.request('PUT', '/1/classes/Putt/12fz4AHTDK', json.dumps({
        "frames": frames,
-       "gyro": gyrodata
+       "gyro": gyrodata,
+       "accel": accel
      }), {
        "X-Parse-Application-Id": "iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb",
        "X-Parse-REST-API-Key": "I0xfoOS0nDqaHxfSBTgLNMuXGtsStl7zO0XZVDZX",
@@ -187,11 +192,12 @@ class wicedsense:
       axnew = []   # new acceleration list in the x direction
       aynew = []   # ... y direction
       aznew = []   # ... z direction
+      accelNew = []
       gyroXnew = []
       gyroYnew = []
       gyroZnew = []
-      print
-      print "magnitude"
+      magnew = []
+    
       for x in range(len(self.magnitude)):
         print self.magnitude[x]
         if self.magnitude[x] > thresh:
@@ -199,14 +205,21 @@ class wicedsense:
           axnew = self.ax[x:]
           aynew = self.ay[x:]
           aznew = self.az[x:]
+          magnew = self.magnitude[x:]
           gyroXnew = self.gyroX[x:]
           gyroYnew = self.gyroY[x:]
           gyroZnew = self.gyroZ[x:]
+          self.magX = self.magX[x:]
+          self.magY = self.magY[x:]
+          self.magZ = self.magZ[x:]
           break
 
       # ========================
       # GET DISPLACEMENT FRAMES
       # ========================
+
+      for x in range(len(axnew)):
+        accelNew.append([axnew[x], aynew[x], aznew[x], magnew[x]])
 
       roll = []
       pitch = []
@@ -217,11 +230,13 @@ class wicedsense:
       zframes = [MathUtil.displacement(self.dz,self.vz,aznew[0], self.delta_t)[0]]
       roll.append(MathUtil.roll(axnew[0], aynew[0], aznew[0]))
       pitch.append(MathUtil.pitch(axnew[0], aynew[0], aznew[0]))
+      yaw.append(MathUtil.yaw(roll[0], pitch[0], self.magX[0], self.magY[0], self.magZ[0]))
       xyzframes = [xframes[-1], yframes[-1], zframes[-1]] 
       for x in range(1, len(axnew)):
         
         roll.append(MathUtil.roll(axnew[x], aynew[x], aznew[x]))
         pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
+        yaw.append(MathUtil.yaw(roll[x], pitch[x], self.magX[x], self.magY[x], self.magZ[x]))
         self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,axnew[x], self.delta_t)
         xframes.append( float(xframes[-1] + self.dx)  )
         self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,aynew[x], self.delta_t)
@@ -256,18 +271,18 @@ class wicedsense:
       gyrodata = []
       kalmanX = kalman.Kalman(roll[0])
       kalmanY = kalman.Kalman(pitch[0])
-      #kalmanZ = kalman.Kalman(gyroZnew[0])
-      gyrodata.append([roll[0], pitch[0], MathUtil.getAngle(gyroZnew[0], self.delta_t)])
+      kalmanZ = kalman.Kalman(yaw[0])
+      gyrodata.append([roll[0], pitch[0], yaw[0]])
       for x in range(1, len(gyroXnew)):
         gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
                         kalmanY.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
-                        MathUtil.getAngle(gyroZnew[x], self.delta_t) ])
+                        kalmanZ.updateAngle(yaw[x], gyroZnew[x], self.delta_t) ])
         #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
 
       # =======================
       # PUSH FRAMES TO PARSE
       # =======================
-      self.pushToCloud(xyzframes, gyrodata)
+      self.pushToCloud(xyzframes, gyrodata, accelNew)
         
 
   def register_cb( self, handle, fn ):
@@ -276,32 +291,41 @@ class wicedsense:
 
 
   def dataCallback(self, v):
+    global start_time
     # clear first ten recordings because BT timing needs to settle
     # garbageiterations = 10
     if self.inittime > self.garbageiterations-1:
 
       if self.starttimer == 0:
         self.starttimer = 1
-        start_time = current_milli_time()
-        self.timestamp.append( 0.0 )
-        print "Python timestamp (in s): " + str(self.timestamp[-1])
+        #start_time = current_milli_time()
+        #self.timestamp.append( 0.0 )
+        #print "Python timestamp (in s): " + str(self.timestamp[-1])
 
       else: # the garbage iterations have passed
-        self.timestamp.append( elapsed_time() )
-        print "Python timestamp (in s): " + str(self.timestamp[-1])
+        if len(self.timestamp) == 0:
+          start_time = current_milli_time()
+          self.timestamp.append(elapsed_time())
+          print "Python timestamp (in s): " + str(self.timestamp[-1])
+        else:
+          self.timestamp.append( elapsed_time() )
+          print "Python timestamp (in s): " + str(self.timestamp[-1])
 
         bytelen = len(v) # v is the handle data
 
         # Make sure bytes are received by the correct handle
         #if(v[0] == 3):
-        print "v: " + str(v)
+        #print "v: " + str(v)
+        print len(v)
         vx1 = int( str(v[2]*256 + v[1]) )
         vy1 = int( str(v[4]*256 + v[3]) )
         vz1 = int( str(v[6]*256 + v[5]) )
         gx1 = int( str(v[8]*256 + v[7]) )
         gy1 = int( str(v[10]*256 + v[9]) )
         gz1 = int( str(v[12]*256 + v[11]) )
-        #mx1 = int( str(v[14]
+        mx1 = int( str(v[14]*256 + v[13]) )
+        my1 = int( str(v[16]*256 + v[15]) )
+        mz1 = int( str(v[18]*256 + v[17]) )
         #print "gx: " + str(gx1)
         #print "gy: " + str(gy1)
         #print "gz: " + str(gz1)
@@ -315,12 +339,17 @@ class wicedsense:
         else:
           (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.0175)
           (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 8192.0/9.80665)
+          (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 16384.0)
                     
-        print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + str(Axyz[0]) + ", " + str(Axyz[1]) + ", " + str(Axyz[2]) 
+        print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2]) + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
 
         self.gyroX.append(Gxyz[0])
         self.gyroY.append(Gxyz[1])
         self.gyroZ.append(Gxyz[2])
+
+        self.magX.append(Mxyz[0])
+        self.magY.append(Mxyz[1])
+        self.magZ.append(Mxyz[2])
 
         self.magnitude.append( Amag )
 
