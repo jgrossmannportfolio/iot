@@ -62,19 +62,22 @@
   function movePutter() // move putter based on convertedframes
   {
     
-    if (index > convertedframes.length - 2){ //when the displacement array ends
-        index = 0;
-        clearInterval(timer); // clear putt
-        timer = setInterval(movePutter, timerinterval); // loop putt
+    if (index > convertedframes.length - 1){ //when the displacement array ends
+        index = -1;
+        cube.transform.reset();
+        //clearInterval(timer); // clear putt
+        //timer = setInterval(movePutter, timerinterval); // loop putt
+    } else {
+
+        // grab displacement values from array
+        X = convertedframes[index][0];
+        Y = convertedframes[index][1];
+        Z = convertedframes[index][2];
+
+        cube.transform.rotate(1,1,0,1);  
+        //g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
     }
-    
-    // grab displacement values from array
-    X = convertedframes[index][0];
-    Y = convertedframes[index][1];
-    Z = convertedframes[index][2];
-    
-    cube.transform.rotate(1,1,0,1);  
-    g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
+        
     g.renderFrame(cube);
       
     index = index + 1; // advance to next array index
@@ -83,9 +86,11 @@
 
 
 
-  function applyZoffset(displacement){ //applies the z offset to a frame from the sensor
+  function applyZoffset(displacementframes){ 
+    // applies the z offset to a frame from the sensor
+    //   -> returns the new displacement frames
     // desired displacement (in terms of x,y,z pixel positions)
-    //xyzdisplacement = [1,1,10],
+
     console.log("applyZoffset");
     newframes = [[0,0,0]];
     // Offset for displacement in the Z direction (can take decimal numbers!)
@@ -93,12 +98,12 @@
     
     // iterate through old frames
     var j = 1;  
-    for (j = 1; j< displacement.length - 1; j++){
+    for (j = 1; j< displacementframes.length - 1; j++){
         
         // Calculate position increment from displacement data
-        xdisp = displacement[j][0] - displacement[j-1][0];
-        ydisp = displacement[j][1] - displacement[j-1][1];
-        zdisp = displacement[j][2] - displacement[j-1][2];
+        xdisp = displacementframes[j][0] - displacementframes[j-1][0];
+        ydisp = displacementframes[j][1] - displacementframes[j-1][1];
+        zdisp = displacementframes[j][2] - displacementframes[j-1][2];
         
         // take into account z bias and position increments
         xincrementer = xdisp + Zoffset[0]*(zdisp);
