@@ -13,7 +13,7 @@ var myapp = (function(){
         $("#puttCanvas").attr("height", height / 2.0);
         console.log("width: "+$("#puttCanvas").attr("width"));
         console.log("set canvas dimensions");
-        putterDemo("puttCanvas");
+        //putterDemo("puttCanvas");
     };
 
     function getPuttData() {
@@ -29,7 +29,8 @@ var myapp = (function(){
                     displacementData = data.get("frames");   
                     gyroData = data.get("gyro");
                     console.log("got data");
-                    console.log(displacementData);   
+                    console.log(displacementData);
+                    putterDemo("puttCanvas");   
                 },
                 error: function(object, error) {
                     console.log("Error getting putt data");
@@ -38,6 +39,7 @@ var myapp = (function(){
                 }
 
             });
+        
         }
         
     };
@@ -125,7 +127,7 @@ var myapp = (function(){
 
 
 
-
+// ----------------------------------------------------
 
 
   function buildPutter(g, width, colors) {
@@ -223,7 +225,7 @@ var myapp = (function(){
   function applyZoffset(displacementframes){ 
     // applies the z offset to the displacement frames from the sensor
     //   -> returns the new displacement frames
-
+      var displacementframes = displacementframes;
       console.log("applyZoffset");
       newframes = [[0,0,0]];
     // Offset for displacement in the Z direction (can take decimal numbers!)
@@ -254,6 +256,18 @@ var myapp = (function(){
       return newframes;
   }
 
+  function toPixels(displacementframes,scale){
+    var ii = 0,
+        newframes = [[0,0,0]];        
+    for (ii; ii < displacementframes.length - 1; ii++){
+        pixX = scale*displacementframes[ii][0];
+        pixY = scale*displacementframes[ii][1];
+        pixZ = scale*displacementframes[ii][2];
+        newframes.push([pixX,pixY,pixZ]);
+    }
+    return newframes;
+  }
+
 
 
   function putterDemo(scrnID)
@@ -279,7 +293,8 @@ var myapp = (function(){
         // note that z graphics are in towards the screen, thus Z and Y are switched
             X = convertedframes[iter][0];
             Y = convertedframes[iter][1];
-            Z = convertedframes[iter][2];
+            //Z = convertedframes[iter][2];
+            Z = 0;
             g.setWorldCoords3D(coordsX+X, coordsY+Z, xyspan+Y);
         }
 
@@ -323,12 +338,21 @@ var myapp = (function(){
       //cube1 = buildCube(g, width, colors1);
       cube1 = buildPutter(g, 10, colors0); // note: len(colors1) != len(colors0)
 
-      displacementData = applyZoffset(displacementData); // data processing routine for graphics
-  
 
+      displacementData = applyZoffset(displacementData); // data processing routine for graphics
+      console.log("after offset");
+      displacementData = toPixels(displacementData,1); // takes scale argument
+      console.log("after topixels");
+      var kk = 0;
+      console.log("length");
+      console.log(displacementData.length);
+      for (kk; kk < displacementData.length - 1; kk++){
+          console.log(displacementData[kk][0]);
+      }
       setInterval(movePutter, 25); // in msec
 
-  }
+
+  } 
 
 
 
