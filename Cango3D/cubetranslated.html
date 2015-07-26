@@ -12,45 +12,218 @@
       
 </head>
 <body>
- <canvas id="canvasID" width="800" height="800" style="border:1px solid black;"></canvas>
+ <canvas id="canvasID" width="0" height="0" style="border:1px solid black;"></canvas>
     
     <script type="text/javascript">
-    var g = new Cango3D("canvasID");  // create a graphics context
-    var inc = -150;
-    g.setWorldCoords3D(inc,-150, 300);
 
-    var cube = buildCube(g, 20, ["red","orange","yellow","green","blue","purple"]);
+    // Set CANVAS width and height
+    var cvsID = "canvasID";
+    setCanvasDim();
 
-    //cube.translate(0,0,0);
-    setInterval(movePutter, 100);
-    //g.render(cube);
+    // Vars for world coordinates
+    var coordsX = -($("#"+cvsID).attr("width")/2), // bottom leftmost pixel x
+        coordsY = -($("#"+cvsID).attr("height")/2), // bottom leftmost pixel y
+        coordsZ = -(coordsX + coordsY);
+    
+    // Initialize Cango3D graphics context
+    var g = new Cango3D(cvsID);
+    g.setFOV(45);
+    g.setPropertyDefault("backgroundColor", "lightyellow");
+    g.setWorldCoords3D(coordsX, coordsY, coordsZ);
+    
+    // Generate Random Path Data
+        var index = 0; // index for displacement array
+        var displacementframes = generateRandPath(); //generates displacement array with path data
+        var convertedframes = applyZoffset(displacementframes); //apply z offset to displacement
+    
+
+    
+    // build the object
+    var cube = buildPutter(g, 10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
+    //var cube = buildCube(g, 10, ["red","orange","yellow","green","blue","violet"]);
+
+    //var angleZ = 90;
+    //g.setWorldCoords3D(coordsX, -coordsY, coordsZ);
+    // Configure animation
+    var timerinterval = 10;
+    var timer = setInterval(movePutter, timerinterval);
 
 
-  function movePutter()
+
+
+// =============================================
+  function setCanvasDim(){
+    width = 400;
+    height = 400;
+    $("#"+cvsID).attr("width", width);
+    $("#"+cvsID).attr("height", height);   
+  }
+
+  function movePutter() // move putter based on convertedframes
   {
-    // use target's parent group drawing origin as reference
-    //cube1.transform.rotate(0,1,0,-25);
-    /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
-    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
-    cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
-    g.setWorldCoords3D(inc, inc, 300);
-    inc = inc + 1;
-      
-    cube.rotate(1,1,1,10);
-    g.renderFrame(cube);
-   /* newPos.x = mousePos.x-this.grabOfs.x;
-    newPos.y = mousePos.y-this.grabOfs.y;
-    newPos.z = mousePos.z-this.grabOfs.z;
-    cube1.transform.reset();          // reset to identity matrix
-    cube1.transform.translate(newPos.x, newPos.y, newPos.z);
+    
+    if (index > convertedframes.length - 1){ //when the displacement array ends
+        index = -1;
+        cube.transform.reset();
+        //clearInterval(timer); // clear putt
+        //timer = setInterval(movePutter, timerinterval); // loop putt
+    } else {
 
-    g.renderFrame(grp);*/
+        // grab displacement values from array
+        X = convertedframes[index][0];
+        Y = convertedframes[index][1];
+        Z = convertedframes[index][2];
+
+        cube.transform.rotate(1,1,0,1);  
+        //g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
+    }
+        
+    g.renderFrame(cube);
+      
+    index = index + 1; // advance to next array index
   }
 
 
 
-function buildCube(g, width, colors) // pass width and array of 6 colors
-{
+
+  function applyZoffset(displacementframes){ 
+    // applies the z offset to a frame from the sensor
+    //   -> returns the new displacement frames
+    // desired displacement (in terms of x,y,z pixel positions)
+
+    console.log("applyZoffset");
+    newframes = [[0,0,0]];
+    // Offset for displacement in the Z direction (can take decimal numbers!)
+    Zoffset = [.5,.5,-1];
+    
+    // iterate through old frames
+    var j = 1;  
+    for (j = 1; j< displacementframes.length - 1; j++){
+        
+        // Calculate position increment from displacement data
+        xdisp = displacementframes[j][0] - displacementframes[j-1][0];
+        ydisp = displacementframes[j][1] - displacementframes[j-1][1];
+        zdisp = displacementframes[j][2] - displacementframes[j-1][2];
+        
+        // take into account z bias and position increments
+        xincrementer = xdisp + Zoffset[0]*(zdisp);
+        yincrementer = ydisp + Zoffset[1]*(zdisp);
+        zincrementer = Zoffset[2]*(zdisp);
+    
+        // update displacement frames based on z bias
+        newframesX = newframes[j-1][0] + xincrementer;
+        newframesY = newframes[j-1][1] + yincrementer;
+        newframesZ = newframes[j-1][2] + zincrementer;
+        
+        // append new array
+        newframes.push([newframesX,newframesY,newframesZ]);    
+    }
+      
+    return newframes;
+  }
+
+
+
+
+  function generateRandPath(){
+    var randIter = 1,
+        displacement = [[0,0,0]],
+        xPositionincrementer = 1,
+        yPositionincrementer = 1,
+        zPositionincrementer = 4;
+      
+    for (randIter; randIter < 100; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+    }
+        xPositionincrementer = 0,
+        yPositionincrementer = -1,
+        zPositionincrementer = 0;
+    for (randIter; randIter < 200; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+    }
+        xPositionincrementer = -1,
+        yPositionincrementer = 0,
+        zPositionincrementer = -4;
+    for (randIter; randIter < 300; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+    }
+        xPositionincrementer = 0,
+        yPositionincrementer = 0,
+        zPositionincrementer = -4;
+    for (randIter; randIter < 400; randIter = randIter + 1 ){
+        xprev = displacement[randIter-1][0];
+        yprev = displacement[randIter-1][1];
+        zprev = displacement[randIter-1][2];
+        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+    }
+    return displacement;
+  }
+
+
+
+  function buildPutter(g, width, colors){
+    
+    var sq = [['M',0,0,0, 'L',width*4,0,0, width*4,width,0, 0,width,0, 'z']];
+      sq.push(sq[0]);
+      sq.push(sq[0]);
+      sq.push(sq[0]);
+      sq.push(['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z']);
+      sq.push(sq[4]);
+      sq.push(['M',0,0,0, 'L',width/2,0,0, width/2,width/2,0, 0,width/2,0, 'z']); // dot on putter head
+    
+      var faces = g.createGroup3D(),
+      side,
+      translateX = [-width*2,-width*2,-width*2,-width*2,-width/2,-width/2,-width/4],
+      translateY = [0,-width/2,-width/2, -width,0,0,width/4],
+      translateZ = [width/2,0,width,width/2,width*2,width*2,width/2+1],
+      rotateX = [1,1,1,1,0,0,0],
+      rotateY = [1,0,0,0,1,1,1],
+      rotateZ = [1,0,0,0,0,0,0],
+      rotateMag = [0,90,-90,180,90,-90,180],
+      i;
+
+    for (i=0; i<7; i++){
+        //console.log(i)
+        side = g.compileShape3D(sq[i], colors[i]);
+        side.translate(translateX[i], translateY[i], translateZ[i]);
+        side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
+        //side.backHidden = true;
+        faces.addObj(side);
+    }
+    
+    // creating the shaft
+    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,3*width,0], "#686868", width/6);
+    faces.addObj(lowerShaft);
+      
+    upperShaft = g.compilePath3D(["M",-width,3*width,0, "L",-26/15*width,13*width,0], "#A8A8A8", width/4);
+    faces.addObj(upperShaft);
+      
+    grip = g.compilePath3D(["M",-26/15*width,13*width,0, "L",-2*width,17*width,0], "#202020", width/3);
+    faces.addObj(grip);
+      
+      
+    // add axes for visual debugging
+    centerX = g.compilePath3D(["M",-4*width,0,0, "L",4*width,0,0], "green", 1);
+    faces.addObj(centerX);
+    centerY = g.compilePath3D(["M",0,-4*width,0, "L",0,4*width,0], "green", 1);
+    faces.addObj(centerY);
+    centerZ = g.compilePath3D(["M",0,0,-4*width, "L",0,0,4*width], "green", 1);
+    faces.addObj(centerZ);
+    
+    
+    return faces;
+  }
+
+function buildCube(g, width, colors){ // pass width and array of 6 colors
   var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
       faces = g.createGroup3D(),
       side,
@@ -72,20 +245,18 @@ function buildCube(g, width, colors) // pass width and array of 6 colors
     side.backHidden = true;
     faces.addObj(side);
   }
-    
+    // Axes added for visual debugging
     centerX = g.compilePath3D(["M",-50,0,0, "L",50,0,0], "black", 1);
     faces.addObj(centerX);
     centerY = g.compilePath3D(["M",0,-50,0, "L",0,50,0], "black", 1);
     faces.addObj(centerY);
     centerZ = g.compilePath3D(["M",0,0,-50, "L",0,0,50], "black", 1);
     faces.addObj(centerZ);
-    
-    
+        
   return faces;
 }
 
-
-    </script>
+  </script>
     
   </body>
 </html>  
