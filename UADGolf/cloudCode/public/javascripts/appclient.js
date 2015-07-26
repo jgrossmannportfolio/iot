@@ -1,9 +1,12 @@
 var myapp = (function(){
-    var displacementData = [];
+    var displacementData = [[]];
     var gyroData = [];
     var width = 600;
     var height = 400;
     var animated = false;
+
+
+
 
 
     function setCanvasDim() {
@@ -26,11 +29,91 @@ var myapp = (function(){
             var query = new Parse.Query(putt);
             query.get("12fz4AHTDK", {
                 success: function(data) {
-                    displacementData = data.get("frames");   
+                    // receive data
+                    displacementData = data.get("frames");
                     gyroData = data.get("gyro");
-                    console.log("got data");
+
+                    displacementData = parseIncomingArray(displacementData);
+                    gyroData = parseIncomingArray(gyroData);
+
+                    // Debug tool - verify that the lengths are valid in the console
+                    console.log("received data (gyro, displacement)");
+                    console.log(gyroData);
+                    console.log(displacementData);
+                    
+                    // data processing routine for translation graphics
+                    displacementData = applyZoffset(displacementData); 
+
+                    // converting data to pixels
+                    displacementData = toPixels(displacementData,10);   
+                    
+                    console.log("processed data (gyro, displacement)");
+                    console.log(gyroData);
                     console.log(displacementData);
                     putterDemo("puttCanvas");   
+
+
+                    // Fix buggy python code -JS incoming data is not always sent to parse as an array of arrays
+                    function parseIncomingArray (incomingArray){
+                        if (incomingArray[0].length != 3){
+                            // append the incorrect parsings as the first array in the array
+                            console.log("python bug accounted for");   
+                            firstArray = [[incomingArray[0],incomingArray[1],incomingArray[2]]];
+                            incomingArray = incomingArray.slice(3, incomingArray.length);
+                            incomingArray = firstArray.concat(incomingArray);
+                        }
+                        return incomingArray;
+                    }
+
+                    function applyZoffset(displacementframes){ 
+                    // applies the z offset to the displacement frames from the sensor
+                    //   -> returns the new displacement frames
+                      var displacementframes = displacementframes;
+                      console.log("applyZoffset()");
+                      newframes = [[0,0,0]];
+                    // Offset for displacement in the Z direction (can take decimal numbers!)
+                      Zoffset = [.5,.5,-1];
+
+                    // iterate through old frames
+                      var j = 1;  
+                      for (j = 1; j< displacementframes.length; j++){
+                        
+                        // Calculate position increment from displacement data
+                        xdisp = displacementframes[j][0] - displacementframes[j-1][0];
+                        ydisp = displacementframes[j][1] - displacementframes[j-1][1];
+                        zdisp = displacementframes[j][2] - displacementframes[j-1][2];
+                        
+                        // take into account z bias and position increments
+                        xincrementer = xdisp + Zoffset[0]*(zdisp);
+                        yincrementer = ydisp + Zoffset[1]*(zdisp);
+                        zincrementer = Zoffset[2]*(zdisp);
+
+                        // update displacement frames based on z bias
+                        newframesX = newframes[j-1][0] + xincrementer;
+                        newframesY = newframes[j-1][1] + yincrementer;
+                        newframesZ = newframes[j-1][2] + zincrementer;
+                        
+                        // append new array
+                        newframes.push([newframesX,newframesY,newframesZ]);    
+                      }
+
+                      return newframes;
+                   } // ends applyZoffset()
+
+                  function toPixels(displacementframes,scale){
+                        console.log("toPixels()");
+                        var ii = 0,
+                            newframes = [];        
+                        for (ii; ii < displacementframes.length; ii++){
+                            pixX = scale*displacementframes[ii][0];
+                            pixY = scale*displacementframes[ii][1];
+                            pixZ = scale*displacementframes[ii][2];
+                            newframes.push([pixX,pixY,pixZ]);
+                        }
+
+                        return newframes;
+                   }
+
                 },
                 error: function(object, error) {
                     console.log("Error getting putt data");
@@ -43,6 +126,10 @@ var myapp = (function(){
         }
         
     };
+
+
+            
+
 
     function animatePutt() {
         if(animated) {
@@ -172,7 +259,6 @@ var myapp = (function(){
     grip = g.compilePath3D(["M",-26/15*width,13*width,0, "L",-2*width,17*width,0], "#202020", width/3);
     faces.addObj(grip);
       
-      
     // add axes for visual debugging
     centerX = g.compilePath3D(["M",-4*width,0,0, "L",4*width,0,0], "green", 1);
     faces.addObj(centerX);
@@ -180,7 +266,6 @@ var myapp = (function(){
     faces.addObj(centerY);
     centerZ = g.compilePath3D(["M",0,0,-4*width, "L",0,0,4*width], "green", 1);
     faces.addObj(centerZ);
-    
     
     return faces;
   }
@@ -222,51 +307,9 @@ var myapp = (function(){
   }
 
 
-  function applyZoffset(displacementframes){ 
-    // applies the z offset to the displacement frames from the sensor
-    //   -> returns the new displacement frames
-      var displacementframes = displacementframes;
-      console.log("applyZoffset");
-      newframes = [[0,0,0]];
-    // Offset for displacement in the Z direction (can take decimal numbers!)
-      Zoffset = [.5,.5,-1];
+    
 
-    // iterate through old frames
-      var j = 1;  
-      for (j = 1; j< displacementframes.length - 1; j++){
-        
-        // Calculate position increment from displacement data
-        xdisp = displacementframes[j][0] - displacementframes[j-1][0];
-        ydisp = displacementframes[j][1] - displacementframes[j-1][1];
-        zdisp = displacementframes[j][2] - displacementframes[j-1][2];
-        
-        // take into account z bias and position increments
-        xincrementer = xdisp + Zoffset[0]*(zdisp);
-        yincrementer = ydisp + Zoffset[1]*(zdisp);
-        zincrementer = Zoffset[2]*(zdisp);
-
-        // update displacement frames based on z bias
-        newframesX = newframes[j-1][0] + xincrementer;
-        newframesY = newframes[j-1][1] + yincrementer;
-        newframesZ = newframes[j-1][2] + zincrementer;
-        
-        // append new array
-        newframes.push([newframesX,newframesY,newframesZ]);    
-      }
-      return newframes;
-  }
-
-  function toPixels(displacementframes,scale){
-    var ii = 0,
-        newframes = [[0,0,0]];        
-    for (ii; ii < displacementframes.length - 1; ii++){
-        pixX = scale*displacementframes[ii][0];
-        pixY = scale*displacementframes[ii][1];
-        pixZ = scale*displacementframes[ii][2];
-        newframes.push([pixX,pixY,pixZ]);
-    }
-    return newframes;
-  }
+   
 
 
 
@@ -289,45 +332,45 @@ var myapp = (function(){
       function movePutter() {
         // use target's parent group drawing origin as reference
 
-        function nextframe (convertedframes){
-        // note that z graphics are in towards the screen, thus Z and Y are switched
-            X = convertedframes[iter][0];
-            Y = convertedframes[iter][1];
-            //Z = convertedframes[iter][2];
-            Z = 0;
-            g.setWorldCoords3D(coordsX+X, coordsY+Z, xyspan+Y);
-        }
-
-        var useDataMode = 1; // set this to one to use parse data
-
-        if (useDataMode){   // USE data mode
-            if (iter == 0){
-                cube1.transform.rotate(1,0,0,gyroData[iter][0]);
-                cube1.transform.rotate(0,1,0,gyroData[iter][1]);
-                //cube1.transform.rotate(0,0,1,gyroData[iter][2]);
-                nextframe(displacementData); // sets world coordinates based on frame
-
-            } else if (iter == gyroData.length - 1) {
-                iter = -1; // reset the array counter for loop
-                cube1.transform.reset(); // reset the 3d object
-
-            } else {
-            // subtract here because gyroData comes in as angular displacement, Cango accumulates
-                cube1.transform.rotate(1,0,0,-(gyroData[iter][0] - gyroData[iter-1][0]));
-                cube1.transform.rotate(0,1,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
-                //cube1.transform.rotate(0,0,1,-(gyroData[iter][2] - gyroData[iter-1][2]));
-                nextframe(displacementData); // sets world coordinates based on frame
+            function nextframe (convertedframes){
+            // note that z graphics are in towards the screen, thus Z and Y are switched
+                X = convertedframes[iter][0];
+                Y = convertedframes[iter][1];
+                //Z = convertedframes[iter][2];
+                Z = 0;
+                g.setWorldCoords3D(coordsX+X, coordsY+Z, xyspan+Y);
             }
 
-            iter = iter + 1; // increment the array counter
+            var useDataMode = 1; // set this to one to use parse data
 
-        } else{ // not in USE data mode
-         cube1.transform.rotate(1,1,0,1);
-        }
+            if (useDataMode){   // USE data mode
+                if (iter == 0){
+                    cube1.transform.rotate(1,0,0,gyroData[iter][0]);
+                    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
+                    //cube1.transform.rotate(0,0,1,gyroData[iter][2]);
+                    nextframe(displacementData); // sets world coordinates based on frame
 
-        g.renderFrame(cube1); // update the canvas
+                } else if (iter == gyroData.length - 1) {
+                    iter = -1; // reset the array counter for loop
+                    cube1.transform.reset(); // reset the 3d object
 
-      }
+                } else {
+                // subtract here because gyroData comes in as angular displacement, Cango accumulates
+                    cube1.transform.rotate(1,0,0,-(gyroData[iter][0] - gyroData[iter-1][0]));
+                    cube1.transform.rotate(0,1,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
+                    //cube1.transform.rotate(0,0,1,-(gyroData[iter][2] - gyroData[iter-1][2]));
+                    nextframe(displacementData); // sets world coordinates based on frame
+                }
+
+                iter = iter + 1; // increment the array counter
+
+            } else{ // not in USEdata mode
+             cube1.transform.rotate(1,1,0,1);
+            }
+
+            g.renderFrame(cube1); // update the canvas
+      } // ends movePutter()
+
 
 
       g.setWorldCoords3D(coordsX, coordsY, xyspan);
@@ -336,22 +379,10 @@ var myapp = (function(){
 
 
       //cube1 = buildCube(g, width, colors1);
-      cube1 = buildPutter(g, 10, colors0); // note: len(colors1) != len(colors0)
+      cube1 = buildPutter(g, 10, colors0); // note for builfing cube/putter: len(colors1) != len(colors0)
 
-
-      displacementData = applyZoffset(displacementData); // data processing routine for graphics
-      console.log("after offset");
-      displacementData = toPixels(displacementData,1); // takes scale argument
-      console.log("after topixels");
-      var kk = 0;
-      console.log("length");
-      console.log(displacementData.length);
-      for (kk; kk < displacementData.length - 1; kk++){
-          console.log(displacementData[kk][0]);
-      }
+    
       setInterval(movePutter, 25); // in msec
-
-
   } 
 
 
