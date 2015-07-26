@@ -53,6 +53,7 @@ class wicedsense:
   starttimer = 0 # wait for garbageiterations before the timer starts
 
   calibrate = False
+  calibrateMagent = False
   accelCal = [0.0, 0.0, 0.0]
   gyroCal = [0.0, 0.0, 0.0]
 
@@ -95,7 +96,7 @@ class wicedsense:
 
   # Init function to connect to wiced sense using mac address
   # Blue tooth address is obtained from blescan.py 
-  def __init__( self, bluetooth_adr, calibrate ):
+  def __init__( self, bluetooth_adr, calibrate, calibrateMagnet):
     self.con = pexpect.spawn('gatttool -b ' + bluetooth_adr + ' --interactive')
     #self.con.logfile = sys.stdout
     self.con.expect('\[LE\]>', timeout=600)
@@ -105,6 +106,7 @@ class wicedsense:
     self.con.expect('Connection successful.*\[LE\]>')
     print "Connection successful"
     self.calibrate = calibrate
+    self.calibrateMagnet = calibrateMagent
     self.cb = {}
     return
 
@@ -133,13 +135,12 @@ class wicedsense:
       self.accelCal = calArray[3:]
       print self.gyroCal
       print self.accelCal
-
-    # LOOP UNTIL TIME EXPIRES
-    if(self.calibrate):
-      total = math.ceil(30.0 / self.delta_t)
-    else:
       total = math.ceil( self.endtime/self.delta_t )
 
+    # LOOP UNTIL TIME EXPIRES
+    else:
+      total = math.ceil(30.0 / self.delta_t)
+      
     iters = 0    
     while total > iters:
       try:
@@ -175,16 +176,24 @@ class wicedsense:
     accelAvg = [0, 0, 0]
     if(self.calibrate == True):
       calText = ""
-      gyroAvg[0] = math.fsum(self.gyroX) / len(self.gyroX)
-      gyroAvg[1] = math.fsum(self.gyroY) / len(self.gyroY)
-      gyroAvg[2] = math.fsum(self.gyroZ) / len(self.gyroZ)
-      accelAvg[0] =math.fsum(self.ax) / len(self.ax)
-      accelAvg[1] = math.fsum(self.ay) / len(self.ay)
-      accelAvg[2] = math.fsum(self.az) / len(self.az)
-      calText += str(0 - gyroAvg[0]) + "," + str(0 - gyroAvg[1]) + "," + str(0 - gyroAvg[2]) + ","
-      calText += str(0 - accelAvg[0]) + "," + str(0 - accelAvg[1]) + "," + str(8192 - accelAvg[2])
-      print "writing to file"
-      self.writeToFile("calibration.txt", calText)
+      if(self.calibrateMagnet == True):
+        xOff = -(max(self.magX) + min(self.magX)) / 2
+        yOff = -(max(self.magY) + min(self.magY)) / 2
+        zOff = -(max(self.magZ) + min(self.magZ)) / 2
+        calText += str(xOff) + "," + str(yOff) + "," + str(zOff)
+        print calText
+        self.writeToFile("magnetCalibration.txt", calText)
+      else:
+        calText = ""
+        gyroAvg[0] = math.fsum(self.gyroX) / len(self.gyroX)
+        gyroAvg[1] = math.fsum(self.gyroY) / len(self.gyroY)
+        gyroAvg[2] = math.fsum(self.gyroZ) / len(self.gyroZ)
+        accelAvg[0] =math.fsum(self.ax) / len(self.ax)
+        accelAvg[1] = math.fsum(self.ay) / len(self.ay)
+        accelAvg[2] = math.fsum(self.az) / len(self.az)
+        calText += str(0 - gyroAvg[0]) + "," + str(0 - gyroAvg[1]) + "," + str(0 - gyroAvg[2]) + ","
+        calText += str(0 - accelAvg[0]) + "," + str(0 - accelAvg[1]) + "," + str(8192 - accelAvg[2])
+        self.writeToFile("calibration.txt", calText)
     
     else:
       # FILTER OUT INITIAL ACCELERATION VALUES --------------
@@ -334,29 +343,41 @@ class wicedsense:
         #print "vz: " + str(vz1)
 
         if(self.calibrate == True):
-          (Gxyz, Gmag) = MathUtil.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
-          (Axyz, Amag) = MathUtil.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
+          if(self.calibrateMagnet == True):
+            (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 1.0)
+            self.magX.append(Mxyz[0])
+            self.magY.append(Mxyz[1])
+            self.magZ.append(Mxyz[2])
+          else:
+            (Gxyz, Gmag) = MathUtil.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
+            (Axyz, Amag) = MathUtil.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
+            self.gyroX.append(Gxyz[0])
+            self.gyroY.append(Gxyz[1])
+            self.gyroZ.append(Gxyz[2])
+            self.ax.append( Axyz[0] )
+            self.ay.append( Axyz[1] )
+            self.az.append( Axyz[2] )
         else:
           (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.0175)
           (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 8192.0/9.80665)
           (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 16384.0)
                     
-        print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2]) + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
+          print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2]) + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
 
-        self.gyroX.append(Gxyz[0])
-        self.gyroY.append(Gxyz[1])
-        self.gyroZ.append(Gxyz[2])
+          self.gyroX.append(Gxyz[0])
+          self.gyroY.append(Gxyz[1])
+          self.gyroZ.append(Gxyz[2])
 
-        self.magX.append(Mxyz[0])
-        self.magY.append(Mxyz[1])
-        self.magZ.append(Mxyz[2])
+          self.magX.append(Mxyz[0])
+          self.magY.append(Mxyz[1])
+          self.magZ.append(Mxyz[2])
 
-        self.magnitude.append( Amag )
+          self.magnitude.append( Amag )
 
-        self.ax.append( Axyz[0] )
-        self.ay.append( Axyz[1] )
-        self.az.append( Axyz[2] )
- 
+          self.ax.append( Axyz[0] )
+          self.ay.append( Axyz[1] )
+          self.az.append( Axyz[2] )
+   
     else:
       self.inittime += 1  # increment 10 times before evaluating values      
 
@@ -364,17 +385,21 @@ class wicedsense:
 # main function USAGE python sense.py <mac address>
 def main():
   calibrate = False
+  calibrateMagnet = False
   bluetooth_adr = sys.argv[1]
   
   if len(sys.argv) > 2:
     if(sys.argv[2] == "true" or sys.argv[2] == "True"):
+      calibrate = True
+    else if(sys.argv[2] == "magnet" or sys.argv[2] == "Magnet"):
+      calibrateMagnet = True
       calibrate = True
 
  # while True:
   try:   
     print "[re]starting.."
 
-    tag = wicedsense(bluetooth_adr, calibrate)
+    tag = wicedsense(bluetooth_adr, calibrate, calibrateMagnet)
 
     tag.register_cb(0x2a,tag.dataCallback)
     tag.char_write_cmd(0x2b, 0x01)
