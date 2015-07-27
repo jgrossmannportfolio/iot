@@ -7,6 +7,20 @@ PI = 3.1415926536
 tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
 tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
 
+def RtoGround(roll, pitch, yaw):
+  return [[math.cos(pitch) * math.cos(yaw), 
+        math.sin(roll) * math.sin(pitch) * math.cos(yaw) - math.cos(roll) * math.sin(yaw),
+        math.cos(roll) * math.sin(pitch) * math.cos(yaw) + math.sin(roll) * math.sin(yaw)],
+       [math.cos(pitch) * math.sin(yaw),
+        math.sin(roll) * math.sin(pitch) * math.sin(yaw) + math.cos(roll) * math.cos(yaw),
+        math.cos(roll) * math.sin(pitch) * math.sin(yaw) - math.sin(roll) * math.cos(yaw)],
+       [-math.sin(pitch),
+        math.sin(roll) * math.cos(pitch),
+        math.cos(roll) * math.cos(pitch)]]
+
+def RtoPutter(roll, pitch, yaw):
+  return zip(*RtoGround(roll, pitch, yaw))
+
 def roll(accelX, accelY, accelZ):
   if accelX**2 + accelZ**2 == 0:
     print "would be divide by 0"
@@ -25,7 +39,7 @@ def yaw(roll, pitch, magX, magY, magZ):
   pitch = math.radians(pitch)
 
   x = magX * math.cos(pitch) + magZ * math.sin(pitch)
-  y = magX * math.sin(roll) * math.sin(pitch) + magY * math.cos(roll) - magZ * math.sin(roll) * cos(pitch)
+  y = magX * math.sin(roll) * math.sin(pitch) + magY * math.cos(roll) - magZ * math.sin(roll) * math.cos(pitch)
 
   #x = magX * math.cos(pitch) + magY * math.sin(pitch) * math.sin(roll)
   #y = magY * math.cos(roll) + magZ * math.sin(roll)
@@ -56,4 +70,40 @@ def convertData(rawX, rawY, rawZ, calibration):
 
 def getAngle(gyroData, dt):
     return gyroData * dt
+
+
+def rotateAcceleration(accel, angles):
+  #angles: 0:roll, 1:pitch, 2:yaw
+  #accel: 0:x, 1:y, 2:z
+  gravity = rotateGravity(angles)
+  accel[0] -= gravity[0]
+  accel[1] -= gravity[1]
+  accel[2] -= gravity[2]
+  rotAccel = [0.0, 0.0, 0.0]
+  roll = math.radians(angles[0])
+  pitch = math.radians(angles[1])
+  yaw = math.radians(angles[2])
+  R = RtoGround(roll, pitch, yaw)
+  for i in range(3):
+    for j in range(3):
+      rotAccel[i] += R[i][j] * accel[j]
+
+  return rotAccel
+
+
+def rotateGravity(angles):
+  gravityOffset = 0.00063
+  gravity = [0.0,0.0,9.80665 - gravityOffset]
+  rotGravity = [0, 0, 0]
+  roll = math.radians(angles[0])
+  pitch = math.radians(angles[1])
+  yaw = math.radians(angles[2])
+  R = RtoPutter(roll, pitch, yaw)
+  for i in range(3):
+    for j in range(3):
+      rotGravity[i] += R[i][j] * gravity[j]
+  return rotGravity
+
+
+
 

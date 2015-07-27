@@ -22,6 +22,7 @@
 # MAC: 
 #20:73:7A:15:13:DE
 
+import matplotlib.pyplot as plot
 import pexpect
 import sys
 import time
@@ -53,9 +54,10 @@ class wicedsense:
   starttimer = 0 # wait for garbageiterations before the timer starts
 
   calibrate = False
-  calibrateMagent = False
+  calibrateMagnet = False
   accelCal = [0.0, 0.0, 0.0]
   gyroCal = [0.0, 0.0, 0.0]
+  magCal = [0,0, 0,0, 0,0]
 
   vx = 0.0
   ax = []
@@ -106,7 +108,7 @@ class wicedsense:
     self.con.expect('Connection successful.*\[LE\]>')
     print "Connection successful"
     self.calibrate = calibrate
-    self.calibrateMagnet = calibrateMagent
+    self.calibrateMagnet = calibrateMagnet
     self.cb = {}
     return
 
@@ -133,13 +135,17 @@ class wicedsense:
       calArray = calText.split(",")
       self.gyroCal = calArray[0:3]
       self.accelCal = calArray[3:]
+      calText = self.readFromFile("magnetCalibration.txt")
+      self.magCal = calText.split(",")
       print self.gyroCal
       print self.accelCal
+      print self.magCal
       total = math.ceil( self.endtime/self.delta_t )
 
     # LOOP UNTIL TIME EXPIRES
     else:
       total = math.ceil(30.0 / self.delta_t)
+      print "set time to 30s for calibration"
       
     iters = 0    
     while total > iters:
@@ -181,6 +187,7 @@ class wicedsense:
         yOff = -(max(self.magY) + min(self.magY)) / 2
         zOff = -(max(self.magZ) + min(self.magZ)) / 2
         calText += str(xOff) + "," + str(yOff) + "," + str(zOff)
+        print calText
         self.writeToFile("magnetCalibration.txt", calText)
       else:
         calText = ""
@@ -208,7 +215,8 @@ class wicedsense:
     
       for x in range(len(self.magnitude)):
         print self.magnitude[x]
-        if self.magnitude[x] > thresh:
+        #if self.magnitude[x] > thresh:
+        if True:
           print "PUTTING................."
           axnew = self.ax[x:]
           aynew = self.ay[x:]
@@ -225,33 +233,21 @@ class wicedsense:
       # ========================
       # GET DISPLACEMENT FRAMES
       # ========================
-
+      
       for x in range(len(axnew)):
         accelNew.append([axnew[x], aynew[x], aznew[x], magnew[x]])
 
       roll = []
       pitch = []
       yaw = []
-
-      xframes = [MathUtil.displacement(self.dx,self.vx,axnew[0], self.delta_t)[0]]
-      yframes = [MathUtil.displacement(self.dy,self.vy,aynew[0], self.delta_t)[0]]
-      zframes = [MathUtil.displacement(self.dz,self.vz,aznew[0], self.delta_t)[0]]
       roll.append(MathUtil.roll(axnew[0], aynew[0], aznew[0]))
       pitch.append(MathUtil.pitch(axnew[0], aynew[0], aznew[0]))
-      yaw.append(MathUtil.yaw(roll[0], pitch[0], self.magX[0], self.magY[0], self.magZ[0]))
-      xyzframes = [xframes[-1], yframes[-1], zframes[-1]] 
+      yaw.append(MathUtil.yaw(roll[0], pitch[0], self.magX[0], self.magY[0], self.magZ[0])) 
       for x in range(1, len(axnew)):
-        
         roll.append(MathUtil.roll(axnew[x], aynew[x], aznew[x]))
         pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
         yaw.append(MathUtil.yaw(roll[x], pitch[x], self.magX[x], self.magY[x], self.magZ[x]))
-        self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,axnew[x], self.delta_t)
-        xframes.append( float(xframes[-1] + self.dx)  )
-        self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,aynew[x], self.delta_t)
-        yframes.append( float(yframes[-1] + self.dy)  )
-        self.dz,self.vz = MathUtil.displacement(self.dz,self.vz,aznew[x], self.delta_t)
-        zframes.append( float(zframes[-1] + self.dz)  )
-        xyzframes.append( [xframes[-1], yframes[-1], zframes[-1]] )
+        
 
       # OUTPUT TO SCREEN ------------------
       '''
@@ -276,21 +272,57 @@ class wicedsense:
       print
 
       '''
+     
       gyrodata = []
       kalmanX = kalman.Kalman(roll[0])
       kalmanY = kalman.Kalman(pitch[0])
       kalmanZ = kalman.Kalman(yaw[0])
-      gyrodata.append([roll[0], pitch[0], yaw[0]])
+      accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], yaw[0]])]
+      print "after accel"
+      xframes = [MathUtil.displacement(self.dx,self.vx,accelRot[-1][0], self.delta_t)[0]]
+      print "after x"
+      yframes = [MathUtil.displacement(self.dy,self.vy,accelRot[-1][1], self.delta_t)[0]]
+      print "after y"
+      zframes = [MathUtil.displacement(self.dz,self.vz,accelRot[-1][2], self.delta_t)[0]]
+      print "after z"
+      xyzframes = [[xframes[-1], yframes[-1], zframes[-1]]]
+      gyrodata.append([roll[0], pitch[0], 0.0])
+      print "after gyro"
+      zAngle = [0.0]
+      time = [0.0]
+      data = [0.0]
+      angle = [0.0]
       for x in range(1, len(gyroXnew)):
+        print x
+        time.append(time[-1] + self.delta_t)
+        data.append(MathUtil.getAngle(gyroZnew[x], self.delta_t))
+        zAngle.append(zAngle[-1] + data[-1])
         gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
                         kalmanY.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
-                        kalmanZ.updateAngle(yaw[x], gyroZnew[x], self.delta_t) ])
+                        zAngle[x] ])
+        accelRot.append(MathUtil.rotateAcceleration([axnew[x], aynew[x], aznew[x]], [gyrodata[-1][0], gyrodata[-1][1], gyrodata[-1][2]]))
+        self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,accelRot[-1][0], self.delta_t)
+        xframes.append( float(xframes[-1] + self.dx)  )
+        self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,accelRot[-1][1], self.delta_t)
+        yframes.append( float(yframes[-1] + self.dy)  )
+        self.dz,self.vz = MathUtil.displacement(self.dz,self.vz,accelRot[-1][2], self.delta_t)
+        zframes.append( float(zframes[-1] + self.dz)  )
+        xyzframes.append( [xframes[-1], yframes[-1], zframes[-1]] )
+        accelNew[x] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[x][3]]
+        
+        
+                        
+                        #kalmanZ.updateAngle(yaw[x], gyroZnew[x], self.delta_t) ])
         #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
 
       # =======================
       # PUSH FRAMES TO PARSE
       # =======================
       self.pushToCloud(xyzframes, gyrodata, accelNew)
+      
+      #plot.plot(time, accelRot[:][, 'red', time, zAngle )
+      #plot.plot(time, zAngle)
+      #plot.show()
         
 
   def register_cb( self, handle, fn ):
@@ -324,7 +356,6 @@ class wicedsense:
         # Make sure bytes are received by the correct handle
         #if(v[0] == 3):
         #print "v: " + str(v)
-        print len(v)
         vx1 = int( str(v[2]*256 + v[1]) )
         vy1 = int( str(v[4]*256 + v[3]) )
         vz1 = int( str(v[6]*256 + v[5]) )
@@ -341,13 +372,12 @@ class wicedsense:
         #print "vy: " + str(vy1)
         #print "vz: " + str(vz1)
 
-        if(self.calibrate == True):
-          if(self.calibrateMagnet == True):
-            (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 1.0)
-            self.magX.append(Mxyz[0])
-            self.magY.append(Mxyz[1])
-            self.magZ.append(Mxyz[2])
-          else:
+        if(self.calibrateMagnet == True):
+          (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 1.0)
+          self.magX.append(Mxyz[0])
+          self.magY.append(Mxyz[1])
+          self.magZ.append(Mxyz[2])
+        elif(self.calibrate == True):
             (Gxyz, Gmag) = MathUtil.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
             (Axyz, Amag) = MathUtil.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
             self.gyroX.append(Gxyz[0])
@@ -359,7 +389,7 @@ class wicedsense:
         else:
           (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.0175)
           (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 8192.0/9.80665)
-          (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 16384.0)
+          (Mxyz, Mmag) = MathUtil.convertData(mx1 + int(float(self.magCal[0])), my1 + int(float(self.magCal[1])), mz1 + int(float(self.magCal[2])), 16384.0)
                     
           print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2]) + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
 
@@ -390,7 +420,7 @@ def main():
   if len(sys.argv) > 2:
     if(sys.argv[2] == "true" or sys.argv[2] == "True"):
       calibrate = True
-    else if(sys.argv[2] == "magnet" or sys.argv[2] == "Magnet"):
+    elif(sys.argv[2] == "magnet" or sys.argv[2] == "Magnet"):
       calibrateMagnet = True
       calibrate = True
 
