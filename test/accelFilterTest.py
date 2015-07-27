@@ -12,7 +12,7 @@ delta_t = .020 # seconds
 
 
 # read in data file
-with open ("accelData.dat", "r") as myfile:
+with open ("sampleAccelData.dat", "r") as myfile:
     data = myfile.read().replace('\n', '')
 
 # delimiters

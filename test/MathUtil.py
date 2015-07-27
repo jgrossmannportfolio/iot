@@ -132,7 +132,9 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     ymax2 = max(plotData[2])
 
     ymax = max([ymax0,ymax1,ymax2])
+    ymax = ymax + .015*ymax
     ymin = min([ymin0,ymin1,ymin2])
+    ymin = ymin - (-.015)*ymin
     xmax = timeX[-1] 
     xmin = 0
     axesRange = [xmin, xmax, ymin, ymax]
@@ -144,6 +146,14 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     scalarForYEndTicks = 1.0/(yticks)+(1.0/(10*yticks))
     xTicks = ((xmax + (scalarForXEndTicks)*xmax)/xticks)
     yTicks = ( (ymax - ymin) + scalarForYEndTicks*(ymax - ymin) )/yticks
+    xTicks = float("{0:.2f}".format(xTicks) )
+    yTicks = float("{0:.4f}".format(yTicks) )
+
+        # prevent division by zero
+    if xTicks == 0.00:
+        xTicks = 0.01
+    if yTicks == 0.00:
+        yTicks = 0.01
 
 
     # declare the figure ---------------
@@ -158,8 +168,8 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     ax.set_ylabel(ylabelStr)
 
 
-    ax.set_xticks(np.arange(xmin,xmax,xTicks))
-    ax.set_yticks(np.arange(ymin,ymax,yTicks))
+    ax.set_xticks( np.arange(xmin,xmax,xTicks) ) 
+    ax.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax.plot(timeX, plotData[0])
 
@@ -174,8 +184,8 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     
     ax2.set_xlabel(xlabelStr)
 
-    ax2.set_xticks(np.arange(xmin,xmax,xTicks))
-    ax2.set_yticks(np.arange(ymin,ymax,yTicks))
+    ax2.set_xticks( np.arange(xmin,xmax,xTicks) ) 
+    ax2.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax2.plot(timeX, plotData[1], color='red')
 
@@ -189,8 +199,8 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     fig.subplots_adjust(top=0.85)
     ax3.set_title(r'$Z$')
 
-    ax3.set_xticks(np.arange(xmin,xmax,xTicks))
-    ax3.set_yticks(np.arange(ymin,ymax,yTicks))
+    ax3.set_xticks( np.arange(xmin,xmax,xTicks) ) 
+    ax3.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax3.plot(timeX, plotData[2], color='green')
 
@@ -206,7 +216,7 @@ def getVeloAndDispLists(aList,timeX):
   vList = [0.0]
   dList = [0.0]
   for i in (range(len(aList)-1)):
-    dPoint,vPoint = displacement(dList[-1], vList[-1], aList[i], timeX[i]-timeX[i-1])
+    dPoint,vPoint = displacement(dList[-1], vList[-1], aList[i], timeX[i+1]-timeX[i])
     dList.append(dList[-1]+dPoint)
     vList.append(vPoint)
   return dList, vList

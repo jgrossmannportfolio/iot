@@ -82,7 +82,7 @@ figDisp = MathUtil.create3plots(timestamp, dispPlotData, plotTitle, xlabel, ylab
 
 
 
-plot.show()
+plot.show() # renders the plots
 
 
 
