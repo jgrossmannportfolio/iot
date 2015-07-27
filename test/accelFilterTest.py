@@ -10,7 +10,7 @@ delta_t = .10 # seconds
 
 
 # read in text file
-with open ("AccelData.dat", "r") as myfile:
+with open ("accelData.dat", "r") as myfile:
     data = myfile.read().replace('\n', '')
 
 
