@@ -92,7 +92,7 @@ def rotateAcceleration(accel, angles):
 
 
 def rotateGravity(angles):
-  gravityOffset = 0.00063
+  #gravityOffset = 0.00063
   gravity = [0.0,0.0,9.80665 - gravityOffset]
   rotGravity = [0, 0, 0]
   roll = math.radians(angles[0])
@@ -103,6 +103,8 @@ def rotateGravity(angles):
     for j in range(3):
       rotGravity[i] += R[i][j] * gravity[j]
   return rotGravity
+
+
 
 
 
