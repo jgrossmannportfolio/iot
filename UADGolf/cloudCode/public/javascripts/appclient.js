@@ -38,7 +38,7 @@ var myapp = (function(){
                         gyroData = data.get("gyro");
                     
                         displacementData = parseIncomingArray(displacementData);
-                        displacementData = changeSigns(displacementData);
+                        //displacementData = changeSigns(displacementData);
                         gyroData = parseIncomingArray(gyroData);
 
                         // Debug tool - check that the lengths are valid in the console
@@ -333,7 +333,7 @@ var myapp = (function(){
 
 
                 // ========== Y DIRECTION TEMPORARILY EXCLUDED DUE TO GRAVITY DEBUG
-                Y = 0;
+                //Y = 0;
 
 
                 g.setWorldCoords3D(coordsX-X, coordsY-Y, xyspan-Z);
@@ -343,8 +343,8 @@ var myapp = (function(){
 
             if (useDataMode){   // USEdata mode
                 if (iter == 0){
-                    cube1.transform.rotate(0,1,0,gyroData[iter][0]);
-                    cube1.transform.rotate(0,0,1,gyroData[iter][1]);
+                    cube1.transform.rotate(0,0,1,gyroData[iter][0]);
+                    cube1.transform.rotate(1,0,0,gyroData[iter][1]);
                     cube1.transform.rotate(0,1,0,gyroData[iter][2]);
                     nextframe(displacementData); // sets world coordinates based on frame
 
@@ -354,8 +354,8 @@ var myapp = (function(){
 
                 } else {
                 // subtract here because gyroData comes in as angular displacement, Cango accumulates
-                    cube1.transform.rotate(0,1,0,-(gyroData[iter][0] - gyroData[iter-1][0]));
-                    cube1.transform.rotate(0,0,1,-(gyroData[iter][1] - gyroData[iter-1][1]));
+                    cube1.transform.rotate(0,0,1,-(gyroData[iter][0] - gyroData[iter-1][0]));
+                    cube1.transform.rotate(1,0,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
                     cube1.transform.rotate(0,1,0,-(gyroData[iter][2] - gyroData[iter-1][2]));
                     nextframe(displacementData); // sets world coordinates based on frame
                 }
@@ -363,7 +363,7 @@ var myapp = (function(){
                 iter = iter + 1; // increment the array counter
 
             } else{ // not in USEdata mode
-             cube1.transform.rotate(1,1,0,1);
+             cube1.transform.rotate(1,0,0,10);
             }
 
             g.renderFrame(cube1); // update the canvas

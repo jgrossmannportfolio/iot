@@ -22,14 +22,20 @@ text-align: center;
 background-color: #CCE1F3;
 font-size: 22;
 }
+#navbar2 {
+background-color: #B0B0B0;
+font-size: 10;
+}
 
 .nav.nav-pills a {
 color: blue;
 }
 
+
 #hello {
 font-size: 36;
 font-weight: bold;
+text-align: center;
 }
 
 #header form {
