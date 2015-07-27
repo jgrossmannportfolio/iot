@@ -5,7 +5,6 @@ var myapp = (function(){
 
     var delta_t = 25;                   // frame rate, in msec
     var worldScalingFactor = 0;         // canvas world scaling factor, will be set in setCanvasDim() 
-    var putterHeight = .83;             // putter height in meters
     var pixelsPerMeter = 3779.527559055;// conversion
     var canvasPixelsPerMeter = 0;       // will be set in setCanvasDim()
 
@@ -332,7 +331,12 @@ var myapp = (function(){
                 Y = convertedframes[iter][2];
                 Z = convertedframes[iter][0];
 
-                g.setWorldCoords3D(coordsX-X, coordsY, xyspan-Z);
+
+                // ========== Y DIRECTION TEMPORARILY EXCLUDED DUE TO GRAVITY DEBUG
+                Y = 0;
+
+
+                g.setWorldCoords3D(coordsX-X, coordsY-Y, xyspan-Z);
             }
 
             var useDataMode = 1; // set this to one to use parse data
@@ -369,8 +373,9 @@ var myapp = (function(){
       g.setWorldCoords3D(coordsX, coordsY, xyspan);
       g.setFOV(45);
       g.setPropertyDefault("backgroundColor", "lightyellow");
-
+    
       // build putter object
+      putterHeight = .83;  // in meters
       cube1 = buildPutter(g, canvasPixelsPerMeter*(putterHeight*10), colors); // note for builfing cube/putter: len(colors1) != len(colors0)
     
       setInterval(movePutter, delta_t); // in msec
