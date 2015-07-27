@@ -3,7 +3,7 @@
 #import MathUtil
 import re
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plot
 import MathUtil
 
 import math
@@ -11,100 +11,12 @@ import math
 delta_t = .020 # seconds
 
 
-# read in text file
+# read in data file
 with open ("accelData.dat", "r") as myfile:
     data = myfile.read().replace('\n', '')
 
-
 # delimiters
 new = re.split(', |\[|\, |\,|\]', data)
-
-
-
-def create3plots(yticks,xticks,plotData):
-    # plotData must be in the form of [xdataArray, ydataArray, zdataArray]
-
-    # left subplot ---------------
-    # - configure the axes sizes
-    ymin0 = min(plotData[0])
-    ymin1 = min(plotData[1])
-    ymin2 = min(plotData[2])
-
-    ymax0 = max(plotData[0])
-    ymax1 = max(plotData[1])
-    ymax2 = max(plotData[2])
-
-    ymax = max([ymax0,ymax1,ymax2])
-    ymin = min([ymin0,ymin1,ymin2])
-    xmax = timestamp[-1] 
-    xmin = 0
-    axesRange = [xmin, xmax, ymin, ymax]
-
-    scalarForEndTicks = 0.199 # random choice? yes, but it works
-    xTicks = ((xmax + scalarForEndTicks*xmax)/xticks)
-    yTicks = ( (ymax - ymin) + scalarForEndTicks*(ymax - ymin) )/yticks
-    fig = plt.figure()
-    
-    ax = fig.add_subplot(131)
-    fig.subplots_adjust(top=0.85)
-    ax.set_title(r'$X$')
-
-
-    ax.set_xticks(np.arange(xmin,xmax,xTicks))
-    ax.set_yticks(np.arange(ymin,ymax,yTicks))
-
-    ax.plot(timestamp, plotData[0])
-
-    ax.axis(axesRange)
-    ax.grid(True)
-
-
-    # middle subplot ------------------
-    # - configure the axes sizes
-    ax2 = fig.add_subplot(132)
-    fig.subplots_adjust(top=0.85)
-    ax2.set_title(r'$Y$')
-    
-    ax2.set_xlabel(r'Time ($s$)')
-
-    ax2.set_xticks(np.arange(xmin,xmax,xTicks))
-    ax2.set_yticks(np.arange(ymin,ymax,yTicks))
-
-    ax2.plot(timestamp, plotData[1], color='red')
-
-    ax2.axis(axesRange)
-    ax2.grid(True)
-    ax2.set_yticklabels([])
-
-
-    # right subplot ---------------------
-    # - configure the axes sizes
-    ax3 = fig.add_subplot(133)
-    fig.subplots_adjust(top=0.85)
-    ax3.set_title(r'$Z$')
-
-    ax3.set_xticks(np.arange(xmin,xmax,xTicks))
-    ax3.set_yticks(np.arange(ymin,ymax,yTicks))
-
-    ax3.plot(timestamp, plotData[2], color='green')
-
-    ax3.axis(axesRange)
-    ax3.grid(True)
-    ax3.set_yticklabels([])
-
-    return ax, fig
-
-def getVeloAndDispLists(aList):
-  vList = [0.0]
-  dList = [0.0]
-  for i in (range(len(aList)-1)):
-    dPoint,vPoint = MathUtil.displacement(dList[-1], vList[-1], aList[i], delta_t)
-    dList.append(dList[-1]+dPoint)
-    vList.append(vPoint)
-  return dList, vList
-
-
-
 
 # Append incoming data into ax, ay, az, aMag lists
 count = 0
@@ -139,39 +51,38 @@ vxData = []
 vyData = []
 vzData = []
 
-dxData, vxData = getVeloAndDispLists(axData)
-dyData, vyData = getVeloAndDispLists(ayData)
-dzData, vzData = getVeloAndDispLists(azData)
+dxData, vxData = MathUtil.getVeloAndDispLists(axData, timestamp)
+dyData, vyData = MathUtil.getVeloAndDispLists(ayData, timestamp)
+dzData, vzData = MathUtil.getVeloAndDispLists(azData, timestamp)
 
 # Create Accel xyz plots
 #   -set axes
-yTicks = 10 # number of ticks
-xTicks = 6
 accelPlotData = [axData, ayData, azData]
+plotTitle = 'Acceleration Data'
+ylabel = r'Acceleration ($m/s^2$)'
+xlabel = r'Time ($s$)'
 
-ayHandle, figAccel = create3plots(yTicks,xTicks,accelPlotData)
-figAccel.suptitle('Acceleration Data', fontsize=14, fontweight='bold')
-ayHandle.set_ylabel(r'Acceleration ($m/s^2$)')
-
+figAccel = MathUtil.create3plots(timestamp, accelPlotData, plotTitle, xlabel, ylabel)
 
 # Create Velo xyz plots
 veloPlotData = [vxData, vyData, vzData]
+plotTitle = 'Velocity Calculation'
+ylabel = r'Velocity ($m/s$)'
+xlabel = r'Time ($s$)'
 
-vyHandle, figVelo = create3plots(yTicks,xTicks,veloPlotData)
-figVelo.suptitle('Velocity Calculation', fontsize=14, fontweight='bold')
-vyHandle.set_ylabel(r'Velocity ($m/s$)')
-
+figVelo = MathUtil.create3plots(timestamp, veloPlotData, plotTitle, xlabel, ylabel)
 
 # Create Displacement xyz plots
 dispPlotData = [dxData, dyData, dzData]
+plotTitle = 'Displacement Calculation'
+ylabel = r'Displacement ($m$)'
+xlabel = r'Time ($s$)'
 
-dyHandle, figDisp = create3plots(yTicks,xTicks,dispPlotData)
-figDisp.suptitle('Displacement Calculation', fontsize=14, fontweight='bold')
-dyHandle.set_ylabel(r'Displacement ($m$)')
+figDisp = MathUtil.create3plots(timestamp, dispPlotData, plotTitle, xlabel, ylabel)
 
 
 
-plt.show()
+plot.show() # renders the plots
 
 
 

@@ -1,5 +1,7 @@
 # Math utility functions
 import math
+import matplotlib.pyplot as plot
+import numpy as np
 
 PI = 3.1415926536
 
@@ -104,6 +106,110 @@ def rotateGravity(angles):
       rotGravity[i] += R[i][j] * gravity[j]
   return rotGravity
 
+def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
+    # -> returns a figure with 3 subplots
+    # NOTE: matplotlib.pyplot.show() [or plot.show(), as adjusted by import]
+    #   must be called to render the plot
+
+    # Parameters:
+        # timeX     - must be a list of timestamps
+        # plotData  - must be in the form of [xdataArray, ydataArray, zdataArray]
+
+    # Example Usage:
+        # > accelPlotData = [axData, ayData, azData]
+        # > plotTitle = 'Acceleration Data'
+        # > ylabel = r'Acceleration ($m/s^2$)'
+        # > xlabel = r'Time ($s$)'
+        # > figAccel = create3plots(timestamp, accelPlotData, plotTitle, xlabel, ylabel)
+
+    # - configure the axes sizes
+    ymin0 = min(plotData[0])
+    ymin1 = min(plotData[1])
+    ymin2 = min(plotData[2])
+
+    ymax0 = max(plotData[0])
+    ymax1 = max(plotData[1])
+    ymax2 = max(plotData[2])
+
+    ymax = max([ymax0,ymax1,ymax2])
+    ymin = min([ymin0,ymin1,ymin2])
+    xmax = timeX[-1] 
+    xmin = 0
+    axesRange = [xmin, xmax, ymin, ymax]
+
+    # - configure the axis ticks
+    yticks = 10 # number of ticks
+    xticks = 6
+    scalarForXEndTicks = 1.0/(xticks)+(1.0/(10*xticks))
+    scalarForYEndTicks = 1.0/(yticks)+(1.0/(10*yticks))
+    xTicks = ((xmax + (scalarForXEndTicks)*xmax)/xticks)
+    yTicks = ( (ymax - ymin) + scalarForYEndTicks*(ymax - ymin) )/yticks
+
+
+    # declare the figure ---------------
+    fig = plot.figure()
+    fig.suptitle(titleStr, fontsize=14, fontweight='bold')
+
+
+    # left subplot ---------------
+    ax = fig.add_subplot(131)
+    fig.subplots_adjust(top=0.85)
+    ax.set_title(r'$X$')
+    ax.set_ylabel(ylabelStr)
+
+
+    ax.set_xticks(np.arange(xmin,xmax,xTicks))
+    ax.set_yticks(np.arange(ymin,ymax,yTicks))
+
+    ax.plot(timeX, plotData[0])
+
+    ax.axis(axesRange)
+    ax.grid(True)
+
+
+    # middle subplot ------------------
+    ax2 = fig.add_subplot(132)
+    fig.subplots_adjust(top=0.85)
+    ax2.set_title(r'$Y$')
+    
+    ax2.set_xlabel(xlabelStr)
+
+    ax2.set_xticks(np.arange(xmin,xmax,xTicks))
+    ax2.set_yticks(np.arange(ymin,ymax,yTicks))
+
+    ax2.plot(timeX, plotData[1], color='red')
+
+    ax2.axis(axesRange)
+    ax2.grid(True)
+    ax2.set_yticklabels([])
+
+
+    # right subplot ---------------------
+    ax3 = fig.add_subplot(133)
+    fig.subplots_adjust(top=0.85)
+    ax3.set_title(r'$Z$')
+
+    ax3.set_xticks(np.arange(xmin,xmax,xTicks))
+    ax3.set_yticks(np.arange(ymin,ymax,yTicks))
+
+    ax3.plot(timeX, plotData[2], color='green')
+
+    ax3.axis(axesRange)
+    ax3.grid(True)
+    ax3.set_yticklabels([])
+
+    return fig
+
+def getVeloAndDispLists(aList,timeX):
+  # input a one dimensional list of acceleration data and one dimensional list of the timestamp
+  # -> returns the corresponding velocity and displacement arrays
+  vList = [0.0]
+  dList = [0.0]
+  for i in (range(len(aList)-1)):
+    dPoint,vPoint = displacement(dList[-1], vList[-1], aList[i], timeX[i]-timeX[i-1])
+    dList.append(dList[-1]+dPoint)
+    vList.append(vPoint)
+  return dList, vList
 
 
 
