@@ -36,17 +36,20 @@
         var displacementframes = generateRandPath(); //generates displacement array with path data
         var convertedframes = applyZoffset(displacementframes); //apply z offset to displacement
     
-
+    var createdPath = g.createGroup3D();
     
     // build the object
     var cube = buildPutter(g, 17*10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
     //var cube = buildCube(g, 10, ["red","orange","yellow","green","blue","violet"]);
+
+    //var pathGraphic = buildPath();
 
     //var angleZ = 90;
     //g.setWorldCoords3D(coordsX, -coordsY, coordsZ);
     // Configure animation
     var timerinterval = 10;
     var timer = setInterval(movePutter, timerinterval);
+
 
 
 // =============================================
@@ -62,10 +65,27 @@
   {
     
     if (index > convertedframes.length - 1){ //when the displacement array ends
+        X = convertedframes[index-2][0];
+        Y = convertedframes[index-2][1];
+        Z = convertedframes[index-2][2];
+        console.log("here");
+        
+        // RESET
         index = -1;
+        //g.deleteObj(cube);
+        // Create path
+        console.log("here");
+        dot = g.compilePath3D(["M",0,0,0,
+                               "L",X,Y,Z], "red", 4);
+        createdPath.addObj(dot);
+
+        g.renderFrame(createdPath);
+        console.log("here");
+        g.deleteObj(cube);
+        /*
+        cube = buildPutter(g, 17*10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
         cube.transform.reset();
-        //clearInterval(timer); // clear putt
-        //timer = setInterval(movePutter, timerinterval); // loop putt
+        */
     } else {
 
         // grab displacement values from array
@@ -75,9 +95,11 @@
 
         //cube.transform.rotate(1,1,0,1);  
         g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
+        
     }
         
     g.renderFrame(cube);
+    //g.renderFrame(pathGraphic);
       
     index = index + 1; // advance to next array index
   }
@@ -139,11 +161,11 @@
   function generateRandPath(){
     var randIter = 1,
         displacement = [[0,0,0]],
-        xPositionincrementer = 0,
+        xPositionincrementer = 2,
         yPositionincrementer = 0,
         zPositionincrementer = 4;
       
-    for (randIter; randIter < 300; randIter = randIter + 1 ){
+    for (randIter; randIter < 100; randIter = randIter + 1 ){
         xprev = displacement[randIter-1][0];
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
@@ -213,7 +235,7 @@
         side = g.compileShape3D(sq[i], colors[i]);
         side.translate(translateX[i], translateY[i], translateZ[i]);
         side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
-        //side.backHidden = true;
+        side.backHidden = true;
         faces.addObj(side);
     }
     
