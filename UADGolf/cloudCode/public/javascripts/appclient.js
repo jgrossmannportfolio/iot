@@ -4,6 +4,8 @@ var myapp = (function(){
     var animated = false;
     var canvasID = '';          // to be loaded with the canvas ID given by the corresponding page
 
+    var puttboost = 10; //boost the path of the putter by a magnitude of 10
+    var putterHeight = .83;  // in meters
     var delta_t = 12.5;                   // frame rate, in msec
     var worldScalingFactor = 0;         // canvas world scaling factor, will be set in setCanvasDim() 
     var pixelsPerMeter = 3779.527559055;// conversion
@@ -17,9 +19,13 @@ var myapp = (function(){
         $("#"+canvasID).attr("height", height / 2.0);
         console.log("width: "+$("#"+canvasID).attr("width"));
         console.log("height: "+$("#"+canvasID).attr("height"));
-        worldScalingFactor = (height/2)/(25*pixelsPerMeter);
+        //worldScalingFactor = (height/2)/(20*pixelsPerMeter);
+        //worldScalingFactor = (Math.pow(height,2)/2)/(Math.pow(pixelsPerMeter,2));
+        worldScalingFactor = 1/100;
         console.log(worldScalingFactor);
         canvasPixelsPerMeter = worldScalingFactor*pixelsPerMeter;
+        console.log("Canvas Pixels per Meter = ");
+        console.log(canvasPixelsPerMeter);
         console.log("set canvas dimensions");
     };
 
@@ -84,11 +90,8 @@ var myapp = (function(){
 
 
 
-            displacementData = applyZoffset(displacementData);
-                    console.log(displacementData);
-                    console.log(gyroData);
+            // posting sample data to the parseCloud "core" dashboard (in m/s)
             
-            // posting data to the parseCloud "core" dashboard
             var puttClass = Parse.Object.extend("Putt");
             var putt2 = new puttClass();
             putt2.id = "12fz4AHTDK";
@@ -101,11 +104,16 @@ var myapp = (function(){
               }
             });
 
+            displacementData = toPixels(displacementData,puttboost*canvasPixelsPerMeter); 
+            displacementData = applyZoffset(displacementData);
+                    console.log(displacementData);
+                    console.log(gyroData);
 
+    
+        // calculate acceleration based on displacement values
+    
 
-
-
-        putterDemo(canvasID,displacementData,gyroData);   
+            putterDemo(canvasID,displacementData,gyroData);   
 
         }
 
@@ -114,19 +122,19 @@ var myapp = (function(){
             var randIter = 1,
                 displacement = [[0,0,0]],
                 rotations = [[0,0,0]],
-                scale = 1/2,
-                xx = -0.1,
-                yy = -0.1,
-                zz = -3,
+                scale = 1/2,    // back swing accel to ball contact accel ratio
+                xx = (-0.1/puttboost)/canvasPixelsPerMeter,
+                yy = (-0.1/puttboost)/canvasPixelsPerMeter,
+                zz = (-5/puttboost)/canvasPixelsPerMeter,
                 xr = -0.66,
                 yr = -0.3,
                         duration = [ 0, 50,(scale)*50,(scale)*50 ],
-            yPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx, -xx],
-            zPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy), yy],
-            xPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz, zz],
+            yPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx],
+            zPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy)],
+            xPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz ],
                 
-            yRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr, xr], //hook
-            zRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr, yr], //bent wrists before putt
+            yRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr], //hook
+            zRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr], //bent wrists before putt
             xRotationincrementer = [ 0, 0,  0, 0],
                                         
             counter = 1,
@@ -490,7 +498,7 @@ var myapp = (function(){
       g.setPropertyDefault("backgroundColor", "lightyellow");
     
       // build putter object
-      putterHeight = .83;  // in meters
+      //putterHeight = .83;  // in meters
       cube1 = buildPutter(g, canvasPixelsPerMeter*(putterHeight*10), colors); // note for builfing cube/putter: len(colors1) != len(colors0)
       console.log("Putter Built");
       timer = setInterval(movePutter, delta_t); // in msec
