@@ -1,67 +1,35 @@
 var myapp = (function(){
-    var displacementData = []; // preallocation for data reception from parse
+    var accelData = [];
     var gyroData = [];
+    var width = 600;
+    var height = 400;
     var animated = false;
-    var canvasID = '';          // to be loaded with the canvas ID given by the corresponding page
-
-    var delta_t = 12.5;                   // frame rate, in msec
-    var worldScalingFactor = 0;         // canvas world scaling factor, will be set in setCanvasDim() 
-    var pixelsPerMeter = 3779.527559055;// conversion
-    var canvasPixelsPerMeter = 0;       // will be set in setCanvasDim()
 
 
-    function setCanvasDim(canvasID) {
+    function setCanvasDim() {
         width = window.innerWidth;
         height = window.innerHeight;
-        $("#"+canvasID).attr("width", width);
-        $("#"+canvasID).attr("height", height / 2.0);
-        console.log("width: "+$("#"+canvasID).attr("width"));
-        console.log("height: "+$("#"+canvasID).attr("height"));
-        worldScalingFactor = (height/2)/(25*pixelsPerMeter);
-        console.log(worldScalingFactor);
-        canvasPixelsPerMeter = worldScalingFactor*pixelsPerMeter;
+        $("#puttCanvas").attr("width", width);
+        $("#puttCanvas").attr("height", height / 2.0);
+        console.log("width: "+$("#puttCanvas").attr("width"));
         console.log("set canvas dimensions");
+        putterDemo("puttCanvas");
     };
 
     function getPuttData() {
         if($("#puttCanvas").length) {
-            canvasID = 'puttCanvas';
             console.log("found canvas");
-            setCanvasDim(canvasID);
+            setCanvasDim();
             
             console.log("getting put data");
             var putt = Parse.Object.extend("Putt");
             var query = new Parse.Query(putt);
             query.get("12fz4AHTDK", {
                 success: function(data) {
-                    
-                        // receive data
-                        displacementData = data.get("frames");
-                        gyroData = data.get("gyro");
-                    
-                        displacementData = parseIncomingArray(displacementData);
-                        //displacementData = changeSigns(displacementData);
-                        gyroData = parseIncomingArray(gyroData);
-
-                        // Debug tool - check that the lengths are valid in the console
-                        console.log("received data (gyro, displacement)");
-                        console.log(gyroData);
-                        console.log(displacementData);
-                        
-                        // data processing routine for translation graphics
-                        displacementData = applyZoffset(displacementData); 
-
-                        // converting data to pixels
-                        displacementData = toPixels(displacementData,canvasPixelsPerMeter);   
-                        
-                        console.log("processed data (gyro, displacement)");
-                        console.log(gyroData);
-                        console.log(displacementData);
-                    
-                    // jump to animation once the data has been received and processed
-                    putterDemo(canvasID,displacementData,gyroData);   
-
-
+                    accelData = data.get("frames");   
+                    gyroData = data.get("gyro");
+                    console.log("got data");
+                    console.log(accelData);   
                 },
                 error: function(object, error) {
                     console.log("Error getting putt data");
@@ -70,131 +38,9 @@ var myapp = (function(){
                 }
 
             });
-        
-        }
-        // if SAMPLE PUTT ANIMATION page was rendered
-        if($("#samplePuttCanvas").length) {
-            
-            canvasID = 'samplePuttCanvas';
-            console.log("found canvas: "+canvasID);
-            setCanvasDim(canvasID);
-  
-                    console.log("generateRandPath()");
-                    var randIter = 1,
-                        displacementData = [[0,0,0]],
-                        gyroData = [[0,0,0]],
-                        xPositionincrementer = 1,
-                        yPositionincrementer = 1,
-                        zPositionincrementer = 0;
-                      
-                    for (randIter; randIter < 300; randIter = randIter + 1 ){
-                        xprev = displacementData[randIter-1][0];
-                        yprev = displacementData[randIter-1][1];
-                        zprev = displacementData[randIter-1][2];
-                        displacementData.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-                        gyroData.push([0,0,0]);
-                    }
-            displacementData = applyZoffset(displacementData);
-                    console.log(displacementData);
-                    console.log(gyroData);
-                    putterDemo(canvasID,displacementData,gyroData);  
-                
-
-
-
         }
         
-
-
-       // ======== functions for data z ============
-        function changeSigns (incomingArray){
-            jj = 0;
-            for (jj; jj < incomingArray.length; jj++){
-                incomingArray[jj][1] = (-1)*incomingArray[jj][1];
-            }
-            return incomingArray;
-        }
-
-        
-        function parseIncomingArray (incomingArray){
-            if (incomingArray[0].length != 3){
-                // append the incorrect parsings as the first array in the array
-                console.log("python bug accounted for");   
-                firstArray = [[incomingArray[0],incomingArray[1],incomingArray[2]]];
-                incomingArray = incomingArray.slice(3, incomingArray.length);
-                incomingArray = firstArray.concat(incomingArray);
-            }
-            return incomingArray;
-        }
-
-
-        function applyZoffset(displacementframes){ 
-        // applies the z offset to the displacement frames from the sensor
-        //   -> returns the new displacement frames
-          //var displacementframes = displacementframes;
-          console.log("applyZoffset()");
-          newframes = [[0,0,0]];
-
-            //Create Z-offset matrix via screen size
-            pageWidth = $("#"+canvasID).attr("width")-0; //subtraction converts str to int
-            pageHeight = $("#"+canvasID).attr("height")-0;
-            if (pageWidth > pageHeight ){
-                z1 = .5;
-                z2 = pageHeight/(2*pageWidth);
-            } else {
-                z1 = pageWidth/(pageWidth+pageHeight);
-                z2 = pageHeight/(pageWidth+pageHeight);
-            }
-            z3 = -1;
-            Zoffset = [z1,z2,z3]; 
-
-        // iterate through old frames
-          var j = 1;  
-          for (j = 1; j< displacementframes.length; j++){
-
-
-            // Calculate position increment from displacement data
-            xdisp = displacementframes[j][0] - displacementframes[j-1][0];
-            ydisp = displacementframes[j][1] - displacementframes[j-1][1];
-            zdisp = displacementframes[j][2] - displacementframes[j-1][2];
-            
-            // take into account z bias and position increments
-            yincrementer = ydisp + Zoffset[0]*(xdisp);
-            zincrementer = zdisp + Zoffset[1]*(xdisp);
-            xincrementer = Zoffset[2]*(xdisp);
-        
-            // update displacement frames based on z bias
-            newframesY = newframes[j-1][1] + yincrementer;
-            newframesZ = newframes[j-1][2] + zincrementer;
-            newframesX = newframes[j-1][0] + xincrementer;
-            
-            // append new array
-            newframes.push([newframesX,newframesY,newframesZ]);    
-          }
-
-          return newframes;
-       } // ends applyZoffset()
-
-
-      function toPixels(displacementframes,scale){
-            console.log("toPixels()");
-            var ii = 0,
-                newframes = [];        
-            for (ii; ii < displacementframes.length; ii++){
-                pixX = scale*displacementframes[ii][0];
-                pixY = scale*displacementframes[ii][1];
-                pixZ = scale*displacementframes[ii][2];
-                newframes.push([pixX,pixY,pixZ]);
-            }
-
-            return newframes;
-       }
-        
-    }; // ends getPuttData()
-
-
-            
-
+    };
 
     function animatePutt() {
         if(animated) {
@@ -252,7 +98,7 @@ var myapp = (function(){
           }
         });
       }
-      var canvas = document.getElementById(canvasID);
+      var canvas = document.getElementById('puttCanvas');
       var context = canvas.getContext('2d');
 
       var myRectangle = {
@@ -278,172 +124,224 @@ var myapp = (function(){
     };
 
 
-
-// ----------------------------------------------------
-
-
-  function buildPutter(g, height, colors){
-    console.log("buildingputter()");
-    // height input in pixels scaled to the canvas height
-    // Customize your putter
-    buttDisplacementScalar = 6; // essentially the x displacement from tip of the shaft to the putter head
-    putterHeightScalar = 17;
-    width = height/putterHeightScalar;
-    
-    var sq = [['M',0,0,0, 'L',width*4,0,0, width*4,width,0, 0,width,0, 'z']];
-      sq.push(sq[0]);
-      sq.push(sq[0]);
-      sq.push(sq[0]);
-      sq.push(['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z']);
-      sq.push(sq[4]);
-      sq.push(['M',0,0,0, 'L',width/2,0,0, width/2,width/2,0, 0,width/2,0, 'z']); // dot on putter head
-    
-      var faces = g.createGroup3D(),
+function buildCube(g, width, colors) // pass width and array of 6 colors
+{
+/*
+  var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+      foldTbl = [-90, 90, -90, 90, -90, 90],
+      bend = -90,
+      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
       side,
-      translateX = [-width*2,-width*2,-width*2,-width*2,-width/2,-width/2,-width/4],
-      translateY = [0,-width/2,-width/2, -width,0,0,width/4],
-      translateZ = [width/2,0,width,width/2,width*2,width*2,width/2+1],
-      rotateX = [1,1,1,1,0,0,0],
-      rotateY = [1,0,0,0,1,1,1],
-      rotateZ = [1,0,0,0,0,0,0],
-      rotateMag = [0,90,-90,180,90,-90,180],
       i;
 
-    for (i=0; i<7; i++){
-        //console.log(i)
-        side = g.compileShape3D(sq[i], colors[i]);
-        side.translate(translateX[i], translateY[i], translateZ[i]);
-        side.rotate(rotateX[i], rotateY[i], rotateZ[i], rotateMag[i]);
-        //side.backHidden = true;
-        faces.addObj(side);
-    }
-    
-    shaft2ShaftPlusGripRatio = 7/10;
-    // creating the shaft
-    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,2*width,0], "#686868", width/3);
-    faces.addObj(lowerShaft);
-      
-    upperShaft = g.compilePath3D(["M",-width,2*width,0, "L",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0], "#A8A8A8", width/4);
-    faces.addObj(upperShaft);
-      
-    grip = g.compilePath3D(["M",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0, "L",(-buttDisplacementScalar*width),(putterHeightScalar*width),0], "#202020", width/3);
-    faces.addObj(grip);
-      
-    // reference putter head to the center
-    faces.translate(0,-width/2,0);
-      
-    // add axes for visual debugging
-    centerX = g.compilePath3D(["M",-4*width,0,0, "L",4*width,0,0], "green", 1);
-    faces.addObj(centerX);
-    centerY = g.compilePath3D(["M",0,-4*width,0, "L",0,4*width,0], "green", 1);
-    faces.addObj(centerY);
-    centerZ = g.compilePath3D(["M",0,0,-4*width, "L",0,0,4*width], "green", 1);
-    faces.addObj(centerZ);
-
-    
-    return faces;
+  for (i=0; i<6; i++)
+  {
+    side = g.compileShape3D(sq, colors[i]);
+    side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
   }
 
+*/
+  var xorg = -10,
+      yorg = -10,
+      zorg = -10;
 
+  var sq = ['M',xorg,yorg,zorg, 'L',xorg+width,yorg+0,zorg+0, xorg+width,yorg+width,zorg+0, xorg+0,yorg+width,zorg+0, 'z'],
+      foldTbl = [-90, 90, 90, 90, -90, 90],
+      bend = -90,
+      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
+      side,
+      i;
 
-
-
-// ============================ MOVE PUTTER ==================================
-  function putterDemo(scrnID,displacementData,gyroData)
+  for (i=0; i<1; i++)
   {
-    var g = new Cango3D(scrnID),
+    side = g.compileShape3D(sq, colors[i]);
+    //side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
+  }
+
+  return faces;
+}
+
+function buildPutter(g, width, colors) //pass width and array of 6 colors
+{
+    var sq = ['M',0,0,0, 'L',width,0,0, width,width,0, 0,width,0, 'z'],
+      foldTbl = [-90, 90, -90, 90, -90, 90],
+      bend = -90,
+      moveTbl_1 = [-width, 0, -width, 0, -width, 0],
+      moveTbl_2 = [width, 0, width, 0, width, 0],
+      faces = g.createGroup3D(),
+      side,
+      i;
+
+  for (i=0; i<6; i++)
+  {
+    side = g.compileShape3D(sq, colors[i]);
+    side.backHidden = true;
+    faces.addObj(side);
+    faces.translate(0, moveTbl_1[i], 0);
+    faces.rotate(0, 0, 1, foldTbl[i]);
+    faces.rotate(0, 1, 0, bend);
+    faces.translate(0, moveTbl_2[i], 0);
+  }
+  return faces;
+}
+
+
+
+
+function putterDemo(scrnID)
+{
+  var g = new Cango3D(scrnID),
       newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
       taggedFace, cube1,
       width = 20,
-      colors = ["#686868","#686868","#686868","#686868","#686868","#686868", "red"],
-      iter = 0,
-      timer = 0,
-      coordsX = -($("#"+canvasID).attr("width")/2), // bottom leftmost pixel x location
-      coordsY = -($("#"+canvasID).attr("height")/2), // bottom leftmose pixel y location
-      xyspan = -(2*coordsX);
+      colors1 = ["green", "green", "green", "green", "green", "green"],
+      bottom,
+      putterhead,
+      iter = 0;
+
       console.log(g.cnvs.offsetWidth);
 
-    // Initialize subfunction within putterDemo()
-      function movePutter() {
-            //console.log(iter);
+
+
+
+
+
+
+    function makePutterHeadlayer(input, z) {
         
-            function nextframe (convertedframes){
-            // note that z graphics are in towards the screen, thus Z and Y are switched
-                X = convertedframes[iter][1];
-                Y = convertedframes[iter][2];
-                Z = convertedframes[iter][0];
-                console.log("xyz:");
-                console.log(X);
-                console.log(Y);
-                console.log(Z);
-
-                // ========== Y DIRECTION TEMPORARILY EXCLUDED DUE TO GRAVITY DEBUG
-                //Y = 0;
-
-
-                g.setWorldCoords3D(coordsX-X, coordsY-Y, xyspan-Z);
-            }
-
-            var useDataMode = 1; // set this to one to use parse data
-            
-            if (useDataMode){   // USEdata mode
-                if (iter == 0){
-                    //console.log("iter == 0");
-                    //console.log(gyroData[iter][0]);
-                    //console.log("gyro");
-                    //console.log(gyroData);
-                    //console.log("displacement");
-                    //console.log(displacementData);
-                    cube1.transform.rotate(0,0,1,gyroData[iter][0]);
-                    cube1.transform.rotate(1,0,0,gyroData[iter][1]);
-                    cube1.transform.rotate(0,1,0,gyroData[iter][2]);
-                    nextframe(displacementData); // sets world coordinates based on frame
-
-                } else if (iter == gyroData.length - 1) {
-                    console.log("LOOP");
-                    iter = -1; // reset the array counter for loop
-                    //cube1.transform.reset(); // reset the 3d object
-                    
-                    clearTimeout(timer);
-                    
-                    setTimeout(function() {
-                        cube1.transform.reset(); // reset the 3d object
-                        timer = setInterval(movePutter, delta_t);
-                    }, 1800);
-
-                } else {
-                console.log("displacement");
-                // subtract here because gyroData comes in as angular displacement, Cango accumulates
-                    cube1.transform.rotate(0,0,1,-(gyroData[iter][0] - gyroData[iter-1][0]));
-                    cube1.transform.rotate(1,0,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
-                    cube1.transform.rotate(0,1,0,-(gyroData[iter][2] - gyroData[iter-1][2]));
-                    nextframe(displacementData); // sets world coordinates based on frame
-                }
-
-                iter = iter + 1; // increment the array counter
-
-            } else{ // not in USEdata mode
-             cube1.transform.rotate(1,0,0,10);
-            }
-
-            g.renderFrame(cube1); // update the canvas
-      } // ends movePutter()
-
-
-      g.setWorldCoords3D(coordsX, coordsY, xyspan);
-      g.setFOV(45);
-      g.setPropertyDefault("backgroundColor", "lightyellow");
+        input = g.createGroup3D();
+        
+        plateL = g.compileShape3D(shapes3D.circle(20), "#D3D3D3");
+        plateL.transform.translate(0,50,z);
+        input.addObj(plateL);
     
-      // build putter object
-      putterHeight = .83;  // in meters
-      cube1 = buildPutter(g, canvasPixelsPerMeter*(putterHeight*10), colors); // note for builfing cube/putter: len(colors1) != len(colors0)
-      console.log("Putter Built");
-      timer = setInterval(movePutter, delta_t); // in msec
-  } 
+        plateR = g.compileShape3D(shapes3D.circle(20), "#D3D3D3");
+        plateR.transform.translate(0,-50,z);
+        input.addObj(plateR);
+
+        headAppendL = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendL.transform.translate(0,40,z);
+        input.addObj(headAppendL);
+
+        headAppendLhalf = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendLhalf.transform.translate(0,20,z);
+        input.addObj(headAppendLhalf);
+
+        headAppendR = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendR.transform.translate(0,0,z);
+        input.addObj(headAppendR);
+
+        headAppendRhalf = g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendRhalf.transform.translate(0,-20,z);
+        input.addObj(headAppendRhalf);
+
+        headAppendC =g.compileShape3D(shapes3D.square(20), "#D3D3D3");
+        headAppendC.transform.translate(0,-40,z);
+        input.addObj(headAppendC);
+        
+        return input;
+    } 
+
+  function movePutter()
+  {
+    // use target's parent group drawing origin as reference
+    //cube1.transform.rotate(0,1,0,-25);
+    /*cube1.transform.rotate(1,0,0,gyroData[iter][0]);
+    cube1.transform.rotate(0,1,0,gyroData[iter][1]);
+    cube1.transform.rotate(0,0,1,gyroData[iter][2]);*/
+    cube1.transform.rotate(1,0,0,10);
+    g.renderFrame(cube1);
+   /* newPos.x = mousePos.x-this.grabOfs.x;
+    newPos.y = mousePos.y-this.grabOfs.y;
+    newPos.z = mousePos.z-this.grabOfs.z;
+    cube1.transform.reset();          // reset to identity matrix
+    cube1.transform.translate(newPos.x, newPos.y, newPos.z);
+
+    g.renderFrame(grp);*/
+  }
+
+  g.setWorldCoords3D(-150, -80, 300);
+  g.setFOV(45);
+  g.setPropertyDefault("backgroundColor", "lightyellow");
 
 
 
-    // return from the outermost function, myapp
+   bottom = g.createGroup3D();
+
+   putterhead = makePutterHeadlayer(bottom,0);
+
+   
+    bottom.addObj(putterhead);
+
+    var layers = 10;
+    var i = 1;
+    for (i; i < layers; i++){
+        bottom.addObj(makePutterHeadlayer(bottom,i))
+    }
+
+    bottom.backHidden = true;
+
+    //bottom.transform.translate(35,-60,-10);
+    //bottom.transform.rotate(1,1,0,30);
+    
+    //g.render(bottom);
+
+
+
+
+  cube1 = buildCube(g, width, colors1);
+  //cube1.rotate(1, 1, 0, 30);
+  //cube1.translate(35, -60, -10);
+  //g.render(cube1);
+//cube1.transform.rotate(0,1,0,30);
+  setInterval(movePutter, 200);
+ // g.render(grp);
+}
+
+    function drawDemo(cvsID)
+{
+  var stick, plate, plateNstick,
+      g = new Cango3D(cvsID);  // create a graphics context
+
+  function turnPlate()
+  {
+    plateNstick.transform.rotate(0, 1, 0, -25);     // apply 25 deg rotation to matrix
+    g.renderFrame(plateNstick);           // request a re-draw
+  }
+
+  g.setPropertyDefault("backgroundColor", "aliceblue");
+  g.setWorldCoords3D(-75, -120, 150);
+  g.setLightSource(0, 100, 200);
+
+  stick = g.compilePath3D(["M",0,0,0, "Q", 0,50,0, -15, 100, 0], "sienna", 3);
+  stick.rotate(0, 1, 0, 90);  // rotate out of XY plane
+  plate = g.compileShape3D(shapes3D.circle(50), "yellow", "yellow");
+  plate.rotate(1, 0, 0, 75);  // flip to near horizontal
+  stick.translate(0, -96, 0); // move down Y axis under plate
+  // make a group comprising stick and plate
+  plateNstick = g.createGroup3D(stick, plate);
+
+  setInterval(turnPlate, 50)        // keep doing this forever
+}
+   
+
+
+
+
     return {
         init: function() {
             console.log("starting up");
@@ -458,7 +356,7 @@ var myapp = (function(){
         }
     }
 })();
-jQuery(myapp.init); // render the outermost function
+jQuery(myapp.init);
 
 
 

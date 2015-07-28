@@ -94,6 +94,7 @@ var myapp = (function(){
                         displacementData.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
                         gyroData.push([0,0,0]);
                     }
+            displacementData = applyZoffset(displacementData);
                     console.log(displacementData);
                     console.log(gyroData);
                     putterDemo(canvasID,displacementData,gyroData);  

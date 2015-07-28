@@ -23,6 +23,44 @@ def RtoGround(roll, pitch, yaw):
 def RtoPutter(roll, pitch, yaw):
   return zip(*RtoGround(roll, pitch, yaw))
 
+
+def verletDisplacement(a, dt):
+  x = [0.0]
+  v = [0.0]
+  for i in range(1, len(a)):
+    v_half = v[i-1] + 0.5*a[i-1]*dt
+    x.append(x[i-1] + v_half*dt)
+    v.append(v_half + 0.5*a[i]*dt)
+  return x, v
+
+
+def interpolateDisplacement(a, dt):
+  x = [0.0]
+  v = [0.0]
+  for i in range(1, len(a)):
+    v1 = v[i-1] + ((a[i] - a[i-1])/4 + a[i-1]) * (dt / 4)
+    v2 = v1 + ((a[i] - a[i-1])/2 + a[i-1]) * (dt / 4)
+    v3 = v2 + (3*(a[i] - a[i-1])/4 + a[i-1]) * (dt / 4)
+    v.append(v3 + a[i] * (dt / 4))
+
+    x1 = x[-1] + (v[-1] * (dt/4)) + (0.5 * ((a[i] - a[i-1])/4 + a[i-1]) * (dt/4)**2)
+    x2 = x1 + (v1 * (dt/4)) + (0.5 * ((a[i] - a[i-1])/2 + a[i-1]) * (dt/4)**2)
+    x3 = x2 + (v2 * (dt/4)) + (0.5 * (3*(a[i] - a[i-1])/4 + a[i-1]) * (dt/4)**2)
+    x.append(x3 + (v3 * (dt/4)) + (0.5 * a[i] * (dt/4)**2))
+  return x, v
+
+'''
+def rk4Displacement(x, v, a1, a2, dt):
+  x1 = x
+  v1 = v
+  a1 = a
+
+  x2 = x + 0.5*v1*dt
+  v2 = v + 0.5*a1*dt
+  a2 = 
+ ''' 
+  
+
 def roll(accelX, accelY, accelZ):
   if accelX**2 + accelZ**2 == 0:
     print "would be divide by 0"
@@ -117,7 +155,7 @@ def allanVariance(data, frequency, binSize, dt):
 
 
 
-def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
+def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     # -> returns a figure with 3 subplots
     # NOTE: matplotlib.pyplot.show() [or plot.show(), as adjusted by import]
     #   must be called to render the plot
@@ -182,7 +220,8 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     ax.set_xticks( np.arange(xmin,xmax,xTicks) ) 
     ax.set_yticks( np.arange(ymin,ymax,yTicks) )
 
-    ax.plot(timeX, plotData[0])
+    ax.plot(timeX, plotData[0], color='blue')
+    ax.plot(timeX, f_plotData[0], color='black')
 
     ax.axis(axesRange)
     ax.grid(True)
@@ -199,6 +238,7 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     ax2.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax2.plot(timeX, plotData[1], color='red')
+    ax2.plot(timeX, f_plotData[1], color='black')
 
     ax2.axis(axesRange)
     ax2.grid(True)
@@ -214,6 +254,7 @@ def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     ax3.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax3.plot(timeX, plotData[2], color='green')
+    ax3.plot(timeX, f_plotData[2], color='black')
 
     ax3.axis(axesRange)
     ax3.grid(True)
