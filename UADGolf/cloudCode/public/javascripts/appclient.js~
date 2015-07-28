@@ -59,7 +59,7 @@ var myapp = (function(){
                         console.log(displacementData);
                     
                     // jump to animation once the data has been received and processed
-                    putterDemo("puttCanvas");   
+                    putterDemo(canvasID,displacementData,gyroData);   
 
 
                 },
@@ -74,59 +74,30 @@ var myapp = (function(){
         }
         // if SAMPLE PUTT ANIMATION page was rendered
         if($("#samplePuttCanvas").length) {
+            
             canvasID = 'samplePuttCanvas';
             console.log("found canvas: "+canvasID);
             setCanvasDim(canvasID);
-
-            //[gyroData, displacementData] = generatePutt(gyroData, displacementData);
-            //console.log(displacementData);
-               // GENERATE Sample Putt
-              function generatePutt(rotations, displacement){
-                var randIter = 1,
-                    displacement = [[0,0,0]],
-                    rotations = [[0,0,0]],
-                    scale = 1/2,
-                    xx = .1,
-                    yy = .1,
-                    zz = 3,
-                    xr = .66,
-                    yr = .3,
-                            duration = [ 0, 50,(scale)*50,(scale)*50  ],
-                xPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx, -xx],
-                yPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy), yy],
-                zPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz, zz],
-                    
-                xRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr, xr], //hook
-                yRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr, yr], //bent wrists before putt
-                zRotationincrementer = [ 0, 0,  0, 0],
-                                            
-                counter = 1,
-                ii = 1;
-                for (ii; ii < duration.length; ii=ii+1){
-                    console.log("ii");
-                    console.log(ii);
-                    ind = ii-1;
-                    for (randIter=counter; randIter < duration[ii]+counter; randIter = randIter+1 ){
-                        prevInd = randIter-1;
-                        xprev = displacement[prevInd][0];
-                        yprev = displacement[prevInd][1];
-                        zprev = displacement[prevInd][2];
-                        displacement.push([xprev-xPositionincrementer[ind],
-                                           yprev-yPositionincrementer[ind],
-                                           zprev-zPositionincrementer[ind]]);
-
-                        rotations.push([rotations[randIter-1][0] + xRotationincrementer[ind],
-                                        rotations[randIter-1][1] + yRotationincrementer[ind],
-                                        rotations[randIter-1][2] + zRotationincrementer[ind]]);
-                        //console.log("innerloop");
+  
+                    console.log("generateRandPath()");
+                    var randIter = 1,
+                        displacementData = [[0,0,0]],
+                        gyroData = [[0,0,0]],
+                        xPositionincrementer = 1,
+                        yPositionincrementer = 1,
+                        zPositionincrementer = 0;
+                      
+                    for (randIter; randIter < 300; randIter = randIter + 1 ){
+                        xprev = displacementData[randIter-1][0];
+                        yprev = displacementData[randIter-1][1];
+                        zprev = displacementData[randIter-1][2];
+                        displacementData.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+                        gyroData.push([0,0,0]);
                     }
-                    counter = counter + duration[ii]; // update total iteration count
-                    console.log("counter");
-                    console.log(counter);
-                }
+                    console.log(displacementData);
+                    console.log(gyroData);
+                    putterDemo(canvasID,displacementData,gyroData);  
                 
-                return [rotations, displacement];
-              }
 
 
 
@@ -134,7 +105,7 @@ var myapp = (function(){
         
 
 
-       // ======== functions for canvas divs ============
+       // ======== functions for data z ============
         function changeSigns (incomingArray){
             jj = 0;
             for (jj; jj < incomingArray.length; jj++){
@@ -311,6 +282,7 @@ var myapp = (function(){
 
 
   function buildPutter(g, height, colors){
+    console.log("buildingputter()");
     // height input in pixels scaled to the canvas height
     // Customize your putter
     buttDisplacementScalar = 6; // essentially the x displacement from tip of the shaft to the putter head
@@ -376,7 +348,7 @@ var myapp = (function(){
 
 
 // ============================ MOVE PUTTER ==================================
-  function putterDemo(scrnID)
+  function putterDemo(scrnID,displacementData,gyroData)
   {
     var g = new Cango3D(scrnID),
       newPos = {x:0, y:0, z:0},  // avoid creating Objects in event handlers
@@ -392,14 +364,17 @@ var myapp = (function(){
 
     // Initialize subfunction within putterDemo()
       function movePutter() {
-        // use target's parent group drawing origin as reference
-
+            //console.log(iter);
+        
             function nextframe (convertedframes){
             // note that z graphics are in towards the screen, thus Z and Y are switched
                 X = convertedframes[iter][1];
                 Y = convertedframes[iter][2];
                 Z = convertedframes[iter][0];
-
+                console.log("xyz:");
+                console.log(X);
+                console.log(Y);
+                console.log(Z);
 
                 // ========== Y DIRECTION TEMPORARILY EXCLUDED DUE TO GRAVITY DEBUG
                 //Y = 0;
@@ -409,15 +384,22 @@ var myapp = (function(){
             }
 
             var useDataMode = 1; // set this to one to use parse data
-
+            
             if (useDataMode){   // USEdata mode
                 if (iter == 0){
+                    //console.log("iter == 0");
+                    //console.log(gyroData[iter][0]);
+                    //console.log("gyro");
+                    //console.log(gyroData);
+                    //console.log("displacement");
+                    //console.log(displacementData);
                     cube1.transform.rotate(0,0,1,gyroData[iter][0]);
                     cube1.transform.rotate(1,0,0,gyroData[iter][1]);
                     cube1.transform.rotate(0,1,0,gyroData[iter][2]);
                     nextframe(displacementData); // sets world coordinates based on frame
 
                 } else if (iter == gyroData.length - 1) {
+                    console.log("LOOP");
                     iter = -1; // reset the array counter for loop
                     //cube1.transform.reset(); // reset the 3d object
                     
@@ -429,6 +411,7 @@ var myapp = (function(){
                     }, 1800);
 
                 } else {
+                console.log("displacement");
                 // subtract here because gyroData comes in as angular displacement, Cango accumulates
                     cube1.transform.rotate(0,0,1,-(gyroData[iter][0] - gyroData[iter-1][0]));
                     cube1.transform.rotate(1,0,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
@@ -453,7 +436,7 @@ var myapp = (function(){
       // build putter object
       putterHeight = .83;  // in meters
       cube1 = buildPutter(g, canvasPixelsPerMeter*(putterHeight*10), colors); // note for builfing cube/putter: len(colors1) != len(colors0)
-    
+      console.log("Putter Built");
       timer = setInterval(movePutter, delta_t); // in msec
   } 
 
