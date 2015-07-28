@@ -9,9 +9,10 @@ Updates a 1 dimensional angle of rotation based on stream of data:
 
 class Kalman:
     #static bias and error variables
-    Q_angle = 0.001
-    Q_bias = 0.01
-    R_measure = 0.05
+    Q_angle = .001 #low: don't trust acceleration that much, smoother to accel angle
+                 #high: trust acceleration data, follows accel closer with more noise
+    Q_bias = .001 #amound of drift do to gyro
+    R_measure = 0.0005
 
     angle = 0.0
     bias = 0.0
@@ -21,7 +22,7 @@ class Kalman:
     P[0][1] = 0.0
     P[1][0] = 0.0
     P[1][1] = 0.0
-
+ 
     def __init__(self, startAngle):
         self.angle = startAngle
 

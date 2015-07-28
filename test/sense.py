@@ -28,6 +28,7 @@ import sys
 import time
 import httplib
 import json
+import numpy as np
 
 import math
 import operator
@@ -45,9 +46,9 @@ elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - f
 class wicedsense:
 
   # frequency of data
-  delta_t = .025 # in seconds (preset to 12.5 ms)
+  delta_t = .0125 # in seconds (preset to 12.5 ms)
   # total duration
-  endtime = 4.0 # in seconds
+  endtime = 5.0 # in seconds
   garbageiterations = 10
 
   inittime = 0 
@@ -225,9 +226,9 @@ class wicedsense:
           gyroXnew = self.gyroX[x:]
           gyroYnew = self.gyroY[x:]
           gyroZnew = self.gyroZ[x:]
-          self.magX = self.magX[x:]
-          self.magY = self.magY[x:]
-          self.magZ = self.magZ[x:]
+          #self.magX = self.magX[x:]
+          #self.magY = self.magY[x:]
+          #self.magZ = self.magZ[x:]
           break
 
       # ========================
@@ -242,11 +243,11 @@ class wicedsense:
       yaw = []
       roll.append(MathUtil.roll(axnew[0], aynew[0], aznew[0]))
       pitch.append(MathUtil.pitch(axnew[0], aynew[0], aznew[0]))
-      yaw.append(MathUtil.yaw(roll[0], pitch[0], self.magX[0], self.magY[0], self.magZ[0])) 
+      #yaw.append(MathUtil.yaw(roll[0], pitch[0], self.magX[0], self.magY[0], self.magZ[0])) 
       for x in range(1, len(axnew)):
         roll.append(MathUtil.roll(axnew[x], aynew[x], aznew[x]))
         pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
-        yaw.append(MathUtil.yaw(roll[x], pitch[x], self.magX[x], self.magY[x], self.magZ[x]))
+        #yaw.append(MathUtil.yaw(roll[x], pitch[x], self.magX[x], self.magY[x], self.magZ[x]))
         
 
       # OUTPUT TO SCREEN ------------------
@@ -276,27 +277,25 @@ class wicedsense:
       gyrodata = []
       kalmanX = kalman.Kalman(roll[0])
       kalmanY = kalman.Kalman(pitch[0])
-      kalmanZ = kalman.Kalman(yaw[0])
-      accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], yaw[0]])]
-      print "after accel"
+      #kalmanZ = kalman.Kalman(yaw[0])
+      accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], 0.0])]
       xframes = [MathUtil.displacement(self.dx,self.vx,accelRot[-1][0], self.delta_t)[0]]
-      print "after x"
       yframes = [MathUtil.displacement(self.dy,self.vy,accelRot[-1][1], self.delta_t)[0]]
-      print "after y"
       zframes = [MathUtil.displacement(self.dz,self.vz,accelRot[-1][2], self.delta_t)[0]]
-      print "after z"
       xyzframes = [[xframes[-1], yframes[-1], zframes[-1]]]
       gyrodata.append([roll[0], pitch[0], 0.0])
-      print "after gyro"
       zAngle = [0.0]
+      xAngle = [0.0]
+      yAngle = [0.0]
       time = [0.0]
       data = [0.0]
       angle = [0.0]
       accelNew[0] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[0][3]]
       for x in range(1, len(gyroXnew)):
-        print x
         time.append(time[-1] + self.delta_t)
         data.append(MathUtil.getAngle(gyroZnew[x], self.delta_t))
+        xAngle.append(xAngle[-1] + MathUtil.getAngle(gyroXnew[x], self.delta_t))
+        yAngle.append(yAngle[-1] + MathUtil.getAngle(gyroYnew[x], self.delta_t))
         zAngle.append(zAngle[-1] + data[-1])
         gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
                         kalmanY.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
@@ -321,9 +320,36 @@ class wicedsense:
       # =======================
       self.pushToCloud(xyzframes, gyrodata, accelNew)
       
-      #plot.plot(time, accelRot[:][, 'red', time, zAngle )
-      #plot.plot(time, zAngle)
-      #plot.show()
+      '''variance = []
+      period = []
+      for i in range(1, len(gyroXnew)/7):
+        timestep, xVar = MathUtil.allanVariance(gyroXnew, 0.0125, i, self.delta_t)
+        variance.append(xVar)
+        period.append(timestep)
+        print timestep, xVar
+      #z = np.polyfit(period, variance, 2)
+      #f = np.poly1d(z)
+     
+      fig = plot.figure()
+      ax = fig.add_subplot(1,1,1)
+      ax.plot(period, variance )
+      ax.set_xscale('log')
+      ax.set_yscale('log')
+      plot.show()
+      '''
+      #xVar = np.log(xVar, 10)
+      #time = np.log(time, 10)
+      #plot.plot(time, xVar)
+      fig = plot.figure()
+      ax = fig.add_subplot(1,1,1)
+      ax.plot(time, yAngle, 'blue', time, [row[1] for row in gyrodata], 'red', time, pitch, 'green')
+      fig2 = plot.figure()
+      ay = fig2.add_subplot(1,1,1)
+      ay.plot(time, xAngle, 'blue', time, [row[0] for row in gyrodata], 'red', time, roll, 'green')
+      fig3 = plot.figure()
+      az = fig3.add_subplot(1,1,1)
+      az.plot(time, zAngle, 'blue')
+      plot.show()
         
 
   def register_cb( self, handle, fn ):
@@ -363,9 +389,9 @@ class wicedsense:
         gx1 = int( str(v[8]*256 + v[7]) )
         gy1 = int( str(v[10]*256 + v[9]) )
         gz1 = int( str(v[12]*256 + v[11]) )
-        mx1 = int( str(v[14]*256 + v[13]) )
-        my1 = int( str(v[16]*256 + v[15]) )
-        mz1 = int( str(v[18]*256 + v[17]) )
+        #mx1 = int( str(v[14]*256 + v[13]) )
+        #my1 = int( str(v[16]*256 + v[15]) )
+        #mz1 = int( str(v[18]*256 + v[17]) )
         #print "gx: " + str(gx1)
         #print "gy: " + str(gy1)
         #print "gz: " + str(gz1)
@@ -387,20 +413,21 @@ class wicedsense:
             self.ax.append( Axyz[0] )
             self.ay.append( Axyz[1] )
             self.az.append( Axyz[2] )
+            print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2])
         else:
           (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.0175)
           (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 8192.0/9.80665)
-          (Mxyz, Mmag) = MathUtil.convertData(mx1 + int(float(self.magCal[0])), my1 + int(float(self.magCal[1])), mz1 + int(float(self.magCal[2])), 16384.0)
+          #(Mxyz, Mmag) = MathUtil.convertData(mx1 + int(float(self.magCal[0])), my1 + int(float(self.magCal[1])), mz1 + int(float(self.magCal[2])), 16384.0)
                     
-          print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2]) + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
+          print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2])# + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
 
           self.gyroX.append(Gxyz[0])
           self.gyroY.append(Gxyz[1])
           self.gyroZ.append(Gxyz[2])
 
-          self.magX.append(Mxyz[0])
-          self.magY.append(Mxyz[1])
-          self.magZ.append(Mxyz[2])
+         # self.magX.append(Mxyz[0])
+         # self.magY.append(Mxyz[1])
+         # self.magZ.append(Mxyz[2])
 
           self.magnitude.append( Amag )
 

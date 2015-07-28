@@ -95,7 +95,7 @@ def rotateAcceleration(accel, angles):
 
 def rotateGravity(angles):
   #gravityOffset = 0.00063
-  gravity = [0.0,0.0,9.80665 - gravityOffset]
+  gravity = [0.0,0.0,9.80665] #- gravityOffset]
   rotGravity = [0, 0, 0]
   roll = math.radians(angles[0])
   pitch = math.radians(angles[1])
@@ -105,6 +105,17 @@ def rotateGravity(angles):
     for j in range(3):
       rotGravity[i] += R[i][j] * gravity[j]
   return rotGravity
+
+
+def allanVariance(data, frequency, binSize, dt):
+  numBins = int(math.floor(len(data) / binSize))
+  bin_avg = []
+  for i in range(0, numBins):
+    start = i*binSize
+    bin_avg.append(np.mean(data[start:start + binSize]))
+  return (dt * binSize, np.std(bin_avg))
+
+
 
 def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr):
     # -> returns a figure with 3 subplots
