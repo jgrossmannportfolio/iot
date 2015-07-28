@@ -79,21 +79,11 @@ var myapp = (function(){
             console.log("found canvas: "+canvasID);
             setCanvasDim(canvasID);
   
-                    console.log("generateRandPath()");
-                    var randIter = 1,
-                        displacementData = [[0,0,0]],
-                        gyroData = [[0,0,0]],
-                        xPositionincrementer = 1,
-                        yPositionincrementer = 1,
-                        zPositionincrementer = 0;
-                      
-                    for (randIter; randIter < 300; randIter = randIter + 1 ){
-                        xprev = displacementData[randIter-1][0];
-                        yprev = displacementData[randIter-1][1];
-                        zprev = displacementData[randIter-1][2];
-                        displacementData.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-                        gyroData.push([0,0,0]);
-                    }
+
+            [gyroData, displacementData] = generatePutt();
+
+
+
             displacementData = applyZoffset(displacementData);
                     console.log(displacementData);
                     console.log(gyroData);
@@ -103,10 +93,75 @@ var myapp = (function(){
 
 
         }
+
+
+        function generatePutt(){
+            var randIter = 1,
+                displacement = [[0,0,0]],
+                rotations = [[0,0,0]],
+                scale = 1/2,
+                xx = -0.1,
+                yy = -0.1,
+                zz = -3,
+                xr = -0.66,
+                yr = -0.3,
+                        duration = [ 0, 50,(scale)*50,(scale)*50 ],
+            yPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx, -xx],
+            zPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy), yy],
+            xPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz, zz],
+                
+            yRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr, xr], //hook
+            zRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr, yr], //bent wrists before putt
+            xRotationincrementer = [ 0, 0,  0, 0],
+                                        
+            counter = 1,
+            ii = 1;
+            for (ii; ii < duration.length; ii=ii+1){
+                console.log("ii");
+                console.log(ii);
+                ind = ii-1;
+                for (randIter=counter; randIter < duration[ii]+counter; randIter = randIter+1 ){
+                    prevInd = randIter-1;
+                    xprev = displacement[prevInd][0];
+                    yprev = displacement[prevInd][1];
+                    zprev = displacement[prevInd][2];
+                    displacement.push([xprev-xPositionincrementer[ind],
+                                       yprev-yPositionincrementer[ind],
+                                       zprev-zPositionincrementer[ind]]);
+
+                    rotations.push([rotations[randIter-1][0] + xRotationincrementer[ind],
+                                    rotations[randIter-1][1] + yRotationincrementer[ind],
+                                    rotations[randIter-1][2] + zRotationincrementer[ind]]);
+                    //console.log("innerloop");
+                }
+                counter = counter + duration[ii]; // update total iteration count
+                console.log("counter");
+                console.log(counter);
+            }
+            
+            return [rotations, displacement];
+        }
+
         
+        function generateRandPath(){
+            var randIter = 1,
+                displacement = [[0,0,0]],
+                gyroData = [[0,0,0]],
+                xPositionincrementer = 2,
+                yPositionincrementer = 0,
+                zPositionincrementer = 0;
+              
+            for (randIter; randIter < 100; randIter = randIter + 1 ){
+                xprev = displacement[randIter-1][0];
+                yprev = displacement[randIter-1][1];
+                zprev = displacement[randIter-1][2];
+                displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
+                gyroData.push([0,0,0]);
+            }
+            return [gyroData, displacement];
+        }
 
-
-       // ======== functions for data z ============
+       // ======== functions for data  ============
         function changeSigns (incomingArray){
             jj = 0;
             for (jj; jj < incomingArray.length; jj++){
@@ -372,13 +427,6 @@ var myapp = (function(){
                 X = convertedframes[iter][1];
                 Y = convertedframes[iter][2];
                 Z = convertedframes[iter][0];
-                console.log("xyz:");
-                console.log(X);
-                console.log(Y);
-                console.log(Z);
-
-                // ========== Y DIRECTION TEMPORARILY EXCLUDED DUE TO GRAVITY DEBUG
-                //Y = 0;
 
 
                 g.setWorldCoords3D(coordsX-X, coordsY-Y, xyspan-Z);
@@ -388,31 +436,23 @@ var myapp = (function(){
             
             if (useDataMode){   // USEdata mode
                 if (iter == 0){
-                    //console.log("iter == 0");
-                    //console.log(gyroData[iter][0]);
-                    //console.log("gyro");
-                    //console.log(gyroData);
-                    //console.log("displacement");
-                    //console.log(displacementData);
                     cube1.transform.rotate(0,0,1,gyroData[iter][0]);
                     cube1.transform.rotate(1,0,0,gyroData[iter][1]);
                     cube1.transform.rotate(0,1,0,gyroData[iter][2]);
                     nextframe(displacementData); // sets world coordinates based on frame
 
                 } else if (iter == gyroData.length - 1) {
-                    console.log("LOOP");
                     iter = -1; // reset the array counter for loop
                     //cube1.transform.reset(); // reset the 3d object
                     
-                    clearTimeout(timer);
+                    clearInterval(timer);
                     
                     setTimeout(function() {
                         cube1.transform.reset(); // reset the 3d object
                         timer = setInterval(movePutter, delta_t);
                     }, 1800);
-
+                    
                 } else {
-                console.log("displacement");
                 // subtract here because gyroData comes in as angular displacement, Cango accumulates
                     cube1.transform.rotate(0,0,1,-(gyroData[iter][0] - gyroData[iter-1][0]));
                     cube1.transform.rotate(1,0,0,-(gyroData[iter][1] - gyroData[iter-1][1]));
