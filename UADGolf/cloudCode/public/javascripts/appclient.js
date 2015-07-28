@@ -87,26 +87,25 @@ var myapp = (function(){
             displacementData = applyZoffset(displacementData);
                     console.log(displacementData);
                     console.log(gyroData);
-                    putterDemo(canvasID,displacementData,gyroData);  
-             
-              Parse.Push.send({
-                    channels: ["samplePuttDisplacement"],
-                    data: {
-                      "Health":newHealth
-                    }
-                  }, 
-                  {
-                    success: function() {
-                      console.log("Push Successful! New HEALTH = " + newHealth);
-                    },
-                    error: function(error) {
-                      // The object was not retrieved successfully.
-                      // error is a Parse.Error with an error code and message.
-                      alert("Error" + error);
-                    }
-                  });
+            
+            // posting data to the parseCloud "core" dashboard
+            var puttClass = Parse.Object.extend("Putt");
+            var putt2 = new puttClass();
+            putt2.id = "12fz4AHTDK";
+
+            putt2.set("samplePuttDisplacement", displacementData);
+            putt2.set("sampleGyroDisplacement", gyroData);
+            putt2.save(null, {
+              success: function(putt2) {
+                console.log("success!!!");
+              }
+            });
 
 
+
+
+
+        putterDemo(canvasID,displacementData,gyroData);   
 
         }
 
