@@ -29,6 +29,7 @@ import time
 import httplib
 import json
 import numpy as np
+import subprocess
 
 import math
 import operator
@@ -343,9 +344,11 @@ class wicedsense:
       fig = plot.figure()
       ax = fig.add_subplot(1,1,1)
       ax.plot(time, yAngle, 'blue', time, [row[1] for row in gyrodata], 'red', time, pitch, 'green')
-      ay = fig.add_subplot(1,1,1)
+      fig2 = plot.figure()
+      ay = fig2.add_subplot(1,1,1)
       ay.plot(time, xAngle, 'blue', time, [row[0] for row in gyrodata], 'red', time, roll, 'green')
-      az = fig.add_subplot(1,1,1)
+      fig3 = plot.figure()
+      az = fig3.add_subplot(1,1,1)
       az.plot(time, zAngle, 'blue')
       plot.show()
         
@@ -442,6 +445,7 @@ def main():
   calibrate = False
   calibrateMagnet = False
   bluetooth_adr = sys.argv[1]
+  p1 = None
   
   if len(sys.argv) > 2:
     if(sys.argv[2] == "true" or sys.argv[2] == "True"):
@@ -449,6 +453,9 @@ def main():
     elif(sys.argv[2] == "magnet" or sys.argv[2] == "Magnet"):
       calibrateMagnet = True
       calibrate = True
+  
+  if(!calibrate):
+    p1 = subprocess.Popen(['./lightbulb'])
 
  # while True:
   try:   

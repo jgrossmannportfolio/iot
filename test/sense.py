@@ -29,6 +29,7 @@ import time
 import httplib
 import json
 import numpy as np
+import subprocess
 
 import math
 import operator
@@ -444,6 +445,7 @@ def main():
   calibrate = False
   calibrateMagnet = False
   bluetooth_adr = sys.argv[1]
+  p1 = None
   
   if len(sys.argv) > 2:
     if(sys.argv[2] == "true" or sys.argv[2] == "True"):
@@ -451,6 +453,9 @@ def main():
     elif(sys.argv[2] == "magnet" or sys.argv[2] == "Magnet"):
       calibrateMagnet = True
       calibrate = True
+  
+  if(!calibrate):
+    p1 = subprocess.Popen(['./lightbulb'])
 
  # while True:
   try:   
@@ -467,7 +472,8 @@ def main():
   except Exception, e:
     print str(e)
     pass
-
+  
+  p1.terminate()
 if __name__ == "__main__":
   main()
 
