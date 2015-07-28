@@ -8,7 +8,7 @@ import MathUtil
 
 import math
 
-delta_t = .020 # seconds
+delta_t = .0125 # seconds
 
 
 # read in data file
@@ -82,7 +82,7 @@ figDisp = MathUtil.create3plots(timestamp, dispPlotData, plotTitle, xlabel, ylab
 
 
 
-plot.show() # renders the plots
+plot.show() # renders all three plots
 
 
 

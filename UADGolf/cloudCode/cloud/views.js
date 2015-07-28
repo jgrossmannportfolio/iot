@@ -25,3 +25,6 @@ exports.documentation = function(req, res) {
     res.render('documentation', {title: "UADGolf", home:true, users:[]});
 };
 
+exports.sampleputt = function(req,res){
+    res.render('sampleputt', {title: "UADGolf", home:true, users:[]});
+}

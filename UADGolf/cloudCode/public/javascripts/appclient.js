@@ -2,20 +2,21 @@ var myapp = (function(){
     var displacementData = []; // preallocation for data reception from parse
     var gyroData = [];
     var animated = false;
+    var canvasID = '';          // to be loaded with the canvas ID given by the corresponding page
 
-    var delta_t = 25;                   // frame rate, in msec
+    var delta_t = 12.5;                   // frame rate, in msec
     var worldScalingFactor = 0;         // canvas world scaling factor, will be set in setCanvasDim() 
     var pixelsPerMeter = 3779.527559055;// conversion
     var canvasPixelsPerMeter = 0;       // will be set in setCanvasDim()
 
 
-    function setCanvasDim() {
+    function setCanvasDim(canvasID) {
         width = window.innerWidth;
         height = window.innerHeight;
-        $("#puttCanvas").attr("width", width);
-        $("#puttCanvas").attr("height", height / 2.0);
-        console.log("width: "+$("#puttCanvas").attr("width"));
-        console.log("height: "+$("#puttCanvas").attr("height"));
+        $("#"+canvasID).attr("width", width);
+        $("#"+canvasID).attr("height", height / 2.0);
+        console.log("width: "+$("#"+canvasID).attr("width"));
+        console.log("height: "+$("#"+canvasID).attr("height"));
         worldScalingFactor = (height/2)/(25*pixelsPerMeter);
         console.log(worldScalingFactor);
         canvasPixelsPerMeter = worldScalingFactor*pixelsPerMeter;
@@ -24,8 +25,9 @@ var myapp = (function(){
 
     function getPuttData() {
         if($("#puttCanvas").length) {
+            canvasID = 'puttCanvas';
             console.log("found canvas");
-            setCanvasDim();
+            setCanvasDim(canvasID);
             
             console.log("getting put data");
             var putt = Parse.Object.extend("Putt");
@@ -60,85 +62,6 @@ var myapp = (function(){
                     putterDemo("puttCanvas");   
 
 
-                     function changeSigns (incomingArray){
-                        jj = 0;
-                        for (jj; jj < incomingArray.length; jj++){
-                            incomingArray[jj][1] = (-1)*incomingArray[jj][1];
-                        }
-                        return incomingArray;
-                    }
-                    function parseIncomingArray (incomingArray){
-                        if (incomingArray[0].length != 3){
-                            // append the incorrect parsings as the first array in the array
-                            console.log("python bug accounted for");   
-                            firstArray = [[incomingArray[0],incomingArray[1],incomingArray[2]]];
-                            incomingArray = incomingArray.slice(3, incomingArray.length);
-                            incomingArray = firstArray.concat(incomingArray);
-                        }
-                        return incomingArray;
-                    }
-
-                    function applyZoffset(displacementframes){ 
-                    // applies the z offset to the displacement frames from the sensor
-                    //   -> returns the new displacement frames
-                      //var displacementframes = displacementframes;
-                      console.log("applyZoffset()");
-                      newframes = [[0,0,0]];
-
-                        //Create Z-offset matrix via screen size
-                        pageWidth = $("#puttCanvas").attr("width")-0; //subtraction converts str to int
-                        pageHeight = $("#puttCanvas").attr("height")-0;
-                        if (pageWidth > pageHeight ){
-                            z1 = .5;
-                            z2 = pageHeight/(2*pageWidth);
-                        } else {
-                            z1 = pageWidth/(pageWidth+pageHeight);
-                            z2 = pageHeight/(pageWidth+pageHeight);
-                        }
-                        z3 = -1;
-                        Zoffset = [z1,z2,z3]; 
-
-                    // iterate through old frames
-                      var j = 1;  
-                      for (j = 1; j< displacementframes.length; j++){
-
-
-                        // Calculate position increment from displacement data
-                        xdisp = displacementframes[j][0] - displacementframes[j-1][0];
-                        ydisp = displacementframes[j][1] - displacementframes[j-1][1];
-                        zdisp = displacementframes[j][2] - displacementframes[j-1][2];
-                        
-                        // take into account z bias and position increments
-                        yincrementer = ydisp + Zoffset[0]*(xdisp);
-                        zincrementer = zdisp + Zoffset[1]*(xdisp);
-                        xincrementer = Zoffset[2]*(xdisp);
-                    
-                        // update displacement frames based on z bias
-                        newframesY = newframes[j-1][1] + yincrementer;
-                        newframesZ = newframes[j-1][2] + zincrementer;
-                        newframesX = newframes[j-1][0] + xincrementer;
-                        
-                        // append new array
-                        newframes.push([newframesX,newframesY,newframesZ]);    
-                      }
-
-                      return newframes;
-                   } // ends applyZoffset()
-
-                  function toPixels(displacementframes,scale){
-                        console.log("toPixels()");
-                        var ii = 0,
-                            newframes = [];        
-                        for (ii; ii < displacementframes.length; ii++){
-                            pixX = scale*displacementframes[ii][0];
-                            pixY = scale*displacementframes[ii][1];
-                            pixZ = scale*displacementframes[ii][2];
-                            newframes.push([pixX,pixY,pixZ]);
-                        }
-
-                        return newframes;
-                   }
-
                 },
                 error: function(object, error) {
                     console.log("Error getting putt data");
@@ -149,8 +72,153 @@ var myapp = (function(){
             });
         
         }
+        // if SAMPLE PUTT ANIMATION page was rendered
+        if($("#samplePuttCanvas").length) {
+            canvasID = 'samplePuttCanvas';
+            console.log("found canvas: "+canvasID);
+            setCanvasDim(canvasID);
+
+            //[gyroData, displacementData] = generatePutt(gyroData, displacementData);
+            //console.log(displacementData);
+               // GENERATE Sample Putt
+              function generatePutt(rotations, displacement){
+                var randIter = 1,
+                    displacement = [[0,0,0]],
+                    rotations = [[0,0,0]],
+                    scale = 1/2,
+                    xx = .1,
+                    yy = .1,
+                    zz = 3,
+                    xr = .66,
+                    yr = .3,
+                            duration = [ 0, 50,(scale)*50,(scale)*50  ],
+                xPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx, -xx],
+                yPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy), yy],
+                zPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz, zz],
+                    
+                xRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr, xr], //hook
+                yRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr, yr], //bent wrists before putt
+                zRotationincrementer = [ 0, 0,  0, 0],
+                                            
+                counter = 1,
+                ii = 1;
+                for (ii; ii < duration.length; ii=ii+1){
+                    console.log("ii");
+                    console.log(ii);
+                    ind = ii-1;
+                    for (randIter=counter; randIter < duration[ii]+counter; randIter = randIter+1 ){
+                        prevInd = randIter-1;
+                        xprev = displacement[prevInd][0];
+                        yprev = displacement[prevInd][1];
+                        zprev = displacement[prevInd][2];
+                        displacement.push([xprev-xPositionincrementer[ind],
+                                           yprev-yPositionincrementer[ind],
+                                           zprev-zPositionincrementer[ind]]);
+
+                        rotations.push([rotations[randIter-1][0] + xRotationincrementer[ind],
+                                        rotations[randIter-1][1] + yRotationincrementer[ind],
+                                        rotations[randIter-1][2] + zRotationincrementer[ind]]);
+                        //console.log("innerloop");
+                    }
+                    counter = counter + duration[ii]; // update total iteration count
+                    console.log("counter");
+                    console.log(counter);
+                }
+                
+                return [rotations, displacement];
+              }
+
+
+
+        }
         
-    };
+
+
+       // ======== functions for data ============
+        function changeSigns (incomingArray){
+            jj = 0;
+            for (jj; jj < incomingArray.length; jj++){
+                incomingArray[jj][1] = (-1)*incomingArray[jj][1];
+            }
+            return incomingArray;
+        }
+
+        
+        function parseIncomingArray (incomingArray){
+            if (incomingArray[0].length != 3){
+                // append the incorrect parsings as the first array in the array
+                console.log("python bug accounted for");   
+                firstArray = [[incomingArray[0],incomingArray[1],incomingArray[2]]];
+                incomingArray = incomingArray.slice(3, incomingArray.length);
+                incomingArray = firstArray.concat(incomingArray);
+            }
+            return incomingArray;
+        }
+
+
+        function applyZoffset(displacementframes){ 
+        // applies the z offset to the displacement frames from the sensor
+        //   -> returns the new displacement frames
+          //var displacementframes = displacementframes;
+          console.log("applyZoffset()");
+          newframes = [[0,0,0]];
+
+            //Create Z-offset matrix via screen size
+            pageWidth = $("#"+canvasID).attr("width")-0; //subtraction converts str to int
+            pageHeight = $("#"+canvasID).attr("height")-0;
+            if (pageWidth > pageHeight ){
+                z1 = .5;
+                z2 = pageHeight/(2*pageWidth);
+            } else {
+                z1 = pageWidth/(pageWidth+pageHeight);
+                z2 = pageHeight/(pageWidth+pageHeight);
+            }
+            z3 = -1;
+            Zoffset = [z1,z2,z3]; 
+
+        // iterate through old frames
+          var j = 1;  
+          for (j = 1; j< displacementframes.length; j++){
+
+
+            // Calculate position increment from displacement data
+            xdisp = displacementframes[j][0] - displacementframes[j-1][0];
+            ydisp = displacementframes[j][1] - displacementframes[j-1][1];
+            zdisp = displacementframes[j][2] - displacementframes[j-1][2];
+            
+            // take into account z bias and position increments
+            yincrementer = ydisp + Zoffset[0]*(xdisp);
+            zincrementer = zdisp + Zoffset[1]*(xdisp);
+            xincrementer = Zoffset[2]*(xdisp);
+        
+            // update displacement frames based on z bias
+            newframesY = newframes[j-1][1] + yincrementer;
+            newframesZ = newframes[j-1][2] + zincrementer;
+            newframesX = newframes[j-1][0] + xincrementer;
+            
+            // append new array
+            newframes.push([newframesX,newframesY,newframesZ]);    
+          }
+
+          return newframes;
+       } // ends applyZoffset()
+
+
+      function toPixels(displacementframes,scale){
+            console.log("toPixels()");
+            var ii = 0,
+                newframes = [];        
+            for (ii; ii < displacementframes.length; ii++){
+                pixX = scale*displacementframes[ii][0];
+                pixY = scale*displacementframes[ii][1];
+                pixZ = scale*displacementframes[ii][2];
+                newframes.push([pixX,pixY,pixZ]);
+            }
+
+            return newframes;
+       }
+        
+    }; // ends getPuttData()
 
 
             
@@ -212,7 +280,7 @@ var myapp = (function(){
           }
         });
       }
-      var canvas = document.getElementById('puttCanvas');
+      var canvas = document.getElementById(canvasID);
       var context = canvas.getContext('2d');
 
       var myRectangle = {
@@ -316,8 +384,9 @@ var myapp = (function(){
       width = 20,
       colors = ["#686868","#686868","#686868","#686868","#686868","#686868", "red"],
       iter = 0,
-      coordsX = -($("#puttCanvas").attr("width")/2), // bottom leftmost pixel x location
-      coordsY = -($("#puttCanvas").attr("height")/2), // bottom leftmose pixel y location
+      timer = 0,
+      coordsX = -($("#"+canvasID).attr("width")/2), // bottom leftmost pixel x location
+      coordsY = -($("#"+canvasID).attr("height")/2), // bottom leftmose pixel y location
       xyspan = -(2*coordsX);
       console.log(g.cnvs.offsetWidth);
 
@@ -350,7 +419,14 @@ var myapp = (function(){
 
                 } else if (iter == gyroData.length - 1) {
                     iter = -1; // reset the array counter for loop
-                    cube1.transform.reset(); // reset the 3d object
+                    //cube1.transform.reset(); // reset the 3d object
+                    
+                    clearTimeout(timer);
+                    
+                    setTimeout(function() {
+                        cube1.transform.reset(); // reset the 3d object
+                        timer = setInterval(movePutter, delta_t);
+                    }, 1800);
 
                 } else {
                 // subtract here because gyroData comes in as angular displacement, Cango accumulates
@@ -378,7 +454,7 @@ var myapp = (function(){
       putterHeight = .83;  // in meters
       cube1 = buildPutter(g, canvasPixelsPerMeter*(putterHeight*10), colors); // note for builfing cube/putter: len(colors1) != len(colors0)
     
-      setInterval(movePutter, delta_t); // in msec
+      timer = setInterval(movePutter, delta_t); // in msec
   } 
 
 

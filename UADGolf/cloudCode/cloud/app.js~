@@ -10,5 +10,6 @@ var views = require('cloud/views.js');
 app.get('/', views.index);
 app.get('/home', views.index);
 app.get('/#', views.index);
+app.get('/documentation', views.documentation);
 
 app.listen();
