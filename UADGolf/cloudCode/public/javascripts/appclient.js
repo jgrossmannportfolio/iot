@@ -1,10 +1,11 @@
 var myapp = (function(){
     var displacementData = []; // preallocation for data reception from parse
     var gyroData = [];
-    var animated = false;
     var canvasID = '';          // to be loaded with the canvas ID given by the corresponding page
 
-    var puttboost = 10; //boost the path of the putter by a magnitude of 10
+    var xPuttGain = 1.25;      // z direction for graphics (i.e. in and out)
+    var yPuttGain = 100;   // x direction for graphics (i.e. left to right))
+    var zPuttGain = 100;   // y direction for graphics (i.e. up and down)
     var putterHeight = .83;  // in meters
     var delta_t = 12.5;                   // frame rate, in msec
     var worldScalingFactor = 0;         // canvas world scaling factor, will be set in setCanvasDim() 
@@ -84,14 +85,29 @@ var myapp = (function(){
             canvasID = 'samplePuttCanvas';
             console.log("found canvas: "+canvasID);
             setCanvasDim(canvasID);
-  
+        
+            var putt = Parse.Object.extend("Putt");
+            var query = new Parse.Query(putt);
+            query.get("12fz4AHTDK", {
+                success: function(data) {
+                    // receive data
+                    displacementData = data.get("samplePuttDisplacement");
+                    gyroData = data.get("sampleGyroDisplacement");
+                    displacementData = toPixels(displacementData,canvasPixelsPerMeter); 
+                    displacementData = applyZoffset(displacementData);
+                    console.log(displacementData);
+                    console.log(gyroData);
 
-            [gyroData, displacementData] = generatePutt();
-
+                    putterDemo(canvasID,displacementData,gyroData); 
+                }, error:  function(error) {
+                    alert("error with .get");}
+                }); 
 
 
             // posting sample data to the parseCloud "core" dashboard (in m/s)
-            
+            /*
+            [gyroData, displacementData] = generatePutt();
+        
             var puttClass = Parse.Object.extend("Putt");
             var putt2 = new puttClass();
             putt2.id = "12fz4AHTDK";
@@ -103,17 +119,7 @@ var myapp = (function(){
                 console.log("success!!!");
               }
             });
-
-            displacementData = toPixels(displacementData,puttboost*canvasPixelsPerMeter); 
-            displacementData = applyZoffset(displacementData);
-                    console.log(displacementData);
-                    console.log(gyroData);
-
-    
-        // calculate acceleration based on displacement values
-    
-
-            putterDemo(canvasID,displacementData,gyroData);   
+            */
 
         }
 
@@ -123,9 +129,9 @@ var myapp = (function(){
                 displacement = [[0,0,0]],
                 rotations = [[0,0,0]],
                 scale = 1/2,    // back swing accel to ball contact accel ratio
-                xx = (-0.1/puttboost)/canvasPixelsPerMeter,
-                yy = (-0.1/puttboost)/canvasPixelsPerMeter,
-                zz = (-5/puttboost)/canvasPixelsPerMeter,
+                xx = (-0.1)/canvasPixelsPerMeter,
+                yy = (-0.1)/canvasPixelsPerMeter,
+                zz = (-5)/canvasPixelsPerMeter,
                 xr = -0.66,
                 yr = -0.3,
                         duration = [ 0, 50,(scale)*50,(scale)*50 ],
@@ -259,9 +265,9 @@ var myapp = (function(){
             var ii = 0,
                 newframes = [];        
             for (ii; ii < displacementframes.length; ii++){
-                pixX = scale*displacementframes[ii][0];
-                pixY = scale*displacementframes[ii][1];
-                pixZ = scale*displacementframes[ii][2];
+                pixX = xPuttGain*scale*displacementframes[ii][0];
+                pixY = yPuttGain*displacementframes[ii][1];
+                pixZ = zPuttGain*displacementframes[ii][2];
                 newframes.push([pixX,pixY,pixZ]);
             }
 
@@ -274,85 +280,36 @@ var myapp = (function(){
             
 
 
-    function animatePutt() {
-        if(animated) {
-            return;
-        }else {
-            window.requestAnimFrame = (function(callback) {
-                return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
-                function(callback) {
-                  window.setTimeout(callback, 1000 / 60);
-                };
-            })();
-        }
+    function BTconnect() { // connect with the listening wiced sense sensor
 
-      function drawRectangle(myRectangle, context) {
-        context.beginPath();
-        context.rect(myRectangle.x, myRectangle.y, myRectangle.width, myRectangle.height);
-        context.fillStyle = '#8ED6FF';
-        context.fill();
-        context.lineWidth = myRectangle.borderWidth;
-        context.strokeStyle = 'black';
-        context.stroke();
-      }
-      function animate(myRectangle, canvas, context, frame, scale) {
-        // update
-        //var time = (new Date()).getTime() - startTime;
 
-        //var linearSpeed = 100;
-        // pixels / second
-        //var newX = linearSpeed * time / 1000;
-        console.log("frame: "+frame);
-        var newX = puttData[frame][0] / scale;
-        var newY = puttData[frame][1] / scale;
-        var newZ = puttData[frame][2] / scale;
+          var connect = "true";
 
-        /*if(newX < canvas.width - myRectangle.width - myRectangle.borderWidth / 2) {
-          myRectangle.x = newX;
-        }*/
-        
-        myRectangle.x = myRectangle.x + newX;
-       // myRectangle.y = myRectangle.y + newY;
+          Parse.Push.send({
+            channels: ["Putt"],
+            data: {"Putt":connect}
+          }, 
+          {success: function() {
+                alert("Push Successful! BTconnect = true");
+                 /*   
+                    var putt = Parse.Object.extend("Putt");
+                    var query = new Parse.Query(putt);
+                    query.get("12fz4AHTDK", {
+                        success: function(data) {
+                            // receive data
+                            connect = data.get("connect2wiced");
+                            alert("Push Successful -> connect2wiced value received = " + connect);
+                        }, error:  function(error) {
+                            alert("error with .get");}
+                        }); */
+            }, error: function(error) {
+                 alert("Error" + error);
+            }
+          });
 
-        // clear
-        context.clearRect(0, 0, canvas.width, canvas.height);
 
-        drawRectangle(myRectangle, context);
 
-        // request new frame
-        requestAnimFrame(function() {
-          if(frame+1 < puttData.length) {
-            animate(myRectangle, canvas, context, frame+1, scale);
-          }else {
-            animated = false;
-            console.log("animation completed");
-            return;
-          }
-        });
-      }
-      var canvas = document.getElementById(canvasID);
-      var context = canvas.getContext('2d');
 
-      var myRectangle = {
-        x: (width / 2.0) - 25,
-        y: (height / 4.0) - 50,
-        width: 50,
-        height: 100,
-        borderWidth: 5
-      };
-
-      drawRectangle(myRectangle, context);
-
-      // wait one second before starting animation
-      setTimeout(function() {    
-        console.log(puttData);
-        if(puttData != [] && puttData != null) {   
-            animated = true;    
-            animate(myRectangle, canvas, context, 0, 10.0);
-        }else {
-            console.log("no putt data loaded");
-        }
-      }, 1000);
     };
 
 
@@ -511,8 +468,19 @@ var myapp = (function(){
         init: function() {
             console.log("starting up");
             Parse.initialize("iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb", "d4q6T1YxleQ2za17PdTtfaAD8x6tAB9rdW4y9vMD");
+
+
+            window.requestAnimFrame = (function(callback) {
+                return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+                function(callback) {
+                  window.setTimeout(callback, 1000 / 60);
+                };
+            })();
+
+
+
             $(window).load(getPuttData);
-            jQuery("#startButton").click(animatePutt);
+            jQuery("#startButton").click(BTconnect);
             //$(window).load(putterDemo("puttCanvas"))
             //console.log("Client-side app starting up")
             
