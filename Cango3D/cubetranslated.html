@@ -24,7 +24,7 @@
     var coordsX = -($("#"+cvsID).attr("width")/2), // bottom leftmost pixel x
         coordsY = -($("#"+cvsID).attr("height")/2), // bottom leftmost pixel y
         coordsZ = -(2*coordsX);
-    
+
     // Initialize Cango3D graphics context
     var g = new Cango3D(cvsID);
     g.setFOV(45);
@@ -33,13 +33,20 @@
     
     // Generate Random Path Data
         var index = 0; // index for displacement array
-        var displacementframes = generateRandPath(); //generates displacement array with path data
+        //var displacementframes = generateRandPath(); //generates displacement array with path data
+        var rotationframes = [],
+            displacementframes = [];
+        var [rotationframes, displacementframes] = generatePutt(rotationframes,displacementframes);
+    console.log(rotationframes);
+
+
         var convertedframes = applyZoffset(displacementframes); //apply z offset to displacement
-    
-    var createdPath = g.createGroup3D();
+    console.log("converted");
+    //var createdPath = g.createGroup3D();
     
     // build the object
-    var cube = buildPutter(g, 17*10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
+    var colors0 = ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]; 
+    var cube = buildPutter(g, 17*10, colors0);
     //var cube = buildCube(g, 10, ["red","orange","yellow","green","blue","violet"]);
 
     //var pathGraphic = buildPath();
@@ -47,61 +54,121 @@
     //var angleZ = 90;
     //g.setWorldCoords3D(coordsX, -coordsY, coordsZ);
     // Configure animation
-    var timerinterval = 10;
+    var timerinterval = 20;
     var timer = setInterval(movePutter, timerinterval);
 
 
 
 // =============================================
   function setCanvasDim(){
+        console.log("canvas DIM");
     width = 700;
     height = 700;
     $("#"+cvsID).attr("width", width);
-    //console.log($("#"+cvsID).attr("width"));
+    console.log($("#"+cvsID).attr("width"));
     $("#"+cvsID).attr("height", height);   
+
   }
+
+  function generatePutt(rotations, displacement){
+    var randIter = 1,
+        displacement = [[0,0,0]],
+        rotations = [[0,0,0]],
+        scale = 1/2,
+        xx = .1,
+        yy = .1,
+        zz = 3,
+        xr = .66,
+        yr = .3,
+                duration = [ 0, 50,(scale)*50,(scale)*50  ],
+    xPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx, -xx],
+    yPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy), yy],
+    zPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz, zz],
+        
+    xRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr, xr], //hook
+    yRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr, yr], //bent wrists before putt
+    zRotationincrementer = [ 0, 0,  0, 0],
+                                
+    counter = 1,
+    ii = 1;
+    for (ii; ii < duration.length; ii=ii+1){
+        console.log("ii");
+        console.log(ii);
+        ind = ii-1;
+        for (randIter=counter; randIter < duration[ii]+counter; randIter = randIter+1 ){
+            prevInd = randIter-1;
+            xprev = displacement[prevInd][0];
+            yprev = displacement[prevInd][1];
+            zprev = displacement[prevInd][2];
+            displacement.push([xprev-xPositionincrementer[ind],
+                               yprev-yPositionincrementer[ind],
+                               zprev-zPositionincrementer[ind]]);
+
+            rotations.push([rotations[randIter-1][0] + xRotationincrementer[ind],
+                            rotations[randIter-1][1] + yRotationincrementer[ind],
+                            rotations[randIter-1][2] + zRotationincrementer[ind]]);
+            //console.log("innerloop");
+        }
+        counter = counter + duration[ii]; // update total iteration count
+        console.log("counter");
+        console.log(counter);
+    }
+    
+    return [rotations, displacement];
+  }
+
 
   function movePutter() // move putter based on convertedframes
   {
     
-    if (index > convertedframes.length - 1){ //when the displacement array ends
-        X = convertedframes[index-2][0];
-        Y = convertedframes[index-2][1];
-        Z = convertedframes[index-2][2];
-        console.log("here");
-        
-        // RESET
-        index = -1;
-        //g.deleteObj(cube);
-        // Create path
-        console.log("here");
-        dot = g.compilePath3D(["M",0,0,0,
-                               "L",X,Y,Z], "red", 4);
-        createdPath.addObj(dot);
-
-        g.renderFrame(createdPath);
-        console.log("here");
-        g.deleteObj(cube);
-        /*
-        cube = buildPutter(g, 17*10, ["#686868","#686868","#686868","#686868","#686868","#686868", "red"]);
-        cube.transform.reset();
-        */
-    } else {
+    if (index == 0) { // first iteration
 
         // grab displacement values from array
         X = convertedframes[index][0];
         Y = convertedframes[index][1];
         Z = convertedframes[index][2];
 
-        //cube.transform.rotate(1,1,0,1);  
+        //console.log(rotationframes);
+        console.log(rotationframes[index][0]);
+        cube.transform.rotate(1,0,0,rotationframes[index][0]);  
+        cube.transform.rotate(0,1,0,rotationframes[index][1]);  
+        cube.transform.rotate(0,0,1,rotationframes[index][2]);
+        g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
+        g.renderFrame(cube);
+        
+    } else if (index > convertedframes.length - 1){ //when the displacement array ends
+        // RESET
+        index = -1;
+        
+        clearTimeout(timer);
+        
+        setTimeout(function() {
+            cube.transform.reset();
+            timer = setInterval(movePutter, timerinterval);
+        }, 2000);
+        
+
+    } else {
+        // grab displacement values from array
+        X = convertedframes[index][0];
+        Y = convertedframes[index][1];
+        Z = convertedframes[index][2];
+        
+        
+        //console.log(rotationframes);
+        //console.log(rotationframes[index][0]);
+        cube.transform.rotate(1,0,0,rotationframes[index][0]-rotationframes[index-1][0]);  
+        cube.transform.rotate(0,1,0,rotationframes[index][1]-rotationframes[index-1][1]);  
+        cube.transform.rotate(0,0,1,rotationframes[index][2]-rotationframes[index-1][2]);
         g.setWorldCoords3D(coordsX+X, coordsY+Y, coordsZ+Z);
         
     }
+    
+
+    index = index + 1; // advance to next array index
         
     g.renderFrame(cube);
-    //g.renderFrame(pathGraphic);
-      
-    index = index + 1; // advance to next array index
+    
   }
 
 
@@ -158,6 +225,9 @@
 
 
 
+
+
+
   function generateRandPath(){
     var randIter = 1,
         displacement = [[0,0,0]],
@@ -170,34 +240,7 @@
         yprev = displacement[randIter-1][1];
         zprev = displacement[randIter-1][2];
         displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-    }/*
-        xPositionincrementer = 0,
-        yPositionincrementer = -1,
-        zPositionincrementer = 0;
-    for (randIter; randIter < 200; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
     }
-        xPositionincrementer = -1,
-        yPositionincrementer = 0,
-        zPositionincrementer = -4;
-    for (randIter; randIter < 300; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-    }
-        xPositionincrementer = 0,
-        yPositionincrementer = 0,
-        zPositionincrementer = -4;
-    for (randIter; randIter < 400; randIter = randIter + 1 ){
-        xprev = displacement[randIter-1][0];
-        yprev = displacement[randIter-1][1];
-        zprev = displacement[randIter-1][2];
-        displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
-    }*/
     return displacement;
   }
 

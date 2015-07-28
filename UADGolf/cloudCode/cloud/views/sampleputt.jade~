@@ -1,0 +1,15 @@
+extends layout
+
+block content
+    div#project-info
+        h3#title Sample Putt Animation
+        //p#description IOT Golf Putting aid.
+        br
+        br
+        canvas(id="samplePuttCanvas", width="", height="")
+
+    
+    
+
+
+                    

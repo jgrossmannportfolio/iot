@@ -18,7 +18,9 @@ div#navbar
         li
             a(href='/') Home
         li
-            a(href='/') Tab1
+            a(href='/documentation') Documentation
+        li
+            a(href='/sampleputt') Sample Putt Animation
         li
             a(href='/') Tab2
         li(class='dropdown')

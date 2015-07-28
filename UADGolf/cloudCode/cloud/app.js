@@ -11,5 +11,6 @@ app.get('/', views.index);
 app.get('/home', views.index);
 app.get('/#', views.index);
 app.get('/documentation', views.documentation);
+app.get('/sampleputt', views.sampleputt);
 
 app.listen();
