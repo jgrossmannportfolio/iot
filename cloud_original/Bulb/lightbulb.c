@@ -71,7 +71,8 @@ void healthCallback(ParseClient client, int error, const char *buffer)
 		return;
 	}
 
-	char *temp = strtok(buffer, "\"");
+	char *temp = strtok(buffer, "Putt");
+
 	if(temp == NULL) {
 		printf("bad push value\n");
 		return;
