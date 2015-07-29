@@ -7,6 +7,13 @@ block content
         br
         br
         canvas(id="samplePuttCanvas", width="", height="")
+        br
+        br
+        br
+        img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
+        br
+        br
+        img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
 
     
     
