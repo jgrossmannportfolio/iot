@@ -21,7 +21,7 @@
 
 # MAC: 
 #20:73:7A:15:13:DE
-
+import filters
 import matplotlib.pyplot as plot
 import pexpect
 import sys
@@ -30,6 +30,7 @@ import httplib
 import json
 import numpy as np
 import subprocess
+import socket
 
 import math
 import operator
@@ -279,11 +280,8 @@ class wicedsense:
       kalmanX = kalman.Kalman(roll[0])
       kalmanY = kalman.Kalman(pitch[0])
       #kalmanZ = kalman.Kalman(yaw[0])
-      accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], 0.0])]
-      xframes = [MathUtil.displacement(self.dx,self.vx,accelRot[-1][0], self.delta_t)[0]]
-      yframes = [MathUtil.displacement(self.dy,self.vy,accelRot[-1][1], self.delta_t)[0]]
-      zframes = [MathUtil.displacement(self.dz,self.vz,accelRot[-1][2], self.delta_t)[0]]
-      xyzframes = [[xframes[-1], yframes[-1], zframes[-1]]]
+     # accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], 0.0])]
+      
       gyrodata.append([roll[0], pitch[0], 0.0])
       zAngle = [0.0]
       xAngle = [0.0]
@@ -291,7 +289,7 @@ class wicedsense:
       time = [0.0]
       data = [0.0]
       angle = [0.0]
-      accelNew[0] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[0][3]]
+      #accelNew[0] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[0][3]]
       for x in range(1, len(gyroXnew)):
         time.append(time[-1] + self.delta_t)
         data.append(MathUtil.getAngle(gyroZnew[x], self.delta_t))
@@ -301,16 +299,29 @@ class wicedsense:
         gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
                         kalmanY.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
                         zAngle[x] ])
-        accelRot.append(MathUtil.rotateAcceleration([axnew[x], aynew[x], aznew[x]], [gyrodata[-1][0], gyrodata[-1][1], gyrodata[-1][2]]))
-        self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,accelRot[-1][0], self.delta_t)
+        
+      accelRot = MathUtil.rotateAcceleration([axnew, aynew, aznew], [[i[0] for i in gyrodata[:]], [i[1] for i in gyrodata[:]], [i[2] for i in gyrodata[:]]])
+
+      #lowx = filters.lowpass([i[0] for i in accelRot[:]], 0.09)
+      #lowy = filters.lowpass([i[1] for i in accelRot[:]], 0.09)
+      #lowz = filters.lowpass([i[2] for i in accelRot[:]], 0.09)
+      xframes = [MathUtil.displacement(self.dx,self.vx,accelRot[0][0], self.delta_t)[0]]
+      yframes = [MathUtil.displacement(self.dy,self.vy,accelRot[1][0], self.delta_t)[0]]
+      zframes = [MathUtil.displacement(self.dz,self.vz,accelRot[2][0], self.delta_t)[0]]
+      xyzframes = [[xframes[-1], yframes[-1], zframes[-1]]]
+      for x in range(1, len(gyroXnew)):
+        self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,accelRot[0][x], self.delta_t)
         xframes.append( float(xframes[-1] + self.dx)  )
-        self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,accelRot[-1][1], self.delta_t)
+        self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,accelRot[1][x], self.delta_t)
         yframes.append( float(yframes[-1] + self.dy)  )
-        self.dz,self.vz = MathUtil.displacement(self.dz,self.vz,accelRot[-1][2], self.delta_t)
+        self.dz,self.vz = MathUtil.displacement(self.dz,self.vz,accelRot[2][x], self.delta_t)
         zframes.append( float(zframes[-1] + self.dz)  )
         xyzframes.append( [xframes[-1], yframes[-1], zframes[-1]] )
-        accelNew[x] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[x][3]]
-        
+        accelNew[x] = [accelRot[0][x], accelRot[1][x], accelRot[2][x], accelNew[x][3]]
+       
+
+      
+      #accelNew = [[lowx[i], lowy[i], lowz[i], accelNew[i][3]] for i in range(len(lowx))]
         
                         
                         #kalmanZ.updateAngle(yaw[x], gyroZnew[x], self.delta_t) ])
@@ -331,17 +342,22 @@ class wicedsense:
       #z = np.polyfit(period, variance, 2)
       #f = np.poly1d(z)
      
-      fig = plot.figure()
-      ax = fig.add_subplot(1,1,1)
-      ax.plot(period, variance )
-      ax.set_xscale('log')
-      ax.set_yscale('log')
+      #fig = plot.figure()
+      #ax = fig.add_subplot(1,1,1)
+      #ax.plot(time, axnew, time, filters.highpass(axnew, 0.001), time, accelRot[0])
+      fig2 = plot.figure()
+      ay = fig2.add_subplot(1,1,1)
+      ay.plot(time, [i[1] for i in gyrodata[:]], time, yAngle)
+     #ax.set_title("Acceleration")
+     # ax.set_ylabel("m/s^2")
+      #ax.set_xlabel("Time (s)")
       plot.show()
       '''
+     
       #xVar = np.log(xVar, 10)
       #time = np.log(time, 10)
       #plot.plot(time, xVar)
-      fig = plot.figure()
+      '''fig = plot.figure()
       ax = fig.add_subplot(1,1,1)
       ax.plot(time, yAngle, 'blue', time, [row[1] for row in gyrodata], 'red', time, pitch, 'green')
       fig2 = plot.figure()
@@ -350,8 +366,39 @@ class wicedsense:
       fig3 = plot.figure()
       az = fig3.add_subplot(1,1,1)
       az.plot(time, zAngle, 'blue')
-      plot.show()
-        
+      plot.show()'''
+    self.resetVars()  
+
+ 
+  def resetVars(self):
+    self.inittime = 0 
+    self.starttimer = 0 # wait for garbageiterations before the timer starts
+    self.accelCal = [0.0, 0.0, 0.0]
+    self.gyroCal = [0.0, 0.0, 0.0]
+    self.magCal = [0,0, 0,0, 0,0]
+    self.vx = 0.0
+    self.ax = []
+    self.dx = 0.0
+    # y
+    self.vy = 0.0
+    self.ay = []
+    self.dy = 0.0
+    # z
+    self.vz = 0.0
+    self.az = []
+    self.dz = 0.0
+
+    self.gyroX = []
+    self.gyroY = []
+    self.gyroZ = []
+
+    self.magX = []
+    self.magY = []
+    self.magZ = []
+
+    self.magnitude = []
+    self.timestamp = []
+
 
   def register_cb( self, handle, fn ):
     self.cb[handle]=fn
@@ -416,8 +463,8 @@ class wicedsense:
             self.az.append( Axyz[2] )
             print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2])
         else:
-          (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.0175)
-          (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 8192.0/9.80665)
+          (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.00762939)
+          (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 16384.0/9.80665)
           #(Mxyz, Mmag) = MathUtil.convertData(mx1 + int(float(self.magCal[0])), my1 + int(float(self.magCal[1])), mz1 + int(float(self.magCal[2])), 16384.0)
                     
           print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2])# + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
@@ -439,6 +486,23 @@ class wicedsense:
     else:
       self.inittime += 1  # increment 10 times before evaluating values      
 
+def createServerSocket(port):
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+  s.bind(("127.0.0.1", port))
+  s.listen(2)
+  s.setblocking(1)
+  #print "connected to callback socket"
+  return s
+
+# We listen on sockets on PORTs defined above
+def acceptSocketConnection(sock):
+  conn, addr = sock.accept()
+  putt = conn.recv(16)
+  conn.close()
+  print "putt: "+putt
+  return putt
+
 
 # main function USAGE python sense.py <mac address>
 def main():
@@ -454,27 +518,54 @@ def main():
       calibrateMagnet = True
       calibrate = True
   
-  if(!calibrate):
-    p1 = subprocess.Popen(['./lightbulb'])
+  if(calibrate == False):
+    p1 = subprocess.Popen(['./callback'])
+    print "created callback process"
+    sock = createServerSocket(50014) 
+    putt = False
+    try:   
+      tag = wicedsense(bluetooth_adr, calibrate, calibrateMagnet)
+      tag.register_cb(0x2a,tag.dataCallback)
+      putt = acceptSocketConnection(sock)
+      print putt
+      print "waiting for putt command"
+    except Exception, e:
+      print str(e)
+      p1.terminate()
+      return
+ 
+    while(True):
+      try:
+        putt = acceptSocketConnection(sock)
+        if(putt):
+          tag.char_write_cmd(0x2b, 0x01)
+          tag.notification_loop()
+          
+      except KeyboardInterrupt:
+        tag.con.sendline("disconnect")
+        tag.con.sendline("exit")
+        sys.exit(0)
+      except Exception, e:
+        print str(e)
+        pass
+      tag.char_write_cmd(0x2b, 0x00)
+    
+    p1.terminate()
 
- # while True:
-  try:   
-    print "[re]starting.."
+  else:
+    try:
+      tag = wicedsense(bluetooth_adr, calibrate, calibrateMagnet)
+      tag.register_cb(0x2a,tag.dataCallback)
+      tag.char_write_cmd(0x2b, 0x01)
+      tag.notification_loop()
+    except Exception, e:
+      print str(e)
+      pass
 
-    tag = wicedsense(bluetooth_adr, calibrate, calibrateMagnet)
 
-    tag.register_cb(0x2a,tag.dataCallback)
-    tag.char_write_cmd(0x2b, 0x01)
-
-    #tag.char_read_hnd(0x2a)
-    tag.notification_loop()
-
-  except Exception, e:
-    print str(e)
-    pass
-  
-  p1.terminate()
 if __name__ == "__main__":
   main()
+
+
 
 

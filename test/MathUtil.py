@@ -2,6 +2,7 @@
 import math
 import matplotlib.pyplot as plot
 import numpy as np
+import filters
 
 PI = 3.1415926536
 
@@ -115,18 +116,23 @@ def getAngle(gyroData, dt):
 def rotateAcceleration(accel, angles):
   #angles: 0:roll, 1:pitch, 2:yaw
   #accel: 0:x, 1:y, 2:z
-  gravity = rotateGravity(angles)
-  accel[0] -= gravity[0]
-  accel[1] -= gravity[1]
-  accel[2] -= gravity[2]
-  rotAccel = [0.0, 0.0, 0.0]
-  roll = math.radians(angles[0])
-  pitch = math.radians(angles[1])
-  yaw = math.radians(angles[2])
-  R = RtoGround(roll, pitch, yaw)
-  for i in range(3):
-    for j in range(3):
-      rotAccel[i] += R[i][j] * accel[j]
+  #gravity = rotateGravity(angles)
+  #accel[0] -= gravity[0]
+  #accel[1] -= gravity[1]
+  #accel[2] -= gravity[2]
+  rotAccel = [[0.0 for i in range(len(accel[0]))] for i in range(3)]
+  roll = [math.radians(i) for i in angles[0]]
+  pitch = [math.radians(i) for i in angles[1]]
+  yaw = [math.radians(i) for i in angles[2]]
+  alpha = 0.05
+  accel[0] = filters.lowpass(filters.highpass(accel[0], alpha), 0.2)
+  accel[1] = filters.lowpass(filters.highpass(accel[1], alpha), 0.2)
+  accel[2] = filters.lowpass(filters.highpass(accel[2], alpha), 0.2)
+  for k in range(len(accel[0])):
+    R = RtoGround(roll[k], pitch[k], yaw[k])
+    for i in range(3):
+      for j in range(3):
+        rotAccel[i][k] += R[i][j] * accel[j][k]
 
   return rotAccel
 
@@ -155,7 +161,7 @@ def allanVariance(data, frequency, binSize, dt):
 
 
 
-def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
+def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr): # NOTE: I took out f_plotData
     # -> returns a figure with 3 subplots
     # NOTE: matplotlib.pyplot.show() [or plot.show(), as adjusted by import]
     #   must be called to render the plot
@@ -221,7 +227,7 @@ def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     ax.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax.plot(timeX, plotData[0], color='blue')
-    ax.plot(timeX, f_plotData[0], color='black')
+    #ax.plot(timeX, f_plotData[0], color='black')
 
     ax.axis(axesRange)
     ax.grid(True)
@@ -238,7 +244,7 @@ def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     ax2.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax2.plot(timeX, plotData[1], color='red')
-    ax2.plot(timeX, f_plotData[1], color='black')
+    #ax2.plot(timeX, f_plotData[1], color='black')
 
     ax2.axis(axesRange)
     ax2.grid(True)
@@ -254,7 +260,7 @@ def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     ax3.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax3.plot(timeX, plotData[2], color='green')
-    ax3.plot(timeX, f_plotData[2], color='black')
+    #ax3.plot(timeX, f_plotData[2], color='black')
 
     ax3.axis(axesRange)
     ax3.grid(True)

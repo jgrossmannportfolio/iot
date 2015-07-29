@@ -35,6 +35,7 @@ for x in (range(len(new))):
     elif count == 1:
         dyData.append(float(new[x]))
     elif count == 2:
+        count = -1
         dzData.append(float(new[x]))
     count += 1
 
@@ -48,12 +49,11 @@ for i in (range(len(dxData)-1)):
 
 # Create Displacement xyz plots
 dispPlotData = [dxData, dyData, dzData]
-f_dispPlotData = [f_dxData, f_dyData, f_dzData]
-plotTitle = 'Displacement Calculation'
+plotTitle = 'Simulated Putt Displacement'
 ylabel = r'Displacement ($m$)'
 xlabel = r'Time ($s$)'
 
-figDisp = MathUtil.create3plots(timestamp, dispPlotData, f_dispPlotData, plotTitle, xlabel, ylabel)
+figDisp = MathUtil.create3plots(timestamp, dispPlotData, plotTitle, xlabel, ylabel)
 
 
 

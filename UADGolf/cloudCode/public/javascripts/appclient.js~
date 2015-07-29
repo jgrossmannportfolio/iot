@@ -506,7 +506,7 @@ var myapp = (function(){
 
                         cube1.transform.reset(); // reset the 3d object
                         timer = setInterval(movePutter, delta_t);
-                    }, 500);
+                    }, 1800);
 
 
 
