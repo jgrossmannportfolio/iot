@@ -10,8 +10,13 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <errno.h>
+#include <signal.h>
+#include <setjmp.h>
 
-
+#define TRY do{ jmp_buf ex_buf__; if( !setjmp(ex_buf__) ){
+#define CATCH } else {
+#define ETRY } }while(0)
+#define THROW longjmp(ex_buf__, 1)
 #define PORT_SENSE 50014
 #define HOST "127.0.0.1"
 #define MAXPENDING 5    /* Maximum outstanding connection requests */
@@ -31,9 +36,18 @@ void puttCallback(ParseClient client, int error, const char *buffer)
 		return;
 	}
 
-  printf("%s\n", buffer);
+  char *temp = strtok(buffer, "\"");
+  if(temp == NULL) {
+    printf("bad push value\n");
+    return;
+  }
 
-	//updateOnParse("Health", bulb.health);
+  int i = 0;
+  for(;i<5;i++) {
+    temp = strtok(NULL, "\"");
+  }
+
+  clientSendSocket(PORT_SENSE, temp);
 }
 
 // This function pushes data onto the Parse Application in cloud.
@@ -81,7 +95,7 @@ void clientSendSocket(int port, char *buffer)
     struct sockaddr_in servAddr;
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        printf("lightbulb::clientSocket():ERROR : Could not create socket \n");
+        printf("clientSocket():ERROR : Could not create socket \n");
     }
     memset(&servAddr, 0, sizeof(servAddr));
     servAddr.sin_family = AF_INET;
@@ -89,21 +103,37 @@ void clientSendSocket(int port, char *buffer)
     servAddr.sin_addr.s_addr = inet_addr(HOST);
     if (connect(sockfd, (struct sockaddr *)&servAddr, sizeof(servAddr)) < 0)
     {
-        printf("lightbulb::clientSocket():ERROR : Connect Failed on Port: %d\n", port);
+        printf("clientSendSocket(): ERROR : Connect Failed on Port: %d\n", port);
     }
     else
     {
         send(sockfd, buffer, strlen(buffer), 0);
-        printf("lightbulb::clientSendSocket(): Data sent Successfully on Port: %d\n", port);
+        printf("clientSendSocket(): Data sent Successfully on Port: %d\n", port);
     }
     close(sockfd);
 }
 
+void sigHandler(int sig) {
+  exit(0);
+}
 
 int main() {
     printf("starting callback process\n");
     //pthread_create(&threadPush, NULL, threadPushNotifications, NULL);
-    pushNotifications();
+    signal(SIGINT, &sigHandler);
+    signal(SIGTERM, &sigHandler);
+   
+    TRY
+   {
+
+      pushNotifications();
+   }
+   CATCH
+   {
+      printf("Got Exception!\n");
+   }
+   ETRY;
+    
     /*while(1)
     {	
         clientSendSocket(PORT_INTENSITY, str);

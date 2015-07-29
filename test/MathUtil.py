@@ -2,6 +2,7 @@
 import math
 import matplotlib.pyplot as plot
 import numpy as np
+import filters
 
 PI = 3.1415926536
 
@@ -115,18 +116,23 @@ def getAngle(gyroData, dt):
 def rotateAcceleration(accel, angles):
   #angles: 0:roll, 1:pitch, 2:yaw
   #accel: 0:x, 1:y, 2:z
-  gravity = rotateGravity(angles)
-  accel[0] -= gravity[0]
-  accel[1] -= gravity[1]
-  accel[2] -= gravity[2]
-  rotAccel = [0.0, 0.0, 0.0]
-  roll = math.radians(angles[0])
-  pitch = math.radians(angles[1])
-  yaw = math.radians(angles[2])
-  R = RtoGround(roll, pitch, yaw)
-  for i in range(3):
-    for j in range(3):
-      rotAccel[i] += R[i][j] * accel[j]
+  #gravity = rotateGravity(angles)
+  #accel[0] -= gravity[0]
+  #accel[1] -= gravity[1]
+  #accel[2] -= gravity[2]
+  rotAccel = [[0.0 for i in range(len(accel[0]))] for i in range(3)]
+  roll = [math.radians(i) for i in angles[0]]
+  pitch = [math.radians(i) for i in angles[1]]
+  yaw = [math.radians(i) for i in angles[2]]
+  alpha = 0.05
+  accel[0] = filters.lowpass(filters.highpass(accel[0], alpha), 0.2)
+  accel[1] = filters.lowpass(filters.highpass(accel[1], alpha), 0.2)
+  accel[2] = filters.lowpass(filters.highpass(accel[2], alpha), 0.2)
+  for k in range(len(accel[0])):
+    R = RtoGround(roll[k], pitch[k], yaw[k])
+    for i in range(3):
+      for j in range(3):
+        rotAccel[i][k] += R[i][j] * accel[j][k]
 
   return rotAccel
 
