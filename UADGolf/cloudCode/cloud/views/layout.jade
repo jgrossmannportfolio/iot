@@ -21,23 +21,33 @@ div#navbar
             a(href='/documentation') Documentation
         li
             a(href='/sampleputt') Sample Putt Animation
-        li
-            a(href='/') Tab2
-        li(class='dropdown')
-            a(href='#', data-toggle='dropdown', class='dropdown-toggle') Settings
-                b(class='caret')
-            ul(class='dropdown-menu')
-                li
-                    a(href='/') Setting1    
-                li 
-                    a(href='/') Setting2
-                li
-                    a(href='/') Setting3
-                li
-                    a(href='/') Setting4  
-                li(class='divider')
-                li
-                    a(href='/') Settings
-             
         
+if documentation
+  div#navbar2
+    ul(class='nav nav-pills')
+      li
+          a(href='/documentation/#video') Video
+      li
+          a(href='/documentation/abstract') Abstract
+      li
+          a(href='/documentation/overview') Overview
+      li
+          a(href='/documentation/stateoftheart') State of the Art
+      li
+          a(href='/documentation/detailed_description') Detailed Description
+      li
+          a(href='/documentation/results') Results
+      li
+          a(href='/documentation/futurework') Future Work
+      li
+          a(href='/documentation/conclusion') Conclusion
+      li
+          a(href='/documentation/references') References
+      li
+          a(href='/documentation/resources') Appendix A: Tools and resources used
+      li
+          a(href='/documentation/software') Appendix B: Decription of SW, github link to SW
+      li
+          a(href='/documentation/#stateoftheart') Appendix C: Detailed description to facilitate reptetition of the project
+
 block content

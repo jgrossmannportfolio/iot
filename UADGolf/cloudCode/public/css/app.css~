@@ -3,9 +3,16 @@ width: 50%;
 background-color: whitesmoke;
 }
 
+p.description {
+margin-left: 5%;
+margin-right: 5%;
+margin-top: 3%;
+font-size: 20;
+}
+
 #test {
 display:inline-block;
-width:100%
+width:100%;
 }
 
 .center {
@@ -24,7 +31,7 @@ font-size: 22;
 }
 #navbar2 {
 background-color: #B0B0B0;
-font-size: 10;
+font-size: 16;
 }
 
 .nav.nav-pills a {
@@ -72,9 +79,6 @@ font-size: 16px;
 
 b {
 font-weight: normal;
-}
-#description {
-font-size: 16px;
 }
 
 .scrollable-menu {
@@ -125,19 +129,19 @@ float: right;
 
 #newevent .input-group {
 display: inline-block;
-margin-left:2%
+margin-left:2%;
 }
 
 #newevent button {
-margin-left:2%
+margin-left:2%;
 }
 
 #newevent {
-margin-bottom: 4%
+margin-bottom: 4%;
 }
 
 #saletext {
-color: red
+color: red;
 }
 
 #newAddress.input-group {
@@ -146,7 +150,7 @@ margin-left: 3%;
 }
 
 button#newAddress {
-margin-left: 3%
+margin-left: 3%;
 }
 
 #newPayment.input-group {
@@ -155,5 +159,8 @@ margin-left: 3%;
 }
 
 button#newPayment {
-margin-left: 3%
+margin-left: 3%;
 }
+
+
+

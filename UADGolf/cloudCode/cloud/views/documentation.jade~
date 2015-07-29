@@ -6,13 +6,13 @@ block content
         li
             a(href='/documentation/#video') Video
         li
-            a(href='/documentation/#abstract') Abstract
+            a(href='/documentation/abstract') Abstract
         li
-            a(href='/documentation/#overview') Overview
+            a(href='/documentation/overview') Overview
         li
             a(href='/documentation/#stateoftheart') State of the Art
         li
-            a(href='/documentation/#stateoftheart') Detailed Description
+            a(href='/documentation/detailed_description') Detailed Description
         li
             a(href='/documentation/#stateoftheart') Results
         li
@@ -20,11 +20,11 @@ block content
         li
             a(href='/documentation/#stateoftheart') Conclusion
         li
-            a(href='/documentation/#stateoftheart') References
+            a(href='/documentation/references') References
         li
-            a(href='/documentation/#stateoftheart') Appendix A: Tools and resources used
+            a(href='/documentation/resources') Appendix A: Tools and resources used
         li
-            a(href='/documentation/#stateoftheart') Appendix B: Decription of SW, github link to SW
+            a(href='/documentation/software') Appendix B: Decription of SW, github link to SW
         li
             a(href='/documentation/#stateoftheart') Appendix C: Detailed description to facilitate reptetition of the project
 
@@ -37,6 +37,6 @@ block content
     h4#abstract Abstract
     p#description IOT Golf Putting aid.
     h4#Introduction
-    img#hs(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
+    img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
 
 

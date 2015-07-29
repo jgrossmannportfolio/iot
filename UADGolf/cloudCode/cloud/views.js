@@ -9,22 +9,62 @@ exports.index = function (req, res) {
             var frames = data.get("frames");   
             console.log("got frames");
             console.log(frames);   
-            res.render('index', {title: "UADGolf", users:[], home:true, frames:frames});      
+            res.render('index', {title: "UADGolf", users:[], documentation:false, frames:frames});      
         },
         error: function(object, error) {
             console.log("Error getting putt data");
             console.log(error);
             frames = [[3,2,1]];
-            res.render('index', {title: "UADGolf", users:[], home:true, frames:frames});
+            res.render('index', {title: "UADGolf", users:[], documentation:false, frames:frames});
         }
     });
     
 };
 
 exports.documentation = function(req, res) {
-    res.render('documentation', {title: "UADGolf", home:true, users:[]});
+    res.render('documentation', {title: "UADGolf", documentation:true, users:[]});
 };
 
 exports.sampleputt = function(req,res){
-    res.render('sampleputt', {title: "UADGolf", home:true, users:[]});
+    res.render('sampleputt', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.detailedDescription = function(req, res) {
+  res.render('detailed_description', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.abstract = function(req, res) {
+  res.render('abstract', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.overview = function(req, res) {
+  res.render('overview', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.resources = function(req, res) {
+  res.render('resources', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.references = function(req, res) {
+  res.render('references', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.software = function(req, res) {
+  res.render('software', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.stateoftheart = function(req, res) {
+  res.render('stateoftheart', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.results = function(req, res) {
+  res.render('results', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.futurework = function(req, res) {
+  res.render('futurework', {title: "UADGolf", documentation:true, users:[]});
+}
+
+exports.conclusion = function(req, res) {
+  res.render('conclusion', {title: "UADGolf", documentation:true, users:[]});
 }
