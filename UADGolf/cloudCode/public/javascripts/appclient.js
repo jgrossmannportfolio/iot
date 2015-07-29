@@ -3,10 +3,11 @@ var myapp = (function(){
     var gyroData = [];
     var canvasID = '';          // to be loaded with the canvas ID given by the corresponding page
 
-    var xPuttGain = 1.25;      // z direction for graphics (i.e. in and out)
-    var yPuttGain = 100;   // x direction for graphics (i.e. left to right))
-    var zPuttGain = 100;   // y direction for graphics (i.e. up and down)
-    var putterHeight = .83;  // in meters
+    var puttGain = 0;
+    var xPuttGain = 0;      // z direction for graphics (i.e. in and out)
+    var yPuttGain = 0;   // x direction for graphics (i.e. left to right))
+    var zPuttGain = 0;   // y direction for graphics (i.e. up and down)
+    var putterHeight = 0.83;  // in meters
     var delta_t = 12.5;                   // frame rate, in msec
     var worldScalingFactor = 0;         // canvas world scaling factor, will be set in setCanvasDim() 
     var pixelsPerMeter = 3779.527559055;// conversion
@@ -20,7 +21,7 @@ var myapp = (function(){
         $("#"+canvasID).attr("height", height / 2.0);
         console.log("width: "+$("#"+canvasID).attr("width"));
         console.log("height: "+$("#"+canvasID).attr("height"));
-        //worldScalingFactor = (height/2)/(20*pixelsPerMeter);
+        //worldScalingFactor = (height/2)/(10*pixelsPerMeter);
         //worldScalingFactor = (Math.pow(height,2)/2)/(Math.pow(pixelsPerMeter,2));
         worldScalingFactor = 1/100;
         console.log(worldScalingFactor);
@@ -47,19 +48,17 @@ var myapp = (function(){
                         gyroData = data.get("gyro");
                     
                         displacementData = parseIncomingArray(displacementData);
-                        //displacementData = changeSigns(displacementData);
+                        displacementData = changeSigns(displacementData); //change incoming y
                         gyroData = parseIncomingArray(gyroData);
-
-                        // Debug tool - check that the lengths are valid in the console
-                        console.log("received data (gyro, displacement)");
-                        console.log(gyroData);
-                        console.log(displacementData);
                         
                         // data processing routine for translation graphics
                         displacementData = applyZoffset(displacementData); 
 
                         // converting data to pixels
-                        displacementData = toPixels(displacementData,canvasPixelsPerMeter);   
+                        xPuttGain = puttGain;      // z direction for graphics (i.e. in and out)
+                        yPuttGain = puttGain;   // x direction for graphics (i.e. left to right))
+                        zPuttGain = puttGain;   // y direction for graphics (i.e. up and down)
+                        displacementData = toPixels(displacementData,canvasPixelsPerMeter);  
                         
                         console.log("processed data (gyro, displacement)");
                         console.log(gyroData);
@@ -85,16 +84,31 @@ var myapp = (function(){
             canvasID = 'samplePuttCanvas';
             console.log("found canvas: "+canvasID);
             setCanvasDim(canvasID);
-        
+            
+
+            /*[gyroData, displacementData] = generateRandPath();
+            [gyroData, displacementData] = generatePutt();
+            displacementData = changeSigns(displacementData, 1); //change incoming y
+            displacementData = applyZoffset(displacementData);  
+            displacementData = toPixels(displacementData,canvasPixelsPerMeter); 
+            putterDemo(canvasID,displacementData,gyroData); 
+*/
+            
+            // Grab sample putt data from parse object
             var putt = Parse.Object.extend("Putt");
             var query = new Parse.Query(putt);
             query.get("12fz4AHTDK", {
                 success: function(data) {
                     // receive data
                     displacementData = data.get("samplePuttDisplacement");
+                    displacementData = changeSigns(displacementData, 1); //change incoming y
                     gyroData = data.get("sampleGyroDisplacement");
-                    displacementData = toPixels(displacementData,canvasPixelsPerMeter); 
                     displacementData = applyZoffset(displacementData);
+                    xPuttGain = 4;      // z direction for graphics (i.e. in and out)
+                    yPuttGain = 4;   // x direction for graphics (i.e. left to right))
+                    zPuttGain = 4;   // y direction for graphics (i.e. up and down)
+                    displacementData = toPixels(displacementData,canvasPixelsPerMeter); 
+                    
                     console.log(displacementData);
                     console.log(gyroData);
 
@@ -117,9 +131,18 @@ var myapp = (function(){
             putt2.save(null, {
               success: function(putt2) {
                 console.log("success!!!");
+                displacementData = changeSigns(displacementData, 1); //change incoming y
+                displacementData = applyZoffset(displacementData);
+
+                xPuttGain = 4;      // z direction for graphics (i.e. in and out)
+                yPuttGain = 4;   // x direction for graphics (i.e. left to right))
+                zPuttGain = 4;   // y direction for graphics (i.e. up and down)
+                displacementData = toPixels(displacementData,canvasPixelsPerMeter); 
+                putterDemo(canvasID,displacementData,gyroData); 
+
               }
-            });
-            */
+            });*/
+            
 
         }
 
@@ -129,18 +152,18 @@ var myapp = (function(){
                 displacement = [[0,0,0]],
                 rotations = [[0,0,0]],
                 scale = 1/2,    // back swing accel to ball contact accel ratio
-                xx = (-0.1)/canvasPixelsPerMeter,
-                yy = (-0.1)/canvasPixelsPerMeter,
-                zz = (-5)/canvasPixelsPerMeter,
-                xr = -0.66,
+                xx = (0.6/10)/canvasPixelsPerMeter, // y for graphics  (pos)
+                yy = -(0.6/10)/canvasPixelsPerMeter, // z for graphics (neg)
+                zz = (10/10)/canvasPixelsPerMeter,   // x for graphics (pos)
+                xr = -0.6,
                 yr = -0.3,
-                        duration = [ 0, 50,(scale)*50,(scale)*50 ],
-            yPositionincrementer = [ -xx, (1/scale)*xx, -(1/scale)*xx],
-            zPositionincrementer = [ yy, (1/scale)*(-yy), (1/scale)*(yy)],
-            xPositionincrementer = [-zz, (1/scale)*zz, (1/scale)*zz ],
+                        duration = [ 0, 50,(scale)*50,(scale)*50,(scale/2)*50],
+            yPositionincrementer = [ -xx, (1/scale)*xx, -(1/(scale))*xx, -(1/(scale))*xx],
+            zPositionincrementer = [ (1/(scale))*yy, -(1/(scale))*yy, (1/(scale))*(yy), (1/(scale))*(yy)],
+            xPositionincrementer = [zz, -(1/scale)*zz, -(1/scale)*zz,-(1/scale)*zz  ],
                 
-            yRotationincrementer = [ -xr, (1/scale)*xr,  (1/scale)*xr], //hook
-            zRotationincrementer = [ -yr, (1/scale)*yr, (1/scale)*yr], //bent wrists before putt
+            yRotationincrementer = [ -xr, (1/scale)*xr,  (1/(scale))*xr, xr], //hook
+            zRotationincrementer = [ -yr, (1/scale)*yr, (1/(scale))*yr, yr], //bent wrists before putt
             xRotationincrementer = [ 0, 0,  0, 0],
                                         
             counter = 1,
@@ -176,9 +199,9 @@ var myapp = (function(){
             var randIter = 1,
                 displacement = [[0,0,0]],
                 gyroData = [[0,0,0]],
-                xPositionincrementer = 2,
-                yPositionincrementer = 0,
-                zPositionincrementer = 0;
+                xPositionincrementer = 0.0,
+                yPositionincrementer = -0.0,
+                zPositionincrementer = 0.1;
               
             for (randIter; randIter < 100; randIter = randIter + 1 ){
                 xprev = displacement[randIter-1][0];
@@ -187,14 +210,25 @@ var myapp = (function(){
                 displacement.push([xprev-xPositionincrementer,yprev-yPositionincrementer,zprev-zPositionincrementer]);
                 gyroData.push([0,0,0]);
             }
+            for (randIter; randIter < 200; randIter = randIter + 1 ){
+                xprev = displacement[randIter-1][0];
+                yprev = displacement[randIter-1][1];
+                zprev = displacement[randIter-1][2];
+                displacement.push([xprev+xPositionincrementer,yprev+yPositionincrementer,zprev+zPositionincrementer]);
+                gyroData.push([0,0,0]);
+            }
             return [gyroData, displacement];
         }
 
+        
+    }; // ends getPuttData()
+
+
        // ======== functions for data  ============
-        function changeSigns (incomingArray){
+        function changeSigns (incomingArray, ind){
             jj = 0;
             for (jj; jj < incomingArray.length; jj++){
-                incomingArray[jj][1] = (-1)*incomingArray[jj][1];
+                incomingArray[jj][ind] = (-1)*incomingArray[jj][ind];
             }
             return incomingArray;
         }
@@ -265,18 +299,16 @@ var myapp = (function(){
             var ii = 0,
                 newframes = [];        
             for (ii; ii < displacementframes.length; ii++){
-                pixX = xPuttGain*scale*displacementframes[ii][0];
-                pixY = yPuttGain*displacementframes[ii][1];
-                pixZ = zPuttGain*displacementframes[ii][2];
-                newframes.push([pixX,pixY,pixZ]);
+                //function forloop (ii){
+                    pixX = xPuttGain*scale*displacementframes[ii][0];
+                    pixY = yPuttGain*scale*displacementframes[ii][1];
+                    pixZ = zPuttGain*scale*displacementframes[ii][2];
+                    newframes.push([pixX,pixY,pixZ]);
+                //};
             }
 
             return newframes;
        }
-        
-    }; // ends getPuttData()
-
-
             
 
 
@@ -355,7 +387,7 @@ var myapp = (function(){
     
     shaft2ShaftPlusGripRatio = 7/10;
     // creating the shaft
-    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,2*width,0], "#686868", width/3);
+    lowerShaft = g.compilePath3D(["M",-width,width,0, "L",-width,2*width,0], "#A8A8A8", width/3);
     faces.addObj(lowerShaft);
       
     upperShaft = g.compilePath3D(["M",-width,2*width,0, "L",(shaft2ShaftPlusGripRatio)*(-buttDisplacementScalar*width),(shaft2ShaftPlusGripRatio)*(putterHeightScalar*width),0], "#A8A8A8", width/4);
@@ -408,7 +440,7 @@ var myapp = (function(){
                 Y = convertedframes[iter][2];
                 Z = convertedframes[iter][0];
 
-
+                //g.setWorldCoords3D(coordsX+X, coordsY+Y, xyspan+Z);
                 g.setWorldCoords3D(coordsX-X, coordsY-Y, xyspan-Z);
             }
 
@@ -424,13 +456,64 @@ var myapp = (function(){
                 } else if (iter == gyroData.length - 1) {
                     iter = -1; // reset the array counter for loop
                     //cube1.transform.reset(); // reset the 3d object
-                    
+
                     clearInterval(timer);
-                    
+                        // refresh data if new putt
+                    console.log(canvasID);
+                        //if ( !(canvasID.localeCompare('puttCanvas')) ){
+                        if (canvasID == 'puttCanvas'){
+                            console.log("pull form parse");
+                            console.log("getting put data");
+                            var putt = Parse.Object.extend("Putt");
+                            var query = new Parse.Query(putt);
+                            query.get("12fz4AHTDK", {
+                                success: function(data) {
+                        
+                                    // receive data
+                                    displacementData = data.get("frames");
+                                    gyroData = data.get("gyro");
+                                
+                                    //displacementData = parseIncomingArray(displacementData);
+                                    displacementData = changeSigns(displacementData); //change incoming y
+                                    gyroData = parseIncomingArray(gyroData);
+                                    
+                                    // data processing routine for translation graphics
+                                    displacementData = applyZoffset(displacementData); 
+
+                                    // converting data to pixels
+                                    xPuttGain = puttGain;      // z direction for graphics (i.e. in and out)
+                                    yPuttGain = puttGain;   // x direction for graphics (i.e. left to right))
+                                    zPuttGain = puttGain;   // y direction for graphics (i.e. up and down)
+                                    displacementData = toPixels(displacementData,canvasPixelsPerMeter);  
+                                    
+                                    console.log("processed data (gyro, displacement)");
+                                    console.log(gyroData);
+                                    console.log(displacementData);
+                            
+                                },
+                                error: function(object, error) {
+                                    console.log("Error getting putt data");
+                                    console.log(error);
+
+                                }
+
+                            });
+                        } //else if(canvasID == )*/
+
+
                     setTimeout(function() {
+
+
                         cube1.transform.reset(); // reset the 3d object
                         timer = setInterval(movePutter, delta_t);
-                    }, 1800);
+                    }, 500);
+
+
+
+
+
+
+
                     
                 } else {
                 // subtract here because gyroData comes in as angular displacement, Cango accumulates

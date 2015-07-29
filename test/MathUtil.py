@@ -155,7 +155,7 @@ def allanVariance(data, frequency, binSize, dt):
 
 
 
-def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
+def create3plots(timeX, plotData, titleStr, xlabelStr, ylabelStr): # NOTE: I took out f_plotData
     # -> returns a figure with 3 subplots
     # NOTE: matplotlib.pyplot.show() [or plot.show(), as adjusted by import]
     #   must be called to render the plot
@@ -221,7 +221,7 @@ def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     ax.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax.plot(timeX, plotData[0], color='blue')
-    ax.plot(timeX, f_plotData[0], color='black')
+    #ax.plot(timeX, f_plotData[0], color='black')
 
     ax.axis(axesRange)
     ax.grid(True)
@@ -238,7 +238,7 @@ def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     ax2.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax2.plot(timeX, plotData[1], color='red')
-    ax2.plot(timeX, f_plotData[1], color='black')
+    #ax2.plot(timeX, f_plotData[1], color='black')
 
     ax2.axis(axesRange)
     ax2.grid(True)
@@ -254,7 +254,7 @@ def create3plots(timeX, plotData, f_plotData, titleStr, xlabelStr, ylabelStr):
     ax3.set_yticks( np.arange(ymin,ymax,yTicks) )
 
     ax3.plot(timeX, plotData[2], color='green')
-    ax3.plot(timeX, f_plotData[2], color='black')
+    #ax3.plot(timeX, f_plotData[2], color='black')
 
     ax3.axis(axesRange)
     ax3.grid(True)

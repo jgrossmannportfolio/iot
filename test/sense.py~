@@ -472,7 +472,8 @@ def main():
   except Exception, e:
     print str(e)
     pass
-
+  
+  p1.terminate()
 if __name__ == "__main__":
   main()
 
