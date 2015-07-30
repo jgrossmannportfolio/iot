@@ -11,7 +11,7 @@ block content
 
     br
     div#detailed_description
-      include ./detailed_description.jade
+      include ./includes/detailed_description.jade
     //img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
 
 

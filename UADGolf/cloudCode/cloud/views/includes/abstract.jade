@@ -2,18 +2,14 @@
 
 block content
 
-  - var AbstractText = "The Up and Down Golf Putting Aid is a platform that serves as a personal putting coach.  Through appending a sensor at the putter head, data is extracted from a user's putting motion and sent to a processing unit via Bluetooth Low Energy (BLE) where various sensor fusion algorithms are performed. Upon its completion, the processed data is pushed to the cloud, where the front-end can retrieve the processed data, display a scaled animation of the putt, and present various metrics, which include, but are not limited to the user's putting tempo and stroke type."
+  - var Par1 = "The Up and Down Golf Putting Aid is a platform designed to perform analyses on one's putting motion. In opposition to existing swing analyzer product implementations, which tend to place sensors at either the ''butt'' of the golf club, the shaft of the golf club, or the glove of the golfer, the Up and Down Golf Putting aid appends sensors to the head of the putter in order to extract data that more accurately reflects the subtle movements that occer throughout the duration of one's putt."
 
   // title
   h3.center Abstract
 
   // abstract framework
-  mixin abstractFormat(text)
-    p#abst #{text}
+  mixin abstractFormat(paragraph1)
+    p.par #{paragraph1}
 
-  +abstractFormat(AbstractText)
+  +abstractFormat(Par1)
 
-
-  //mixin abstractFormat(name, price)
-  //  p#abst #{name} #{price} €
-  //+abstractFormat("blank: ", 5.99)

@@ -10,12 +10,15 @@ margin-top: 3%;
 font-size: 20;
 }
 
-#abst {
-margin-left: 5%;
-margin-right: 5%;
+p.para {
+margin-left: 10%;
+margin-right: 10%;
 margin-top: 3%;
 }
 
+.blue{
+color: blue;
+}
 
 #test {
 display:inline-block;
