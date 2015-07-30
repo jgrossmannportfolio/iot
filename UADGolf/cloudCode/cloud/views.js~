@@ -9,13 +9,13 @@ exports.index = function (req, res) {
             var frames = data.get("frames");   
             console.log("got frames");
             console.log(frames);   
-            res.render('index', {title: "UADGolf", users:[], home:true, frames:frames});      
+            res.render('index', {title: "UADGolf", users:[], documentation:false, frames:frames});      
         },
         error: function(object, error) {
             console.log("Error getting putt data");
             console.log(error);
             frames = [[3,2,1]];
-            res.render('index', {title: "UADGolf", users:[], home:true, frames:frames});
+            res.render('index', {title: "UADGolf", users:[], documentation:false, frames:frames});
         }
     });
     

@@ -10,6 +10,16 @@ margin-top: 3%;
 font-size: 20;
 }
 
+#abst {
+margin-left: 5%;
+margin-right: 5%;
+margin-top: 3%;
+}
+
+.blue{
+color: blue;
+}
+
 #test {
 display:inline-block;
 width:100%;
@@ -163,8 +173,8 @@ margin-left: 3%;
 }
 
 img{
-display: center;
-width: 50%;
+position: relative;
+width: 100%;
 
 }
 

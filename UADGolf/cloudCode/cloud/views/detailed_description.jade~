@@ -1,6 +1,12 @@
-extends layout
+//extends layout
 
 block content
+
+  // title
+  h3.center Detailed Description
+  h3.center Detailed Description
+  h3.center Detailed Description
+
   h4 Hardware:
   p.description
     | We chose the Wiced Sense sensor tag because it was low cost, it has relatively high precision, it
@@ -18,7 +24,7 @@ block content
   h4 Kalman Filter:
   p.description
     | A more detailed description of the Kalman filter we implemented including the equations used can be found at: 
-    a(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/')
+    a(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/') A practical approach to kalman filter and hot to implement it
     br
     br
     | Kalman filter works by producing a statistically optimal estimate of the system state being
