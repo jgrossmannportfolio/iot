@@ -10,16 +10,29 @@ block content
 
     // hardware
     // framework
-    mixin ddFormat(paragraph1, paragraph2)
+    mixin ddFormat(paragraph1, paragraph2, paragraph3)
       h4.center Hardware:
       p.par #{paragraph1}
       p.par #{paragraph2}
+      p.par #{paragraph3}
     
-    -var ddPar1 = "We chose the Wiced Sense sensor tag because it was low cost, it has relatively high precision, it is compact and because of its convenience. The Wiced Sense comes prepackaged and operational for about $30 with a 3-axis accelerometer and a 3-axis gyroscope each with 2 byte precision per axis. We were provided a Wiced Sense sensor tag from the Electrical Engineering Department of Columbia University through our IOT class."
+    -var ddPar1 = "We chose the Wiced Sense sensor tag because it was low cost, it has relatively high precision, it is compact and because of its convenience. The Wiced Sense comes prepackaged and operational for about $20 with a 3-axis accelerometer and a 3-axis gyroscope each with 2 byte precision per axis. We were provided a Wiced Sense sensor tag from the Electrical Engineering Department of Columbia University through our IOT class."
 
     -var ddPar2 = "The Wiced Sense tag comes with its own SDK for its firmware with an eclipse IDE, both downloadable from the Broadcomm website. Having premade firmware that is easily editable, and easy to upload to the sensor tag, makes setting up and starting the project much more efficient."
 
+    -var ddPar3 = "To process the data from the Wiced Sense sensors, a Raspberry Pi with usb bluetooth card was used. The Raspberry Pi is only intended to be used as a prototype, as the convenience and simplicity of using a smartphone for signal processing, as well as a GUI, makes it the logical candidate for this project. Therefore, the time allotted for finishing the project did not allow for porting to any type of smartphone."
+    
 
+    // hardware
+    // framework
+    mixin sraFormat(paragraph1, paragraph2)
+      h4.center Signal Retrieval, Analysis and Storage:
+      p.par #{paragraph1}
+      p.par #{paragraph2}
+
+    -var sraPar1 = "To facilitate the retrieval, analysis and handling of the putt data, we implemented a main control program in the python programming language. In this program, we connect to the Wiced Sense based on a command line MAC address argument. The MAC address is sent to the Gatttool program executable which handles the sending and receiving of Bluetooth Low Energy messages. Once connection is established, the Wiced Sense remains in a connected, but low energy state which only sends the minimum amount of messages necessary to stay connected to the Raspberry Pi. Once a push notification callback is spawned from the web front end interface, the program requests notifictations for both gyroscope, and accelerometer data. If the request gets received by the Wiced Sense, the program goes into a notification loop where it receives sensor data from the Wiced Sense for 10 seconds at 12.5ms intervals. After all the messages are received, the program performs conversion from hexadecimal bytes, to signed integers. Once the data is in integer format, it can be filtered using a high-pass gravity filter, a low-pass noise reducer, and a kalman filter for putter orientation. Double integration is also used on the accelerometer data in order to calculate the position of the putter. Before sending the finished orientation and position calculations to cloud storage, the position data must be rotated using a rotation matrix. The rotation matrix is necessary as the acceleration measurements, and resulting position measurements, are relative to the orientation of the Wiced Sense yet, the animation window keeps constant axes."
+  
+    -var sraPar2 = "For cloud storage, we use parse.com. Parse allows us to store measurements of the angles that the animated putter must turn, as well as the positions on screen that the putter must move to. Parse is also very ubiquitous as we are also able to pull and push to Parse through python, java and C. The main python program simply pushes the data from each 10 second putt to parse via the included parse module. In order to get the push notification callback, we spawn a C program subprocess from the main python program connected via a Unix socket. This subprocess registers a callback function with Parse which activates whenever a button is pressed via the web front end. The main python program blocks on the socket connection with the C subprocess. So, the main python process is essentially paused until the C subprocess receives a push notificaiton, and sends the go-ahead to the python program. It was necessary to use a C subprocess because it is not currently possible to register a push notification with Parse via python."
 
 
     // center
@@ -28,7 +41,7 @@ block content
       h4.center Kalman Filter:
       p.par #{paragraph1}
       p.indent 
-        a.blue(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/') A practical approach to kalman filter and hot to implement it
+        a.blue(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/') A practical approach to kalman filter and how to implement it
       p.par #{paragraph2}
       p.par #{paragraph3}
 
@@ -37,10 +50,10 @@ block content
 
 
 
-    -var kfPar2 = "Kalman filter works by producing a statistically optimal estimate of the system state being measured, based on the measurements and their error. First we try to estimate the priori state based on all previous states and the gyro measurement as a control input.Then we estimate the a priori error covariance matrix based on the previous error covariance matrix and the process noise. We then determine the innovation, or the difference between the accelerometer based measurement and the a priori state estimate. Then, we determine the innovation covariance from the a priori error covariance matrix and the measurement covariance matrix. The innovation covariance tells us how much we should ''trust'' the measured value. Next we calculate the Kalman gain with the a priori error covariance matrix and the innovation covariance. The Kalman gain indicates how much we should &ldquo;trust&rdquo; the innovation value. Next, update the a posteriori estimate of the current state with the a priori state, innovation and Kalman gain. Finally, update the a posteriori error covariance matrix based on how much we corrected the state estimate."
+    -var kfPar2 = "The Kalman filter works by producing a statistically optimal estimate of the system state being measured, based on the measurements and their error. The system state we calculate is the putter orientation angles (yaw, pitch, roll). First, we try to estimate the a priori state based on all previous states using the gyroscope measurement as a control input. Then, we estimate the a priori error covariance matrix based on the previous error covariance matrix and the process noise. We then determine the innovation, or the difference between the accelerometer based measurement and the a priori state estimate. Then, we determine the innovation covariance from the a priori error covariance matrix and the measurement covariance matrix. The innovation covariance tells us how much we should ''trust'' the measured value. Next we calculate the Kalman gain with the a priori error covariance matrix and the innovation covariance. The Kalman gain indicates how much we should &ldquo;trust&rdquo; the innovation value. Next, update the a posteriori estimate of the current state with the a priori state, innovation and Kalman gain. Finally, update the a posteriori error covariance matrix based on how much we corrected the state estimate."
 
 
-    -var kfPar3 = "Used an independent Kalman filter for each axis of rotation assuming all process noise is Gaussian with the average at 0. Implementation of Extended Kalman Filter would have been more accurate as it estimates each axis state based on all the other axis measurements, but it is much more complicated to understand. We also decided to deal with the Gimbal lock inherent with Euler angles instead of using quaternions because a natural putting motion should not be affected by Gimbal lock."
+    -var kfPar3 = "An independent Kalman filter for each axis of rotation was used assuming all process noise is Gaussian with the average at 0. Implementation of an Extended Kalman Filter would have been more accurate as it estimates each axis state based on all the other axis measurements, but it is much more complicated to understand. We also decided to deal with the Gimbal lock inherent with Euler angles instead of using quaternions because a natural putting motion should not be affected by Gimbal lock."
 
 
 
@@ -120,6 +133,7 @@ block content
       div.outerimg
         img(id='add-razaoSocial', class='input-img', src='/images/backendflow.png')
         br
+        br
         img(id='add-razaoSocial', class='input-img', src='/images/frontendflow.png')
 
 
@@ -128,7 +142,9 @@ block content
 
     // LOAD CONTENT INTO FRAMEWORKS
     br
-    +ddFormat(ddPar1,ddPar2)
+    +ddFormat(ddPar1,ddPar2,ddPar3)
+    br
+    +sraFormat(sraPar1,sraPar2)
     br
     +kfFormat(kfPar1,kfPar2,kfPar3)
     br

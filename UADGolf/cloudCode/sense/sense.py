@@ -19,137 +19,101 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
-
-#hcitool lescan
-
+# MAC: 
+#20:73:7A:15:13:DE
+import filters
+import matplotlib.pyplot as plot
 import pexpect
 import sys
 import time
 import httplib
 import json
+import numpy as np
+import subprocess
+import socket
 
+import math
+import operator
 
+import MathUtil
+import kalman
 
+# Global functions/retrieve start time --------------------------------------
+current_milli_time = lambda: int(round(time.time() * 1000))
+start_time = 0.0
+elapsed_time = lambda: float ("{0:.4f}".format( (float(current_milli_time()) - float(start_time))/1000 ) )
 
-tosigned = lambda n: float(n-0x10000) if n>0x7fff else float(n)
-tosignedbyte = lambda n: float(n-0x100) if n>0x7f else float(n)
 
 # Wiced sense class
 class wicedsense:
 
-  def pushToCloud(self, frames):
-    print frames[0]
+  # frequency of data
+  delta_t = .0125 # in seconds (preset to 12.5 ms)
+  # total duration
+  endtime = 5.0 # in seconds
+  garbageiterations = 10
+
+  inittime = 0 
+  starttimer = 0 # wait for garbageiterations before the timer starts
+
+  calibrate = False
+  calibrateMagnet = False
+  accelCal = [0.0, 0.0, 0.0]
+  gyroCal = [0.0, 0.0, 0.0]
+  magCal = [0,0, 0,0, 0,0]
+
+  vx = 0.0
+  ax = []
+  dx = 0.0
+  # y
+  vy = 0.0
+  ay = []
+  dy = 0.0
+  # z
+  vz = 0.0
+  az = []
+  dz = 0.0
+
+  gyroX = []
+  gyroY = []
+  gyroZ = []
+
+  magX = []
+  magY = []
+  magZ = []
+
+  magnitude = []
+  timestamp = []
+
+  def pushToCloud(self, frames, gyrodata, accel):
+    #print frames[1]
     connection = httplib.HTTPSConnection("api.parse.com", 443)
     connection.connect()
     connection.request('PUT', '/1/classes/Putt/12fz4AHTDK', json.dumps({
-       "frames": frames
+       "frames": frames,
+       "gyro": gyrodata,
+       "accel": accel
      }), {
        "X-Parse-Application-Id": "iAFEw9XwderX692l0DGIwoDDHcLTGMGtcBFbgMqb",
        "X-Parse-REST-API-Key": "I0xfoOS0nDqaHxfSBTgLNMuXGtsStl7zO0XZVDZX",
        "Content-Type": "application/json"
-     }) 
-
-
-  def processData(self):
-    frames = []
-    interval = 1.0 / 10.0
-    t0 = self.time[0]
-    t1 = self.time[1]
-    i = 1
-    vx = 0
-    vy = 0
-    vz = 0
-    x = 0
-    y = 0
-    z = 0
-    time = 0;
-    print "processing data"
-    print len(self.accel)
-    while i < len(self.accel):
-        t1 = self.time[i]
-        if((t1 - t0) >= interval):
-            time = interval
-            interval = 1.0/10.0
-        else:
-            time = t1 - t0
-            interval -= time
-
-        x += vx*time + (0.5 * self.accel[i][0] * time**2)
-        y += vy*time + (0.5 * self.accel[i][1] * time**2)
-        z += vz*time + (0.5 * self.accel[i][2] * time**2)
-        vx += self.accel[i][0] * time
-        vy += self.accel[i][1] * time
-        vz += self.accel[i][2] * time
-        
-        print "ax, ay, az: "+ str(self.accel[i][0]) + ", " + str(self.accel[i][1]) + ", " + str(self.accel[i][2])
-        print "vx, vy, vz: "+ str(vx) + ", " + str(vy) + ", "+ str(vz)
-        print "x, y, z: "+ str(x) + ", " + str(y) + ", " + str(z)
-        print "time, interval: "+ str(time) + ", "+str(interval)
-        
-        if(interval == (1.0/10.0)):
-            frames.append([x, y, z])
-        else:
-            i += 1
-        t0 += time          
-
-    return frames
-            
-        
-
-  # Accelerometer conversion
-  def convertData(self, rawX, rawY, rawZ, calibration):
-    data = lambda v: tosigned(v) / calibration 
-    xyz = [data(rawX), data(rawY), data(rawZ)]
-    mag = (xyz[0]**2 + xyz[1]**2 + xyz[2]**2)**0.5
-    return (xyz, mag)
-    
+     })  
 
   # Init function to connect to wiced sense using mac address
   # Blue tooth address is obtained from blescan.py 
-  def __init__( self, bluetooth_adr ):
+  def __init__( self, bluetooth_adr, calibrate, calibrateMagnet):
     self.con = pexpect.spawn('gatttool -b ' + bluetooth_adr + ' --interactive')
-    self.con.logfile = sys.stdout
+    #self.con.logfile = sys.stdout
     self.con.expect('\[LE\]>', timeout=600)
     print "Preparing to connect. You might need to press the side button..."
     self.con.sendline('connect')
     # test for success of connect
     self.con.expect('Connection successful.*\[LE\]>')
     print "Connection successful"
-
+    self.calibrate = calibrate
+    self.calibrateMagnet = calibrateMagnet
     self.cb = {}
-
-    # Data from sensors
-    self.time = []
-    self.accel = []
-    self.gyro = []
-    self.magnetometer=[]
-    self.humidity = 0
-    self.temperature = 0
-    self.pressure = 0
-
-	# Calibration vars
-    self.xCal = [0,0,0]
-    self.yCal = [0,0,0]
-    self.zCal = [0,0,0]
-	
     return
-
-  def calibration (self, x, y, z):
-    self.xCal[0] += x
-    self.xCal[1] = min(self.xCal[1],x)
-    self.xCal[2] = max(self.xCal[2],x)
-
-    self.yCal[0] += y
-    self.yCal[1] = min(self.yCal[1],y)
-    self.yCal[2] = max(self.yCal[2],y)    
-    
-    self.zCal[0] += z
-    self.zCal[1] = min(self.zCal[1],z)
-    self.zCal[2] = max(self.zCal[2],z)
-
-
-     
 
   # Function to write a value to a particular handle  
   def char_write_cmd( self, handle, value ):
@@ -158,185 +122,450 @@ class wicedsense:
     self.con.sendline( cmd )
     return
 
-  # Funcrion to read from a handle
-  def char_read_hnd(self, handle):
-    self.con.sendline('char-read-hnd 0x%02x' % handle)
-    self.con.expect('descriptor: .*? \r')
-    after = self.con.after
-    rval = after.split()[1:]
-    #print rval
-    # decode data obtained from the sensor tag
-    self.processdata(rval)
+  def writeToFile(self, filename, text):
+    file = open(filename, 'w')
+    file.write(text)
+    file.close
 
-  def processdata(self,data):
-
-    # This is to decode and get sensor data from the packets we received
-    # please refer to the broadcom data packet format document to understand the structure of the packet
-    data_decode = ''.join(data)
-    mask = int(data_decode[0:2],16)
-    print "processing data"
-    if(mask==0x0b):
-      self.accelerometer = [int((data_decode[4:6] + data_decode[2:4]),16)]
-      #self.accelerometer.append(int((data_decode[4:6] + data_decode[2:4]),16))
-      self.accelerometer.append(int((data_decode[8:10] + data_decode[6:8]),16))
-      self.accelerometer.append(int((data_decode[12:14] + data_decode[10:12]),16))
-      self.gyroscope = [int((data_decode[16:18] + data_decode[14:16]),16)]
-      #self.gyroscope.append(int((data_decode[16:18] + data_decode[14:16]),16))
-      self.gyroscope.append(int((data_decode[20:22] + data_decode[18:20]),16))
-      self.gyroscope.append(int((data_decode[24:26] + data_decode[22:24]),16))
-      self.magnetometer = [int((data_decode[28:30] + data_decode[26:28]),16)]
-      #self.magnetometer.append(int((data_decode[28:30] + data_decode[26:28]),16))
-      self.magnetometer.append(int((data_decode[32:34] + data_decode[30:32]),16))
-    else:
-      self.humidity = int((data_decode[4:6] + data_decode[2:4]),16)
-      self.pressure = int((data_decode[4:6] + data_decode[2:4]),16)/10
-      self.temperature = int((data_decode[4:6] + data_decode[2:4]),16)/10
+  def readFromFile(self, filename):
+    file = open(filename, 'r')
+    return file.read()
 
     # Notification handle = 0x002b 
   def notification_loop( self ):
-    iterations = 25
-    while True:
+    if(self.calibrate == False):
+      calText = self.readFromFile("calibration.txt")
+      calArray = calText.split(",")
+      self.gyroCal = calArray[0:3]
+      self.accelCal = calArray[3:]
+      calText = self.readFromFile("magnetCalibration.txt")
+      self.magCal = calText.split(",")
+      print self.gyroCal
+      print self.accelCal
+      print self.magCal
+      total = math.ceil( self.endtime/self.delta_t )
+
+    # LOOP UNTIL TIME EXPIRES
+    else:
+      total = math.ceil(30.0 / self.delta_t)
+      print "set time to 30s for calibration"
+      
+    iters = 0    
+    while total > iters:
       try:
-	    #print "in notification loop"
-        if(len(self.time) >= iterations):
-          print
-          break
-        '''
-          print
-          print "CALIBRATIONS:"
-          self.xCal[0] /= iterations
-          print self.xCal
-          self.yCal[0] /= iterations
-          print self.yCal
-          self.zCal[0] /= iterations
-          print self.zCal
-          
-
-        [15.4533, -20.0, 54.0]
-        [-5.1469, -49.0, 38.0]
-        [8210.8074, 0, 8280.0]
-
-        '''
-
         pnum = self.con.expect('Notification handle = .*? \r', timeout=4)
-        self.time.append(time.time())
-        #print "Printing in notification loop"
+        
+        # wait for the BT to settle -> wait for program to cycle through garbage iterations
+        if self.starttimer == 1:
+          iters += 1
+
       except pexpect.TIMEOUT:
         print "TIMEOUT exception!"
         break
-      if pnum==0:
-        #print "pnum = 0"
-        after = self.con.after
-        hxstr = after.split()[3:]
-        handle = long(float.fromhex(hxstr[0]))
-        if True:
-	  try:
-            self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
-          except Exception,e:
-            print str(e)
-          #print "after callback"
-          pass
+
+      try:
+        if pnum==0:
+          after = self.con.after
+          hxstr = after.split()[3:]
+          handle = long(float.fromhex(hxstr[0]))
+          self.cb[handle]([long(float.fromhex(n)) for n in hxstr[2:]])
         else:
+          print "pnum not equal to 0"
+
+      except Exception,e:
+        print str(e)
+        '''else:
           print "TIMEOUT!!"
-          pass
+          pass'''
+      
+
+
+    # After the while loop has broken...
+    gyroAvg = [0, 0, 0]
+    accelAvg = [0, 0, 0]
+    if(self.calibrate == True):
+      calText = ""
+      if(self.calibrateMagnet == True):
+        xOff = -(max(self.magX) + min(self.magX)) / 2
+        yOff = -(max(self.magY) + min(self.magY)) / 2
+        zOff = -(max(self.magZ) + min(self.magZ)) / 2
+        calText += str(xOff) + "," + str(yOff) + "," + str(zOff)
+        print calText
+        self.writeToFile("magnetCalibration.txt", calText)
       else:
-        print "else statement"
-    frames = self.processData()
-    self.pushToCloud(frames)
+        calText = ""
+        gyroAvg[0] = math.fsum(self.gyroX) / len(self.gyroX)
+        gyroAvg[1] = math.fsum(self.gyroY) / len(self.gyroY)
+        gyroAvg[2] = math.fsum(self.gyroZ) / len(self.gyroZ)
+        accelAvg[0] =math.fsum(self.ax) / len(self.ax)
+        accelAvg[1] = math.fsum(self.ay) / len(self.ay)
+        accelAvg[2] = math.fsum(self.az) / len(self.az)
+        calText += str(0 - gyroAvg[0]) + "," + str(0 - gyroAvg[1]) + "," + str(0 - gyroAvg[2]) + ","
+        calText += str(0 - accelAvg[0]) + "," + str(0 - accelAvg[1]) + "," + str(8192 - accelAvg[2])
+        self.writeToFile("calibration.txt", calText)
     
+    else:
+      # FILTER OUT INITIAL ACCELERATION VALUES --------------
+      thresh = 9.9 # accel treshold must be exceeded to indicate putt has begun (m/s^2)
+      axnew = []   # new acceleration list in the x direction
+      aynew = []   # ... y direction
+      aznew = []   # ... z direction
+      accelNew = []
+      gyroXnew = []
+      gyroYnew = []
+      gyroZnew = []
+      magnew = []
+    
+      for x in range(len(self.magnitude)):
+        print self.magnitude[x]
+        #if self.magnitude[x] > thresh:
+        if True:
+          print "PUTTING................."
+          axnew = self.ax[x:]
+          aynew = self.ay[x:]
+          aznew = self.az[x:]
+          magnew = self.magnitude[x:]
+          gyroXnew = self.gyroX[x:]
+          gyroYnew = self.gyroY[x:]
+          gyroZnew = self.gyroZ[x:]
+          #self.magX = self.magX[x:]
+          #self.magY = self.magY[x:]
+          #self.magZ = self.magZ[x:]
+          break
+
+      # ========================
+      # GET DISPLACEMENT FRAMES
+      # ========================
+      
+      for x in range(len(axnew)):
+        accelNew.append([axnew[x], aynew[x], aznew[x], magnew[x]])
+
+      roll = []
+      pitch = []
+      yaw = []
+      roll.append(MathUtil.roll(axnew[0], aynew[0], aznew[0]))
+      pitch.append(MathUtil.pitch(axnew[0], aynew[0], aznew[0]))
+      #yaw.append(MathUtil.yaw(roll[0], pitch[0], self.magX[0], self.magY[0], self.magZ[0])) 
+      for x in range(1, len(axnew)):
+        roll.append(MathUtil.roll(axnew[x], aynew[x], aznew[x]))
+        pitch.append(MathUtil.pitch(axnew[x], aynew[x], aznew[x]))
+        #yaw.append(MathUtil.yaw(roll[x], pitch[x], self.magX[x], self.magY[x], self.magZ[x]))
+        
+
+      # OUTPUT TO SCREEN ------------------
+      '''
+      print "axnew:"
+      for x in range(0,len(axnew)): print axnew[x]
+      print
+
+      print "axnew length"
+      print len(axnew)
+      print
+
+      print "xyzframes (frame indicates the x displacement in meters at a given time):"
+      for x in range(0,len(xyzframes)): print xyzframes[x]
+      print
+      
+      print "total duration (in s) "
+      print (float(len(axnew)))*delta_t
+      print
+
+      print "total samples"
+      print int (len(axnew)) + 1 # add one for time 0
+      print
+
+      '''
+     
+      gyrodata = []
+      kalmanX = kalman.Kalman(roll[0])
+      kalmanY = kalman.Kalman(pitch[0])
+      #kalmanZ = kalman.Kalman(yaw[0])
+     # accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], 0.0])]
+      
+      gyrodata.append([roll[0], pitch[0], 0.0])
+      zAngle = [0.0]
+      xAngle = [0.0]
+      yAngle = [0.0]
+      time = [0.0]
+      data = [0.0]
+      angle = [0.0]
+      #accelNew[0] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[0][3]]
+      for x in range(1, len(gyroXnew)):
+        time.append(time[-1] + self.delta_t)
+        data.append(MathUtil.getAngle(gyroZnew[x], self.delta_t))
+        xAngle.append(xAngle[-1] + MathUtil.getAngle(gyroXnew[x], self.delta_t))
+        yAngle.append(yAngle[-1] + MathUtil.getAngle(gyroYnew[x], self.delta_t))
+        zAngle.append(zAngle[-1] + data[-1])
+        gyrodata.append([kalmanX.updateAngle(roll[x], gyroXnew[x], self.delta_t), 
+                        kalmanY.updateAngle(pitch[x], gyroYnew[x], self.delta_t), 
+                        zAngle[x] ])
+        
+      accelRot = MathUtil.rotateAcceleration([axnew, aynew, aznew], [[i[0] for i in gyrodata[:]], [i[1] for i in gyrodata[:]], [i[2] for i in gyrodata[:]]])
+
+      #lowx = filters.lowpass([i[0] for i in accelRot[:]], 0.09)
+      #lowy = filters.lowpass([i[1] for i in accelRot[:]], 0.09)
+      #lowz = filters.lowpass([i[2] for i in accelRot[:]], 0.09)
+      xframes = [MathUtil.displacement(self.dx,self.vx,accelRot[0][0], self.delta_t)[0]]
+      yframes = [MathUtil.displacement(self.dy,self.vy,accelRot[1][0], self.delta_t)[0]]
+      zframes = [MathUtil.displacement(self.dz,self.vz,accelRot[2][0], self.delta_t)[0]]
+      xyzframes = [[xframes[-1], yframes[-1], zframes[-1]]]
+      for x in range(1, len(gyroXnew)):
+        self.dx,self.vx = MathUtil.displacement(self.dx,self.vx,accelRot[0][x], self.delta_t)
+        xframes.append( float(xframes[-1] + self.dx)  )
+        self.dy,self.vy = MathUtil.displacement(self.dy,self.vy,accelRot[1][x], self.delta_t)
+        yframes.append( float(yframes[-1] + self.dy)  )
+        self.dz,self.vz = MathUtil.displacement(self.dz,self.vz,accelRot[2][x], self.delta_t)
+        zframes.append( float(zframes[-1] + self.dz)  )
+        xyzframes.append( [xframes[-1], yframes[-1], zframes[-1]] )
+        accelNew[x] = [accelRot[0][x], accelRot[1][x], accelRot[2][x], accelNew[x][3]]
+       
+
+      
+      #accelNew = [[lowx[i], lowy[i], lowz[i], accelNew[i][3]] for i in range(len(lowx))]
+        
+                        
+                        #kalmanZ.updateAngle(yaw[x], gyroZnew[x], self.delta_t) ])
+        #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
+
+      # =======================
+      # PUSH FRAMES TO PARSE
+      # =======================
+      self.pushToCloud(xyzframes, gyrodata, accelNew)
+      
+      '''variance = []
+      period = []
+      for i in range(1, len(gyroXnew)/7):
+        timestep, xVar = MathUtil.allanVariance(gyroXnew, 0.0125, i, self.delta_t)
+        variance.append(xVar)
+        period.append(timestep)
+        print timestep, xVar
+      #z = np.polyfit(period, variance, 2)
+      #f = np.poly1d(z)
+     
+      #fig = plot.figure()
+      #ax = fig.add_subplot(1,1,1)
+      #ax.plot(time, axnew, time, filters.highpass(axnew, 0.001), time, accelRot[0])
+      fig2 = plot.figure()
+      ay = fig2.add_subplot(1,1,1)
+      ay.plot(time, [i[1] for i in gyrodata[:]], time, yAngle)
+     #ax.set_title("Acceleration")
+     # ax.set_ylabel("m/s^2")
+      #ax.set_xlabel("Time (s)")
+      plot.show()
+      '''
+     
+      #xVar = np.log(xVar, 10)
+      #time = np.log(time, 10)
+      #plot.plot(time, xVar)
+      '''fig = plot.figure()
+      ax = fig.add_subplot(1,1,1)
+      ax.plot(time, yAngle, 'blue', time, [row[1] for row in gyrodata], 'red', time, pitch, 'green')
+      fig2 = plot.figure()
+      ay = fig2.add_subplot(1,1,1)
+      ay.plot(time, xAngle, 'blue', time, [row[0] for row in gyrodata], 'red', time, roll, 'green')
+      fig3 = plot.figure()
+      az = fig3.add_subplot(1,1,1)
+      az.plot(time, zAngle, 'blue')
+      plot.show()'''
+    self.resetVars()  
+
+ 
+  def resetVars(self):
+    self.inittime = 0 
+    self.starttimer = 0 # wait for garbageiterations before the timer starts
+    self.accelCal = [0.0, 0.0, 0.0]
+    self.gyroCal = [0.0, 0.0, 0.0]
+    self.magCal = [0,0, 0,0, 0,0]
+    self.vx = 0.0
+    self.ax = []
+    self.dx = 0.0
+    # y
+    self.vy = 0.0
+    self.ay = []
+    self.dy = 0.0
+    # z
+    self.vz = 0.0
+    self.az = []
+    self.dz = 0.0
+
+    self.gyroX = []
+    self.gyroY = []
+    self.gyroZ = []
+
+    self.magX = []
+    self.magY = []
+    self.magZ = []
+
+    self.magnitude = []
+    self.timestamp = []
+
 
   def register_cb( self, handle, fn ):
     self.cb[handle]=fn
     return
 
+
   def dataCallback(self, v):
-    bytelen = len(v)
-    # Make sure 18 (?) bytes are received
-    if(v[0] == 3):
-      vx = int( str(v[2]*256 + v[1]) )
-      vy = int( str(v[4]*256 + v[3]) )
-      vz = int( str(v[6]*256 + v[5]) )
-      gx = int( str(v[8]*256 + v[7]) )
-      gy = int( str(v[10]*256 + v[9]) )
-      gz = int( str(v[12]*256 + v[11]) )
-      print " "
-      print "gx: " + str(gx)
-      print "gy: " + str(gy)
-      print "gz: " + str(gz)
-      print "vx: " + str(vx)
-      print "vy: " + str(vy)
-      print "vz: " + str(vz)
-      #for x in range(0,19): print v[x]
-      (Gxyz, Gmag) = self.convertData(gx, gy, gz, 100.0)
-      (Axyz, Amag) = self.convertData(vx,vy,vz, 8192.0/9.80665) #(86.0/(9.80665 * 3779.53)))
-      self.accel.append(Axyz)
-      self.gyro.append(Gxyz)
-      print "Axyz: " + str(Axyz)
-      print "Amag: " + str(Amag)
-      print "Gxyz: " + str(Gxyz)
-      print "Gmag: " + str(Gmag)
+    global start_time
+    # clear first ten recordings because BT timing needs to settle
+    # garbageiterations = 10
+    if self.inittime > self.garbageiterations-1:
 
-      self.calibration(Axyz[0], Axyz[1], Axyz[2])
+      if self.starttimer == 0:
+        self.starttimer = 1
+        #start_time = current_milli_time()
+        #self.timestamp.append( 0.0 )
+        #print "Python timestamp (in s): " + str(self.timestamp[-1])
 
-    return
+      else: # the garbage iterations have passed
+        if len(self.timestamp) == 0:
+          start_time = current_milli_time()
+          self.timestamp.append(elapsed_time())
+          print "Python timestamp (in s): " + str(self.timestamp[-1])
+        else:
+          self.timestamp.append( elapsed_time() )
+          print "Python timestamp (in s): " + str(self.timestamp[-1])
 
-class SensorCallbacks:
+        bytelen = len(v) # v is the handle data
 
-  data = {}
+        # Make sure bytes are received by the correct handle
+        #if(v[0] == 3):
+        #print "v: " + str(v)
+        vx1 = int( str(v[2]*256 + v[1]) )
+        vy1 = int( str(v[4]*256 + v[3]) )
+        vz1 = int( str(v[6]*256 + v[5]) )
+        gx1 = int( str(v[8]*256 + v[7]) )
+        gy1 = int( str(v[10]*256 + v[9]) )
+        gz1 = int( str(v[12]*256 + v[11]) )
+        #mx1 = int( str(v[14]*256 + v[13]) )
+        #my1 = int( str(v[16]*256 + v[15]) )
+        #mz1 = int( str(v[18]*256 + v[17]) )
+        #print "gx: " + str(gx1)
+        #print "gy: " + str(gy1)
+        #print "gz: " + str(gz1)
+        #print "vx: " + str(vx1)
+        #print "vy: " + str(vy1)
+        #print "vz: " + str(vz1)
 
-  def __init__(self,addr):
-    self.data['addr'] = addr
+        if(self.calibrateMagnet == True):
+          (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 1.0)
+          self.magX.append(Mxyz[0])
+          self.magY.append(Mxyz[1])
+          self.magZ.append(Mxyz[2])
+        elif(self.calibrate == True):
+            (Gxyz, Gmag) = MathUtil.convertData(gx1, gy1, gz1, 1.0) # FS = 500dps
+            (Axyz, Amag) = MathUtil.convertData( vx1,vy1,vz1, 1.0)#(8192.0/9.80665))
+            self.gyroX.append(Gxyz[0])
+            self.gyroY.append(Gxyz[1])
+            self.gyroZ.append(Gxyz[2])
+            self.ax.append( Axyz[0] )
+            self.ay.append( Axyz[1] )
+            self.az.append( Axyz[2] )
+            print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2])
+        else:
+          (Gxyz, Gmag) = MathUtil.convertData(gx1 + int(float(self.gyroCal[0])), gy1 + int(float(self.gyroCal[1])), gz1 + int(float(self.gyroCal[2])), 1.0/.00762939)
+          (Axyz, Amag) = MathUtil.convertData(vx1 + int(float(self.accelCal[0])), vy1 + int(float(self.accelCal[1])), vz1 + int(float(self.accelCal[2])), 16384.0/9.80665)
+          #(Mxyz, Mmag) = MathUtil.convertData(mx1 + int(float(self.magCal[0])), my1 + int(float(self.magCal[1])), mz1 + int(float(self.magCal[2])), 16384.0)
+                    
+          print str(Gxyz[0]) +", "+str(Gxyz[1])+", "+str(Gxyz[2]) + ", " + "{0:.5f}".format(Axyz[0]) + ", " + "{0:.5f}".format(Axyz[1]) + ", " + "{0:.5f}".format(Axyz[2])# + ", " + "{0:.5f}".format(Mxyz[0]) + ", " + "{0:.5f}".format(Mxyz[1]) + ", " + "{0:.5f}".format(Mxyz[2])
+
+          self.gyroX.append(Gxyz[0])
+          self.gyroY.append(Gxyz[1])
+          self.gyroZ.append(Gxyz[2])
+
+         # self.magX.append(Mxyz[0])
+         # self.magY.append(Mxyz[1])
+         # self.magZ.append(Mxyz[2])
+
+          self.magnitude.append( Amag )
+
+          self.ax.append( Axyz[0] )
+          self.ay.append( Axyz[1] )
+          self.az.append( Axyz[2] )
+   
+    else:
+      self.inittime += 1  # increment 10 times before evaluating values      
+
+def createServerSocket(port):
+  s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+  s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+  s.bind(("127.0.0.1", port))
+  s.listen(2)
+  s.setblocking(1)
+  #print "connected to callback socket"
+  return s
+
+# We listen on sockets on PORTs defined above
+def acceptSocketConnection(sock):
+  conn, addr = sock.accept()
+  putt = conn.recv(16)
+  conn.close()
+  print "putt: "+putt
+  return putt
+
 
 # main function USAGE python sense.py <mac address>
 def main():
-
+  calibrate = False
+  calibrateMagnet = False
   bluetooth_adr = sys.argv[1]
-  #data['addr'] = bluetooth_adr
+  p1 = None
+  
   if len(sys.argv) > 2:
-      datalog = open(sys.argv[2], 'w+')
-
- # while True:
-  try:   
-    print "[re]starting.."
-
-    print bluetooth_adr
-    tag = wicedsense(bluetooth_adr)
-    cbs = SensorCallbacks(bluetooth_adr)
-
-    #print cbs.data['addr']
+    if(sys.argv[2] == "true" or sys.argv[2] == "True"):
+      calibrate = True
+    elif(sys.argv[2] == "magnet" or sys.argv[2] == "Magnet"):
+      calibrateMagnet = True
+      calibrate = True
+  
+  if(calibrate == False):
+    p1 = subprocess.Popen(['./callback'])
+    print "created callback process"
+    sock = createServerSocket(50014) 
+    putt = False
+    try:   
+      tag = wicedsense(bluetooth_adr, calibrate, calibrateMagnet)
+      tag.register_cb(0x2a,tag.dataCallback)
+      putt = acceptSocketConnection(sock)
+      print putt
+      print "waiting for putt command"
+    except Exception, e:
+      print str(e)
+      p1.terminate()
+      return
+ 
+    while(True):
+      try:
+        putt = acceptSocketConnection(sock)
+        if(putt):
+          tag.char_write_cmd(0x2b, 0x01)
+          tag.notification_loop()
+          
+      except KeyboardInterrupt:
+        tag.con.sendline("disconnect")
+        tag.con.sendline("exit")
+        sys.exit(0)
+      except Exception, e:
+        print str(e)
+        pass
+      tag.char_write_cmd(0x2b, 0x00)
     
-    #print "registering"
-    tag.register_cb(0x2a,tag.dataCallback)
-    tag.char_write_cmd(0x2b, 0x01)
-    #tag.char_write_cmd(0x31, 0x01)
-    #tag.char_write_cmd(0x2e, 0x0100)
-    #tag.char_write_cmd(0x2b,0x01)
-    # Read from handle 
-    #tag.char_read_hnd(0x2a)
-    #tag.frequency.append(time.time())
-    tag.notification_loop()
-    #print "after notification loop"
-    i=1
-    #while i<50:
-    	# Print the data
-    	#print ("Accel: ")
-   	#print(tag.accelerometer) 
-   	#print ("Gyro: ")
-    	#print (tag.gyroscope)
-        #print ("Magneto: ")
-        #print (tag.magnetometer)
-	#tag.char_write_cmd(0x2b,0x01)
-	#tag.char_read_hnd(0x2a)
-	#tag.frequency.append(time.time())
-	#i = i + 1
-        
-    # @avi: Add final REST API code to push data to Parse Cloud
-    #print (tag.frequency[-1] - tag.frequency[0])
+    p1.terminate()
 
+  else:
+    try:
+      tag = wicedsense(bluetooth_adr, calibrate, calibrateMagnet)
+      tag.register_cb(0x2a,tag.dataCallback)
+      tag.char_write_cmd(0x2b, 0x01)
+      tag.notification_loop()
+    except Exception, e:
+      print str(e)
+      pass
 
-  except Exception, e:
-    print str(e)
-    pass
 
 if __name__ == "__main__":
   main()
+
+
+
+

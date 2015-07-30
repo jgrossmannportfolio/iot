@@ -1,0 +1,7 @@
+extends layout
+
+block content
+  img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
+  p.description
+
+  

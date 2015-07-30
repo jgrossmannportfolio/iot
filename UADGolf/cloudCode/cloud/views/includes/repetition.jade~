@@ -14,16 +14,19 @@ block content
     p.par #{paragraph1}
     p.par
         p.indent 1. Download the git repo
-        p.indent 2. Change the Parse keys in sense.py and appclient.js 
-        p.indent 3. Update the Wiced Sense firmware with the firmware provided
-        p.indent 4. Retrieve the Wiced Sense's MAC address
-        p.indent 5. Run the following on the RaspberryPi command line:
+        p.indent 2. Make sure parse is completely set up using the parse quickstart guide on the parse website. We used parse on RaspberryPi.
+        p.indent 3. Change the Parse keys in UADGolf/cloudCode/sense/sense.py at line 92, UADGolf/cloudCode/public/javascripts/appclient.js at lines 43 and 553, and UADGolf/cloudCode/sense/callback.c at line 58.
+        p.indent 4. Compile UADGolf/cloudCode/sense/callback.c by running makefile in UADGolf/cloudCode/sense/ directory. *Warning: need parse.h file to make. We had parse bin file on RaspberryPi.
+        p.indent 5. Update the Wiced Sense firmware with the firmware provided in UADGolf/firmware/ directory. Follow tutorial by broadcom to update firmware using their IDE.
+        p.indent 6. Retrieve the Wiced Sense's MAC address. This can be done by using hcitool lescan. Make sure your bluetooth is enabled first. 
+        p.indent 7. Run the following on the RaspberryPi command line in UADGolf/cloudCode/sense/ :
             div.outerimg 
-                p.indent For calibration -> sense.py MACaddress true (Note: hold still, takes 30 seconds)
+                p.indent For calibration -> sense.py <MACaddress> true
             div.outerimg 
-                p.indent For Putt recording -> sense.py MACaddress
-        p.indent 6. Push ''Connect to Wiced Sense'' button on front end
-        p.indent 7. Putt and the results can be viewed on the webpage
+                p.indent For Putt recording -> sense.py <MACaddress>
+        p.indent 8. Push connect button on the side of the Wiced Sense sensor tag on the putter.
+        p.indent 9. Push ''Connect to Wiced Sense'' button on front end webpage at upanddowngolf.parseapp.com
+        p.indent 10. Putt and the results can be viewed on the webpage (may take a few seconds).
 
   +Format(Par1)
 

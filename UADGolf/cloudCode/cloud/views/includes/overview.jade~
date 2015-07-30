@@ -2,8 +2,8 @@
 
 block content
 
-  - var Par1 = "The operation of the Up and Down putting aid begins at sensors appeded to the head of the putter.  During a user's putting motion, the data extracted from the sensors is transmitted in real time to a processing unit via Bluetooth Low Energy (BLE)."
-  - var Par2 = "At the processing unit, the data undergoes a series of sensor fusion algorithms to filter intrinsic noise and account for gravitational acceleration.  Once the data is cleaned, the processing unit pushes the processed data to the cloud, which the front-end webpage periodically polls in order to update the scaled animation of the putting motion in addition to the various putting performance metrics, which include the user's putting tempo and stroke type."
+  - var Par1 = "The operation of the Up and Down putting aid begins at sensors appended to the head of the putter.  During a user's putting motion, the data extracted from the sensors is transmitted in real time to a processing unit via BLE."
+  - var Par2 = "At the processing unit, the data undergoes a series of sensor fusion algorithms to filter intrinsic noise and account for gravitational acceleration in order to accurately calculate the orientation, and position of the putter at all times.  Once the data is cleaned, the processing unit pushes the processed data to the cloud, which the front-end webpage periodically polls in order to update the scaled animation of the putting motion in addition to the various putting performance metrics, which include the user's putting tempo and stroke type."
   - var Par3 = "This overview is depicted in the following diagram:"
 
   // title
