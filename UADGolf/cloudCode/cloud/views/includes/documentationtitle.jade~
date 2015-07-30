@@ -8,34 +8,35 @@ block content
 
     br
 
-
     h2.center Table of Contents
     h4.center
-      a(href='/documentation/#video') Video
+      a.blue(href='/documentation/#video') Video
     h4.center
-      a(href='/documentation/#abstract') Abstract
+      a.blue(href='/documentation/#abstract') Abstract
     h4.center
-      a(href='/documentation/#overview') Overview
+      a.blue(href='/documentation/#overview') Overview
     h4.center
-      a(href='/documentation/#stateoftheart') State of the Art
+      a.blue(href='/documentation/#stateoftheart') State of the Art
     h4.center
-      a(href='/documentation/#detailed_description') Detailed Description
+      a.blue(href='/documentation/#detailed_description') Detailed Description
     h4.center
-      a(href='/documentation/#results') Results
+      a.blue(href='/documentation/#results') Results
     h4.center
-      a(href='/documentation/#futurework') Future Work
+      a.blue(href='/documentation/#futurework') Future Work
     h4.center
-      a(href='/documentation/#conclusion') Conclusion
+      a.blue(href='/documentation/#conclusion') Conclusion
     h4.center
-      a(href='/documentation/#references') References
+      a.blue(href='/documentation/#references') References
     h4.center
-      a(href='/documentation/#resources') Appendix A: Tools & Resources
+      a.blue(href='/documentation/#resources') Appendix A: Tools & Resources
     h4.center
-      a(href='/documentation/#software') Appendix B: SW Git
+      a.blue(href='/documentation/#software') Appendix B: SW Git
     h4.center
-      a(href='/documentation/#stateoftheart') Appendix C: Project Repitition Details
+      a.blue(href='/documentation/#stateoftheart') Appendix C: Project Repitition Details
+
+    br
 
 
-  //mixin abstractFormat(name, price)
-  //  p#abst #{name} #{price} €
-  //+abstractFormat("blank: ", 5.99)
+    //mixin abstractFormat(name, price)
+    //  p#abst #{name} #{price} €
+    //+abstractFormat("blank: ", 5.99)
