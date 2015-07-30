@@ -67,25 +67,7 @@ void *pushNotifications()
     parseRunPushLoop(client);
 }
 
-// This function pushes changes to the cloud
-void updateOnParse(const char *column, int value)
-{
-	char body[128];
-	if(column == NULL || value == NULL) {
-		return;
-	}
-	sprintf(body, "{\"%s\":%d}", column, value);
-	ParseClient client = parseInitialize("LLXKP3xsmyHpEsZiYo6b8i9kHhsHDKyrlkW5lNrP", "D8XJySU9yqmTTLQkMDLEebVfKmLjp1ApNtWuFyxN");
-	parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
 
-
-    /* ================================
-        UPDATE DISPLACEMENT AS A FLOAT! 
-        =============================*/
-    sprintf(body, "{\"%s\":%0.2f}", "Displacement", 9.8);
-    parseSendRequest(client, "PUT", "/1/classes/Bulb/7SPLF6KHR6", body, NULL);
-	
-}
 
 
 // Here we establish socket connectivity with another endpoint/program on 'port' argument

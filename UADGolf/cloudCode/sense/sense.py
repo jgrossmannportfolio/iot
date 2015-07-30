@@ -276,11 +276,10 @@ class wicedsense:
 
       '''
      
+      #Kalman filtering
       gyrodata = []
       kalmanX = kalman.Kalman(roll[0])
       kalmanY = kalman.Kalman(pitch[0])
-      #kalmanZ = kalman.Kalman(yaw[0])
-     # accelRot =[MathUtil.rotateAcceleration([axnew[0], aynew[0], aznew[0]], [roll[0], pitch[0], 0.0])]
       
       gyrodata.append([roll[0], pitch[0], 0.0])
       zAngle = [0.0]
@@ -289,7 +288,6 @@ class wicedsense:
       time = [0.0]
       data = [0.0]
       angle = [0.0]
-      #accelNew[0] = [accelRot[-1][0], accelRot[-1][1], accelRot[-1][2], accelNew[0][3]]
       for x in range(1, len(gyroXnew)):
         time.append(time[-1] + self.delta_t)
         data.append(MathUtil.getAngle(gyroZnew[x], self.delta_t))
@@ -302,9 +300,7 @@ class wicedsense:
         
       accelRot = MathUtil.rotateAcceleration([axnew, aynew, aznew], [[i[0] for i in gyrodata[:]], [i[1] for i in gyrodata[:]], [i[2] for i in gyrodata[:]]])
 
-      #lowx = filters.lowpass([i[0] for i in accelRot[:]], 0.09)
-      #lowy = filters.lowpass([i[1] for i in accelRot[:]], 0.09)
-      #lowz = filters.lowpass([i[2] for i in accelRot[:]], 0.09)
+      #displacement calculations
       xframes = [MathUtil.displacement(self.dx,self.vx,accelRot[0][0], self.delta_t)[0]]
       yframes = [MathUtil.displacement(self.dy,self.vy,accelRot[1][0], self.delta_t)[0]]
       zframes = [MathUtil.displacement(self.dz,self.vz,accelRot[2][0], self.delta_t)[0]]
@@ -320,53 +316,13 @@ class wicedsense:
         accelNew[x] = [accelRot[0][x], accelRot[1][x], accelRot[2][x], accelNew[x][3]]
        
 
-      
-      #accelNew = [[lowx[i], lowy[i], lowz[i], accelNew[i][3]] for i in range(len(lowx))]
-        
-                        
-                        #kalmanZ.updateAngle(yaw[x], gyroZnew[x], self.delta_t) ])
-        #gyrodata.append( [ MathUtil.getAngle(gyroXnew[x], self.delta_t), MathUtil.getAngle(gyroYnew[x], self.delta_t), MathUtil.getAngle(gyroZnew[x], self.delta_t) ] )
 
       # =======================
       # PUSH FRAMES TO PARSE
       # =======================
       self.pushToCloud(xyzframes, gyrodata, accelNew)
       
-      '''variance = []
-      period = []
-      for i in range(1, len(gyroXnew)/7):
-        timestep, xVar = MathUtil.allanVariance(gyroXnew, 0.0125, i, self.delta_t)
-        variance.append(xVar)
-        period.append(timestep)
-        print timestep, xVar
-      #z = np.polyfit(period, variance, 2)
-      #f = np.poly1d(z)
      
-      #fig = plot.figure()
-      #ax = fig.add_subplot(1,1,1)
-      #ax.plot(time, axnew, time, filters.highpass(axnew, 0.001), time, accelRot[0])
-      fig2 = plot.figure()
-      ay = fig2.add_subplot(1,1,1)
-      ay.plot(time, [i[1] for i in gyrodata[:]], time, yAngle)
-     #ax.set_title("Acceleration")
-     # ax.set_ylabel("m/s^2")
-      #ax.set_xlabel("Time (s)")
-      plot.show()
-      '''
-     
-      #xVar = np.log(xVar, 10)
-      #time = np.log(time, 10)
-      #plot.plot(time, xVar)
-      '''fig = plot.figure()
-      ax = fig.add_subplot(1,1,1)
-      ax.plot(time, yAngle, 'blue', time, [row[1] for row in gyrodata], 'red', time, pitch, 'green')
-      fig2 = plot.figure()
-      ay = fig2.add_subplot(1,1,1)
-      ay.plot(time, xAngle, 'blue', time, [row[0] for row in gyrodata], 'red', time, roll, 'green')
-      fig3 = plot.figure()
-      az = fig3.add_subplot(1,1,1)
-      az.plot(time, zAngle, 'blue')
-      plot.show()'''
     self.resetVars()  
 
  
@@ -413,9 +369,6 @@ class wicedsense:
 
       if self.starttimer == 0:
         self.starttimer = 1
-        #start_time = current_milli_time()
-        #self.timestamp.append( 0.0 )
-        #print "Python timestamp (in s): " + str(self.timestamp[-1])
 
       else: # the garbage iterations have passed
         if len(self.timestamp) == 0:
@@ -428,24 +381,12 @@ class wicedsense:
 
         bytelen = len(v) # v is the handle data
 
-        # Make sure bytes are received by the correct handle
-        #if(v[0] == 3):
-        #print "v: " + str(v)
         vx1 = int( str(v[2]*256 + v[1]) )
         vy1 = int( str(v[4]*256 + v[3]) )
         vz1 = int( str(v[6]*256 + v[5]) )
         gx1 = int( str(v[8]*256 + v[7]) )
         gy1 = int( str(v[10]*256 + v[9]) )
         gz1 = int( str(v[12]*256 + v[11]) )
-        #mx1 = int( str(v[14]*256 + v[13]) )
-        #my1 = int( str(v[16]*256 + v[15]) )
-        #mz1 = int( str(v[18]*256 + v[17]) )
-        #print "gx: " + str(gx1)
-        #print "gy: " + str(gy1)
-        #print "gz: " + str(gz1)
-        #print "vx: " + str(vx1)
-        #print "vy: " + str(vy1)
-        #print "vz: " + str(vz1)
 
         if(self.calibrateMagnet == True):
           (Mxyz, Mmag) = MathUtil.convertData(mx1, my1, mz1, 1.0)
@@ -511,6 +452,7 @@ def main():
   bluetooth_adr = sys.argv[1]
   p1 = None
   
+  #command line arg for calibration
   if len(sys.argv) > 2:
     if(sys.argv[2] == "true" or sys.argv[2] == "True"):
       calibrate = True
@@ -518,6 +460,7 @@ def main():
       calibrateMagnet = True
       calibrate = True
   
+  #no calibration, spawn subprocess, connect to wiced sense and start notification loop
   if(calibrate == False):
     p1 = subprocess.Popen(['./callback'])
     print "created callback process"

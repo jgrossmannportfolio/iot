@@ -95,6 +95,7 @@ void clientSendSocket(int port, char *buffer)
     close(sockfd);
 }
 
+//for closing correctly if terminated
 void sigHandler(int sig) {
   exit(0);
 }

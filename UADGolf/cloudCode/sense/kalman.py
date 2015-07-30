@@ -1,4 +1,7 @@
 '''
+Adapted from code snippets taken from http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/
+
+
 Kalman filter implementation
 Updates a 1 dimensional angle of rotation based on stream of data:
     newAngle: pitch, roll, yaw based on accelerometer data
