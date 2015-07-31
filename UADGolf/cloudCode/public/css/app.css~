@@ -10,10 +10,10 @@ margin-top: 3%;
 font-size: 20;
 }
 
-p.para {
+p.par {
 margin-left: 10%;
 margin-right: 10%;
-margin-top: 3%;
+margin-top: 1%;
 }
 
 .blue{
@@ -170,6 +170,12 @@ margin-left: 3%;
 
 button#newPayment {
 margin-left: 3%;
+}
+
+.outerimg {
+margin-left: 10%;
+margin-right: 10%;
+margin-bottom: 4%;
 }
 
 img{

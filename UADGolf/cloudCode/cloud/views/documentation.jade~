@@ -9,6 +9,15 @@ block content
     div#abstract
       include ./includes/abstract.jade
 
+    div#intro
+      include ./includes/intro.jade
+
+    div#overview
+      include ./includes/overview.jade
+
+    div#stateoftheart
+      include ./includes/stateoftheart.jade
+
     br
     div#detailed_description
       include ./includes/detailed_description.jade

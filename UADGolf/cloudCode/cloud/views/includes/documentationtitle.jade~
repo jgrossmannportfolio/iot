@@ -8,9 +8,9 @@ block content
 
     br
 
-    h2.center Table of Contents
+    h3.center Table of Contents
     h4.center
-      a.blue(href='/documentation/#video') Video
+      a.blue(href='/documentation/#intro') Introduction
     h4.center
       a.blue(href='/documentation/#abstract') Abstract
     h4.center
