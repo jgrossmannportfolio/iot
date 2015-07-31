@@ -1,0 +1,15 @@
+//extends layout
+
+block content
+
+  - var Par1 = "The Up and Down Golf Putting Aid is a platform designed to perform analyses on one's putting motion. In opposition to existing swing analyzer product implementations, which tend to place sensors at either the ''butt'' of the golf club, the shaft of the golf club, or the glove of the golfer, the Up and Down Golf Putting aid appends sensors to the head of the putter in order to extract data that more accurately reflects the subtle movements that occer throughout the duration of one's putt."
+
+  // title
+  h3.center Abstract
+
+  // abstract framework
+  mixin abstractFormat(paragraph1)
+    p.par #{paragraph1}
+
+  +abstractFormat(Par1,Par2)
+

@@ -1,0 +1,15 @@
+//extends layout
+
+block content
+
+  - var Par1 = "The motivation to build a putting analysis platform is best answered by a phrase coined by all-time putting great, Bobby Locke, who said, ''You drive for show, but putt for dough.''  As cheesy as Locke's words might sound, they are continuously reinforced by the performances of the players on the Professional Golf Association (PGA) tour, year after year.  A recent and prominent example comes from 22 year old phenom Jordan Spieth.  As the world's number 1 ranked golfer, Spieth has already captured two PGA Major wins, and it should come as no surprise that he is also the world's number 1 ranked putter.  But the real shocker is that the world's best putter consumes %40.51 (accurate as of 7/21/14) of his strokes on the greens! For the pros and amatuers alike, a significant amount of strokes (and ''dough'') are lost on the greens"
+
+  // title
+  h3.center Introduction
+
+  // abstract framework
+  mixin Format(paragraph1)
+    p.par #{paragraph1}
+
+  +Format(Par1)
+

@@ -1,0 +1,127 @@
+//extends layout
+
+block content
+
+
+    // title
+    h3.center Detailed Description
+
+
+
+    // hardware
+    // framework
+    mixin ddFormat(paragraph1, paragraph2)
+      h4.center Hardware:
+      p.par #{paragraph1}
+      p.par #{paragraph2}
+    
+    -var ddPar1 = "We chose the Wiced Sense sensor tag because it was low cost, it has relatively high precision, it is compact and because of its convenience. The Wiced Sense comes prepackaged and operational for about $30 with a 3-axis accelerometer and a 3-axis gyroscope each with 2 byte precision per axis. We were provided a Wiced Sense sensor tag from the Electrical Engineering Department of Columbia University through our IOT class."
+
+    -var ddPar2 = "The Wiced Sense tag comes with its own SDK for its firmware with an eclipse IDE, both downloadable from the Broadcomm website. Having premade firmware that is easily editable, and easy to upload to the sensor tag, makes setting up and starting the project much more efficient."
+
+
+
+
+    // center
+    // framework
+    mixin kfFormat(paragraph1, paragraph2, paragraph3)
+      h4.center Kalman Filter:
+      p.par #{paragraph1}
+      p.indent
+        link
+        
+      p.par #{paragraph2}
+      p.par #{paragraph3}
+
+    -var link = a.blue(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/') A practical approach to kalman filter and hot to implement it
+    -var kfPar1 = "A more detailed description of the Kalman filter we implemented including the equations used can be found at:" 
+
+
+
+    -var kfPar2 = "Kalman filter works by producing a statistically optimal estimate of the system state being measured, based on the measurements and their error. First we try to estimate the priori state based on all previous states and the gyro measurement as a control input.Then we estimate the a priori error covariance matrix based on the previous error covariance matrix and the process noise. We then determine the innovation, or the difference between the accelerometer based measurement and the a priori state estimate. Then, we determine the innovation covariance from the a priori error covariance matrix and the measurement covariance matrix. The innovation covariance tells us how much we should ''trust'' the measured value. Next we calculate the Kalman gain with the a priori error covariance matrix and the innovation covariance. The Kalman gain indicates how much we should &ldquo;trust&rdquo; the innovation value. Next, update the a posteriori estimate of the current state with the a priori state, innovation and Kalman gain. Finally, update the a posteriori error covariance matrix based on how much we corrected the state estimate."
+
+
+    -var kfPar3 = "Used an independent Kalman filter for each axis of rotation assuming all process noise is Gaussian with the average at 0. Implementation of Extended Kalman Filter would have been more accurate as it estimates each axis state based on all the other axis measurements, but it is much more complicated to understand. We also decided to deal with the Gimbal lock inherent with Euler angles instead of using quaternions because a natural putting motion should not be affected by Gimbal lock."
+
+
+
+
+    // LPF
+    // framework
+    mixin lpfFormat(paragraph1, eqn, paragraph2)
+      h4.center Low-Pass Filter:
+      p.par #{paragraph1}
+      p.indent #{eqn}
+      p.par #{paragraph2}
+    
+    -var lpfPar1 = "We used a very basic implementation of a lowpass filter which filters out high frequency signals through the variation of a constant which controls how influential each new data point will be on the filtered signal. The equation is:"
+
+
+    -var lpfEqn = "y[i] = (1 - alpha) * y[i-1] + alpha * x[i]"
+
+
+    -var lpfPar2 = "where y is the filtered signal, x is the original signal and alpha is a preset filter constant. Using a low value of alpha limits the effect of each new data point on the filtered signal, so only long lasting trends, or low frequency bands, will have a noticeable effect on the filtered signal."
+
+
+
+    // Gravity
+    // framework
+    mixin gfFormat(paragraph1, eqn, paragraph2)
+      h4.center Gravity filter
+      p.par #{paragraph1}
+      p.indent #{eqn}
+      p.par #{paragraph2}
+
+    
+    -var gfPar1 = "To remove the gravitational acceleration from each axis, we used a low pass filter with a very small alpha constant to isolate it, and then subtract it from the measured signal. The equation is:"
+
+    -var gfEqn = "y[i] = x[i] - gravity[i]"
+
+    -var gfPar2 = "where y is the filtered signal, x is the original signal and gravity is the low-pass filter isolated gravitational acceleration."
+
+
+
+    // Firmware
+    // framework
+    mixin fwFormat(paragraph1, paragraph2,paragraph3,paragraph4)
+      h4.center Firmware Settings:
+      p.par #{paragraph1}
+      p.par #{paragraph2}
+      p.par #{paragraph3}
+      p.par #{paragraph4}
+
+
+    -var fwPar1 = "In order to achieve the precision needed for our measurements, we had to adjust the Wiced Sense firmware to optimize performance. In the main header file, wiced_sense.h, we disabled all of the sensors except for the accelerometer, and the gyroscope. The Wiced Sense Tag has a timer interrupt for each sensor it polls, at 6.25ms before the start of a new polling period. From experimentation, we found that it takes almost exactly 6.25ms for the tag to grab newly generated data from each individual sensor.  We concluded that it was vital for us to disable all unnecessary sensors in order to minimize polling frequency. With only two sensors enabled, we were able to get a minimum sensor data send rate at 12.5ms. In order to keep up with the data send rate, we had to increase the refresh frequency of both the gyroscope and accelerometer to 190Hz and 100Hz respectively. These frequency values were picked from a limited range of preset values, so the exact frequency is not important, just that they refresh faster than we can poll them. In wiced_sense.c, in each init function for the gyroscope and accelerometer, we adjusted the parameter for the ODR function to one of the several preset ODR frequencies found in the header file of each chip driver."
+
+    -var fwPar2 = "With the ability to send new data every 12.5ms, we had to ensure that we were able to send Bluetooth LE messages at that rate. In wiced_sense.c, we changed the first two parameters to the function bleprofile_SendConnParamUpdateReq to 10.0 and 10.0 to set the min and max connection event interval  to 12.5ms (each value is multiplied by 1.25ms internally). This ensures that we send a Bluetooth LE message every 12.5ms."
+
+    -var fwPar3 = "In order to achieve the high speed granularity of 12.5ms that we aimed for, we had to also decrease the period of the software fine-timer to its minimum of 12.5ms. We did this by changing the first value in the wiced_sense_cfg object in wiced_sense.c to 12.5. Without this change, we would have had to create our own timer callbacks using the hardware timer."
+
+    -var fwPar4 = "Aside from data frequency, we also aimed to maximize the precision of our sensor data measurements. We updated the range of the gyroscope to +/- 250 degrees per second and the range of the accelerometer to +/- 2g where g is gravitational acceleration. In wiced_sense.c, in the init functions for the gyroscope and the accelerometer, we changed the parameter to the FullScale function to 250 and 2respectively using preset values in the header files of each of the chip drivers."
+
+
+
+    // Error Values
+    // framework
+    mixin evFormat(paragraph1, paragraph2)
+      h4.center Error Values:
+      p.indent #{paragraph1}
+      p.par #{paragraph2}
+
+    -var evPar1 = "Why we chose filters/algorithms we did (no magnet, etc):"
+
+    -var evPar2 = "Initially planned on using magnetometer as a reference measurement in order to better measure yaw. However, it proved too difficult and tedious to calibrate, was unstable when in our testing environment, and we did not have enough time to figure out the significance of the magnetometer axis and measurements. So for Yaw (Rotation around the Z-axis), we rely on the integration of the gyroscope z-axis reading over time. Other implementations have used GPS instead of magnetometer in order to get an accurate yaw measurement."
+
+
+
+
+
+    // LOAD CONTENT INTO FRAMEWORKS
+    +ddFormat(ddPar1,ddPar2)
+    +kfFormat(kfPar1,kfPar2,kfPar3)
+    +lpfFormat(lpfPar1, lpfEqn, lpfPar2)
+    +gfFormat(gfPar1, gfEqn, gfPar2)
+    +fwFormat(fwPar1, fwPar2,fwPar3,fwPar4)
+    +evFormat(evPar1,evPar2)
+
+

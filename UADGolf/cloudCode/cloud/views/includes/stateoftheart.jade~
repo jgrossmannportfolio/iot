@@ -1,0 +1,19 @@
+//extends layout
+
+block content
+
+  - var Par1 = ""
+
+  // title
+  h3.center Introduction
+
+  // abstract framework
+  mixin Format(paragraph1)
+    p.par #{paragraph1}
+
+  +Format(Par1)
+
+  // stateoftheart diagram
+  div.outerimg
+    img#label(id='add-razaoSocial', class='input-img', src='/images/stateoftheart.png')
+
