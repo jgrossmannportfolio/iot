@@ -1,0 +1,18 @@
+//extends layout
+
+block content
+
+
+  - var Par1 = ""
+
+  // title
+  h3.center Conclusion
+
+  // abstract framework
+  mixin Format(paragraph1)
+    p.par #{paragraph1}
+
+  +Format(Par1)
+
+
+

@@ -27,13 +27,12 @@ block content
     mixin kfFormat(paragraph1, paragraph2, paragraph3)
       h4.center Kalman Filter:
       p.par #{paragraph1}
-      p.indent
-        link
-        
+      p.indent 
+        a.blue(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/') A practical approach to kalman filter and hot to implement it
       p.par #{paragraph2}
       p.par #{paragraph3}
 
-    -var link = a.blue(href='http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it/') A practical approach to kalman filter and hot to implement it
+    -var link = 
     -var kfPar1 = "A more detailed description of the Kalman filter we implemented including the equations used can be found at:" 
 
 
@@ -114,14 +113,33 @@ block content
 
 
 
+    // Error Values
+    // framework
+    mixin swFormat()
+      h4.center Software Architecture:
+      div.outerimg
+        img(id='add-razaoSocial', class='input-img', src='/images/backendflow.png')
+        br
+        img(id='add-razaoSocial', class='input-img', src='/images/frontendflow.png')
+
+
+
 
 
     // LOAD CONTENT INTO FRAMEWORKS
+    br
     +ddFormat(ddPar1,ddPar2)
+    br
     +kfFormat(kfPar1,kfPar2,kfPar3)
+    br
     +lpfFormat(lpfPar1, lpfEqn, lpfPar2)
+    br
     +gfFormat(gfPar1, gfEqn, gfPar2)
+    br
     +fwFormat(fwPar1, fwPar2,fwPar3,fwPar4)
+    br
     +evFormat(evPar1,evPar2)
+    br
+    +swFormat()
 
 

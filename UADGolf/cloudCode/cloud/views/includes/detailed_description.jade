@@ -113,14 +113,34 @@ block content
 
 
 
+    // Error Values
+    // framework
+    mixin swFormat()
+      h4.center Software Architecture:
+      div.outerimg
+        img(id='add-razaoSocial', class='input-img', src='/images/backendflow.png')
+        br
+        br
+        img(id='add-razaoSocial', class='input-img', src='/images/frontendflow.png')
+
+
+
 
 
     // LOAD CONTENT INTO FRAMEWORKS
+    br
     +ddFormat(ddPar1,ddPar2)
+    br
     +kfFormat(kfPar1,kfPar2,kfPar3)
+    br
     +lpfFormat(lpfPar1, lpfEqn, lpfPar2)
+    br
     +gfFormat(gfPar1, gfEqn, gfPar2)
+    br
     +fwFormat(fwPar1, fwPar2,fwPar3,fwPar4)
+    br
     +evFormat(evPar1,evPar2)
+    br
+    +swFormat()
 
 

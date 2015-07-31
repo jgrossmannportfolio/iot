@@ -2,7 +2,7 @@ extends layout
 
 block content
     div#project-info
-        h3#title Up and Down Golf
+        h3#title Columbia University IoT Course Project: Up and Down Golf
         p#description IOT Golf Putting aid.
         button(type='button', id='startButton') Connect to Wiced Sense
         br

@@ -14,7 +14,7 @@ head
             
 body
 #header
-    h2#hello Up And Down Golf
+    h2#hello Columbia University IoT Course Project: Up And Down Golf
 
 div#navbar
     ul(class='nav nav-pills')
@@ -25,35 +25,6 @@ div#navbar
         li
             a(href='/sampleputt') Sample Putt Animation
         
-/*
-if documentation
-  div#navbar2
-    ul(class='nav nav-pills')
-      li
-          a(href='/documentation/#video') Video
-      li
-          a(href='/documentation/#abstract') Abstract
-      li
-          a(href='/documentation/#overview') Overview
-      li
-          a(href='/documentation/#stateoftheart') State of the Art
-      li
-          a(href='/documentation/#detailed_description') Detailed Description
-      li
-          a(href='/documentation/#results') Results
-      li
-          a(href='/documentation/#futurework') Future Work
-      li
-          a(href='/documentation/#conclusion') Conclusion
-      li
-          a(href='/documentation/#references') References
-      li
-          a(href='/documentation/#resources') Appendix A: Tools and resources used
-      li
-          a(href='/documentation/#software') Appendix B: Decription of SW, github link to SW
-      li
-          a(href='/documentation/#stateoftheart') Appendix C: Detailed description to facilitate reptetition of the project
-*/
 
 
 
