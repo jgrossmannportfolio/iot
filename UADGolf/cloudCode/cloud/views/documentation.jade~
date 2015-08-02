@@ -30,5 +30,25 @@ block content
     div#results
       include ./includes/results.jade
 
+    br
+    div#futurework
+      include ./includes/futurework.jade
+
+    br
+    div#conclusion
+      include ./includes/conclusion.jade
+
+    br
+    div#references
+      include ./includes/references.jade
+
+    br
+    div#resources
+      include ./includes/resources.jade
+
+    br
+    div#software
+      include ./includes/swgit.jade
+
 
 

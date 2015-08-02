@@ -5,9 +5,20 @@ block content
 
   // title
   h3.center Future Work
+  - var Par1 = "The future calls for the following works:"
+  - var point1 = "Incorporate Putting Metrics, such as Tempo and Stroke Type"
+  - var point2 = "Port the existing platform to iOS - substitute a mobile device for the RaspberryPi"
+  - var point3 = "Include a Magnetometer to aid in filtering and Kalman estimations"
+  // abstract framework
+  mixin abstractFormat(paragraph1, bullet1, bullet2, bullet3)
+    p.par #{paragraph1}
+    div.outerimg
+      div.outerimg
+        li #{bullet1}
+        li #{bullet2}
+        li #{bullet3}
 
-  p.par Under Construction
-
+  +abstractFormat(Par1,point1,point2,point3)
 
 
 

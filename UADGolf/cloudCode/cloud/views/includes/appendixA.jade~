@@ -1,0 +1,28 @@
+ //extends layout
+
+block content
+
+
+  // title
+  h3.center Appendix A: Tools & Resources
+
+  p.par Wiced Sense Firmware Forums
+  p.indent
+    a.blue(href='http://www.google.com') Insert Here
+
+  p.par Gravity and Kalman Filtering 
+  p.indent
+    a.blue(href='http://www.google.com') Insert Here
+
+  p.par Animation
+  p.indent
+    a.blue(href='http://www.w3schools.com/html/html5_canvas.asp') <canvas> Tutorial
+    a.blue(href='http://www.arc.id.au/Canvas3DManual.html') Cango 3D
+
+  p.par Node.js and Jade
+  p.indent
+    a.blue(href='http://www.google.com') Insert Here
+
+  p.par Python, Numpy.py, and 
+  p.indent
+    a.blue(href='http://www.google.com') Insert Here

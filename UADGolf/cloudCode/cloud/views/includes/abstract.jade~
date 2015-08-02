@@ -2,7 +2,7 @@
 
 block content
 
-  - var Par1 = "The Up and Down Golf Putting Aid is a platform designed to perform analyses on one's putting motion. In opposition to existing swing analyzer product implementations, which tend to place sensors at either the ''butt'' of the golf club, the shaft of the golf club, or the glove of the golfer, the Up and Down Golf Putting aid appends sensors to the head of the putter in order to extract data that more accurately reflects the subtle movements that occer throughout the duration of one's putt.  Architecturally, the sensor relays the data via Bluetooth Low Energy (BLE) to a processing unit, which performs various sensor fusion and filtering algorithms on the data before the data is sent to the cloud and animated on the front-end"
+  - var Par1 = "The Up and Down Golf Putting Aid is a platform designed to perform analyses on one's putting motion. In opposition to existing swing analyzer product implementations, which tend to place sensors at either the ''butt'' of the golf club, the shaft of the golf club, or the glove of the golfer, the Up and Down Golf Putting aid appends sensors to the head of the putter in order to extract data that more accurately reflects the subtle movements that occer throughout the duration of one's putt.  Architecturally, the data is collected by a gyroscope and accelerometer and relayed via Bluetooth Low Energy (BLE) to a processing unit, which performs various sensor fusion and filtering algorithms on the data.  Finally, this processed data is sent to the cloud, where it can be visualized by the front-end"
 
   // title
   h3.center Abstract
@@ -11,7 +11,7 @@ block content
   mixin abstractFormat(paragraph1)
     p.par #{paragraph1}
     div.outerimg
-        img(id='add-razaoSocial', class='input-img', src='/images/prototype.png')
+        img(src='/images/prototype.png')
 
   +abstractFormat(Par1)
 

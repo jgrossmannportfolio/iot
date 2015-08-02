@@ -1,0 +1,10 @@
+ //extends layout
+
+block content
+
+
+  // title
+  h3.center Appendix C: Project Repetition Details
+
+  p.indent
+    a.blue(href='http://www.google.com') Insert Here
