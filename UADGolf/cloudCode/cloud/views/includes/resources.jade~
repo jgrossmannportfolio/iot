@@ -14,7 +14,7 @@ block content
   p.indent
     a.blue(href='http://www.w3schools.com/html/html5_canvas.asp') Canvas Tutorial
   p.indent
-    a.blue(href='http://www.arc.id.au/Canvas3DManual.html') Cango 3D
+    a.blue(href='http://www.arc.id.au/Canvas3DManual.html') Cango 3D User Manual
 
   p.par Node.js and Jade
   p.indent

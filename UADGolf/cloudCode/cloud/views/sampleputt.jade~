@@ -3,17 +3,19 @@ extends layout
 block content
     div#project-info
         h3#title Sample Putt Animation
-        //p#description IOT Golf Putting aid.
+        p#description This page displays the animation that results from a simulated putt.  The simulated putt data was generated in order to catalyze the animation debugging process.  In the event that clean data is received from the sensors appended to the putter, the result might resemble the following animation.
         br
         br
         canvas(id="samplePuttCanvas", width="", height="")
         br
         br
         br
-        img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttTranslation.png')
+        div.outerimg
+          img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttTranslation.png')
         br
         br
-        img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
+        div.outerimg
+          img#label(id='add-razaoSocial', class='input-img', src='/images/simulatedPuttGyro.png')
 
     
     
