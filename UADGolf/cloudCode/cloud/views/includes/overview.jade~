@@ -18,5 +18,5 @@ block content
   +overviewFormat(Par1,Par2,Par3)
 
   // overview diagram
-  div.par
+  div.outerimg
     img#label(id='add-razaoSocial', class='input-img', src='/images/overview.png')
