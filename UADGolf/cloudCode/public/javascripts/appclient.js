@@ -322,7 +322,7 @@ var myapp = (function(){
             data: {"Putt":connect}
           }, 
           {success: function() {
-                alert("Push Successful! BTconnect = true");
+                //alert("Push Successful! BTconnect = true");
                  /*   
                     var putt = Parse.Object.extend("Putt");
                     var query = new Parse.Query(putt);
