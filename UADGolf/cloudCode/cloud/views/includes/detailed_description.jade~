@@ -112,28 +112,21 @@ block content
     -var fwPar4 = "Aside from data frequency, we also aimed to maximize the precision of our sensor data measurements. We updated the range of the gyroscope to +/- 250 degrees per second and the range of the accelerometer to +/- 2g where g is gravitational acceleration. In wiced_sense.c, in the init functions for the gyroscope and the accelerometer, we changed the parameter to the FullScale function to 250 and 2respectively using preset values in the header files of each of the chip drivers."
 
 
+    -var swPar1 = "On the front-end, the animation was controlled using an HTML5 <canvas> third party library, known as Cango 3D.  While Cango 3D hastens the process of building, translating, and rotating 3D figures, the library is limited.  One such limitation involves the rendering of Cango's rotation method in conjuntion with its translation method.  In short, the rotation method strictly rotates a 3D object about the (0,0,0) coordinates, and the translation method alters these (0,0,0) coordinates depending on the arguments given.  As a result, the process of rendering a translation on an object followed by a rotation on that same object would yield an orbit-like animation."
+
+    -var swPar2 = "Since the Up and Down Golf application demanded that the putter object be simultaneously rotated and translated, the translation method could not be used to emulate movement of the putter object.  More specifically, rendering the translation method would alter the (0,0,0) coordinates, which the putter object needed to hold in order for the rotation method to be successfully rendered.  To overcome this limitation, the putter movement was emulated via altering the ''world coordinates'' (as defined by the Cango 3D reference manual), or vantage point. By cleverly and routinely rendering new ''world coordinates,'' the view of the putter would change and emulate motion.  Conveniently, the alteration of the vantage point would maintain the putter object's (0,0,0) coordinates, such that the rotation method could be rendered simultaneously."
 
     // Error Values
     // framework
-    mixin evFormat(paragraph1, paragraph2)
-      h4.center Error Values:
-      p.indent #{paragraph1}
-      p.par #{paragraph2}
-
-    -var evPar1 = "Why we chose filters/algorithms we did (no magnet, etc):"
-
-    -var evPar2 = "Initially planned on using magnetometer as a reference measurement in order to better measure yaw. However, it proved too difficult and tedious to calibrate, was unstable when in our testing environment, and we did not have enough time to figure out the significance of the magnetometer axis and measurements. So for Yaw (Rotation around the Z-axis), we rely on the integration of the gyroscope z-axis reading over time. Other implementations have used GPS instead of magnetometer in order to get an accurate yaw measurement."
-
-
-
-    // Error Values
-    // framework
-    mixin swFormat()
+    mixin swFormat(paragraph1, paragraph2)
       h4.center Software Architecture:
       div.outerimg
         img(id='add-razaoSocial', class='input-img', src='/images/backendflow.png')
         br
         br
+      h4.center Animation:
+      p.par #{paragraph1}
+      p.par #{paragraph2}
         img(id='add-razaoSocial', class='input-img', src='/images/frontendflow.png')
 
 
@@ -154,8 +147,6 @@ block content
     br
     +fwFormat(fwPar1, fwPar2,fwPar3,fwPar4)
     br
-    +evFormat(evPar1,evPar2)
-    br
-    +swFormat()
+    +swFormat(swPar1, swPar2)
 
 
