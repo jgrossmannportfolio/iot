@@ -1,0 +1,5 @@
+John Grossmann and Peter Burrows
+
+School project.
+
+This program analyzes a golf putt made with a Broadcomm Wiced Sense sensor tag on the putter. The relevant impulse data from the sensors of the sensor tag are sent to a raspberry pi paired with the sensor tag (would have used smart phone app if given smartphone). The raspberry pi calculates the swing trajectory of the golf putt and pushes the swing motion to the cloud (Facebook Parse) to be saved and viewed on a website hosted by the raspberry pi. The overall goal was to analyze the swing, but we could not get the physics of the swing completely because of the limited sensor data. However, the position of the putting head in terms of angular rotation is close to accurate using a Kalman filter. 
